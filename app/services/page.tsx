@@ -13,24 +13,39 @@ const scrollToTop = () => {
 
 const services = [
   {
-    title: "Aerospace Engineering",
-    description:
-      "Systems engineering, structural analysis, and technical design support for aerospace platforms and components.",
+    title: "Aerial Mapping and Surveying",
+    description: "We provide accurate aerial mapping and surveying solutions using advanced drone technology. Our services support land assessment, construction planning, and geospatial data collection. We ensure high-resolution outputs that help clients make informed decisions efficiently.",
+    image: "/drone.jpg",
   },
   {
-    title: "Design & Simulation",
-    description:
-      "Digital modeling, simulation, and validation services that help streamline product development and reduce risk.",
+    title: "Drone Piloting Training",
+    description: "Our drone piloting training equips individuals with practical flying skills and industry knowledge. Trainees learn safety procedures, flight control, and mission planning. The program is designed for both beginners and those looking to enhance their expertise.",
+    image: "/simulation.jpg",
   },
   {
-    title: "Manufacturing Support",
-    description:
-      "Production planning, quality assurance guidance, and supply chain coordination for aerospace manufacturing programs.",
+    title: "Technician Training",
+    description: "We offer technician training focused on drone maintenance, troubleshooting, and system management. Participants gain hands-on experience with real equipment and tools. This training prepares technicians to ensure reliable and safe drone operations.",
+    image: "/consulting.jpg",
   },
   {
-    title: "Consulting",
-    description:
-      "Strategic advisory services for operations, certification readiness, program management, and technical performance improvement.",
+    title: "Drone Engineering Training",
+    description: "Our drone engineering training covers design, assembly, and system integration. Students learn the technical foundations behind drone technology and innovation. The course is ideal for those interested in building and improving drone systems.",
+    image: "/drone.jpg",
+  },
+  {
+    title: "Consultancy",
+    description: "We provide expert consultancy services tailored to your drone-related needs. Our team supports project planning, technology selection, and operational strategy. We help organizations adopt drone solutions effectively and responsibly.",
+    image: "/simulation.jpg",
+  },
+  {
+    title: "Agricultural and Infrastructure Inspection",
+    description: "Our drones enable efficient inspection of agricultural fields and infrastructure assets. We help identify issues such as crop health concerns, structural damage, or maintenance needs. This approach saves time while improving accuracy and safety.",
+    image: "/consulting.jpg",
+  },
+  {
+    title: "Customized Missions",
+    description: "We design and execute customized drone missions based on specific client requirements. Whether for research, monitoring, or specialized operations, we adapt our solutions accordingly. Our team ensures precision, flexibility, and reliable results in every project.",
+    image: "/drone.jpg",
   },
 ];
 
@@ -53,7 +68,7 @@ export default function ServicesPage() {
         <Section>
           <div className="grid gap-6 md:grid-cols-2">
             {services.map((service) => (
-              <Card key={service.title} title={service.title} description={service.description} />
+              <Card key={service.title} title={service.title} description={service.description} image={service.image} />
             ))}
           </div>
         </Section>
