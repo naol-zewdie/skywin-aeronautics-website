@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 
 const products = [
   {
@@ -38,6 +39,7 @@ const products = [
 
 export default function ProductsSection() {
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     // Check for dark mode
@@ -59,13 +61,21 @@ export default function ProductsSection() {
     return () => observer.disconnect();
   }, []);
 
+  const handleCardClick = (product: any) => {
+    // Navigate to products page with the selected product
+    router.push(`/products?selected=${encodeURIComponent(product.title)}`);
+  };
+
   return (
     <div className="grid gap-6 md:grid-cols-3">
       {products.slice(0, 3).map((product) => (
         <div key={product.title}>
           {isDarkMode ? (
             /* Dark Mode Card */
-            <div className="h-full overflow-hidden rounded-3xl bg-[#23364F] shadow-lg transition-all duration-500 hover:shadow-2xl hover:shadow-[#23364F]/50 hover:-translate-y-2 hover:ring-2 hover:ring-[#23364F]/50 ring-offset-4 ring-offset-[color:var(--background)] group">
+            <div 
+              className="h-full overflow-hidden rounded-3xl bg-[#23364F] shadow-lg transition-all duration-500 hover:shadow-2xl hover:shadow-[#23364F]/50 hover:-translate-y-2 hover:ring-2 hover:ring-[#23364F]/50 ring-offset-4 ring-offset-[color:var(--background)] group cursor-pointer"
+              onClick={() => handleCardClick(product)}
+            >
               {/* Image Section - Upper Half */}
               <div className="aspect-[4/3] overflow-hidden border-0">
                 <img
@@ -87,7 +97,10 @@ export default function ProductsSection() {
             </div>
           ) : (
             /* Light Mode Card */
-            <div className="h-full overflow-hidden rounded-3xl bg-[color:var(--background)] shadow-lg transition-all duration-500 hover:shadow-2xl hover:shadow-[#23364F]/30 hover:-translate-y-2 hover:ring-2 hover:ring-[#23364F]/50 ring-offset-4 ring-offset-[color:var(--background)] group">
+            <div 
+              className="h-full overflow-hidden rounded-3xl bg-[color:var(--background)] shadow-lg transition-all duration-500 hover:shadow-2xl hover:shadow-[#23364F]/30 hover:-translate-y-2 hover:ring-2 hover:ring-[#23364F]/50 ring-offset-4 ring-offset-[color:var(--background)] group cursor-pointer"
+              onClick={() => handleCardClick(product)}
+            >
               {/* Image Section - Upper Half */}
               <div className="aspect-[4/3] overflow-hidden border-0">
                 <img

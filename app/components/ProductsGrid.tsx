@@ -189,13 +189,23 @@ export default function ProductsGrid() {
     return () => observer.disconnect();
   }, []);
 
+  // Handle URL parameter for selected product
   useEffect(() => {
-    // Reset selected image when card changes
-    if (selectedCard !== null) {
-      setSelectedImageIndex(0);
-      setSliderPosition(0);
+    const urlParams = new URLSearchParams(window.location.search);
+    const selectedProduct = urlParams.get('selected');
+    
+    if (selectedProduct) {
+      const productIndex = products.findIndex(p => 
+        p.title.toLowerCase() === decodeURIComponent(selectedProduct?.toLowerCase() || '')
+      );
+      
+      if (productIndex !== -1) {
+        setSelectedCard(productIndex);
+        setSelectedImageIndex(0);
+        setSliderPosition(0);
+      }
     }
-  }, [selectedCard]);
+  }, []);
 
   const handleCardClick = (index: number) => {
     setSelectedCard(index);
