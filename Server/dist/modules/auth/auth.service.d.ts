@@ -3,8 +3,9 @@ import { Model } from 'mongoose';
 import { User } from '../users/schemas/user.schema';
 export declare class AuthService {
     private jwtService;
-    private userModel;
-    constructor(jwtService: JwtService, userModel: Model<User>);
+    private userModel?;
+    private readonly fallbackUsers;
+    constructor(jwtService: JwtService, userModel?: Model<User> | undefined);
     validateUser(email: string, password: string): Promise<any>;
     login(user: any): Promise<{
         token: string;
@@ -17,7 +18,7 @@ export declare class AuthService {
         };
     }>;
     getMe(userId: string): Promise<{
-        id: import("mongoose").Types.ObjectId;
+        id: string;
         fullName: string;
         email: string;
         role: string;

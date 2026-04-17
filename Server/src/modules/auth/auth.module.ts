@@ -14,7 +14,9 @@ import { User, UserSchema } from '../users/schemas/user.schema';
       secret: process.env.JWT_SECRET || 'fallback-secret',
       signOptions: { expiresIn: '7d' },
     }),
-    MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
+    ...(process.env.ENABLE_DB === 'true'
+      ? [MongooseModule.forFeature([{ name: User.name, schema: UserSchema }])]
+      : []),
   ],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy],

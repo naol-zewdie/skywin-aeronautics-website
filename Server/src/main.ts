@@ -6,6 +6,12 @@ import { AppModule } from './app.module';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  // Enable CORS for admin dashboard
+  app.enableCors({
+    origin: process.env.CORS_ORIGIN || 'http://localhost:3003',
+    credentials: true,
+  });
+
   // Enable global validation with detailed error messages
   app.useGlobalPipes(new ValidationPipe({
     whitelist: true,

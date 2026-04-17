@@ -17,7 +17,7 @@ export declare class AuthController {
         };
     }>;
     getMe(req: any): Promise<{
-        id: import("mongoose").Types.ObjectId;
+        id: string;
         fullName: string;
         email: string;
         role: string;

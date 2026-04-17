@@ -2,9 +2,14 @@ import { Controller, Post, Get, Body, Request, UseGuards } from '@nestjs/common'
 import { ApiOkResponse, ApiOperation, ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './jwt-auth.guard';
+import { IsEmail, IsString, MinLength } from 'class-validator';
 
 class LoginDto {
+  @IsEmail()
   email: string;
+
+  @IsString()
+  @MinLength(6)
   password: string;
 }
 
