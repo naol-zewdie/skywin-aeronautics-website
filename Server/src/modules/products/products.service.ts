@@ -1,11 +1,11 @@
 import { Injectable, NotFoundException, Optional } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
 import { randomUUID } from 'crypto';
 import { CreateProductDto } from './dto/create-product.dto';
 import { ProductDto } from './dto/product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
-import { ProductEntity } from './entities/product.entity';
-import { Repository } from 'typeorm';
+import { Product } from './schemas/product.schema';
 
 @Injectable()
 export class ProductsService {
@@ -14,30 +14,50 @@ export class ProductsService {
       id: 'p_001',
       name: 'Wing Spar Assembly',
       category: 'Aerospace Structures',
+      description: 'High-precision wing spar for commercial aircraft',
+      price: 15000.99,
+      image: 'https://example.com/images/wing-spar.jpg',
+      stock: 25,
+      status: true,
     },
     {
       id: 'p_002',
       name: 'Engine Mount Bracket',
       category: 'Powertrain Components',
+      description: 'Durable engine mount bracket for jet engines',
+      price: 8500.50,
+      image: 'https://example.com/images/engine-bracket.jpg',
+      stock: 40,
+      status: true,
     },
   ];
 
   constructor(
     @Optional()
-    @InjectRepository(ProductEntity)
-    private readonly productsRepository?: Repository<ProductEntity>,
+    @InjectModel(Product.name)
+    private readonly productModel?: Model<Product>,
   ) {}
 
   async findAll(): Promise<ProductDto[]> {
-    if (!this.productsRepository) {
+    if (!this.productModel) {
       return this.fallbackProducts;
     }
 
-    return this.productsRepository.find();
+    const products = await this.productModel.find().exec();
+    return products.map(product => ({
+      id: product._id.toString(),
+      name: product.name,
+      category: product.category,
+      description: product.description,
+      price: product.price,
+      image: product.image,
+      stock: product.stock,
+      status: product.status,
+    }));
   }
 
   async findOne(id: string): Promise<ProductDto> {
-    if (!this.productsRepository) {
+    if (!this.productModel) {
       const product = this.fallbackProducts.find((item) => item.id === id);
       if (!product) {
         throw new NotFoundException(`Product with id ${id} not found`);
@@ -45,26 +65,51 @@ export class ProductsService {
       return product;
     }
 
-    const product = await this.productsRepository.findOne({ where: { id } });
+    const product = await this.productModel.findById(id).exec();
     if (!product) {
       throw new NotFoundException(`Product with id ${id} not found`);
     }
-    return product;
+    return {
+      id: product._id.toString(),
+      name: product.name,
+      category: product.category,
+      description: product.description,
+      price: product.price,
+      image: product.image,
+      stock: product.stock,
+      status: product.status,
+    };
   }
 
   async create(payload: CreateProductDto): Promise<ProductDto> {
-    if (!this.productsRepository) {
-      const created: ProductDto = { id: randomUUID(), ...payload };
+    if (!this.productModel) {
+      const created: ProductDto = { id: randomUUID(), status: true, ...payload };
       this.fallbackProducts.push(created);
       return created;
     }
 
-    const created = this.productsRepository.create(payload);
-    return this.productsRepository.save(created);
+    const created = new this.productModel({
+      ...payload,
+      audit: {
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+    });
+    const saved = await created.save();
+    return {
+      id: saved._id.toString(),
+      name: saved.name,
+      category: saved.category,
+      description: saved.description,
+      price: saved.price,
+      image: saved.image,
+      stock: saved.stock,
+      status: saved.status,
+    };
   }
 
   async update(id: string, payload: UpdateProductDto): Promise<ProductDto> {
-    if (!this.productsRepository) {
+    if (!this.productModel) {
       const index = this.fallbackProducts.findIndex((item) => item.id === id);
       if (index === -1) {
         throw new NotFoundException(`Product with id ${id} not found`);
@@ -77,13 +122,31 @@ export class ProductsService {
       return this.fallbackProducts[index];
     }
 
-    const product = await this.findOne(id);
-    const merged = this.productsRepository.merge(product, payload);
-    return this.productsRepository.save(merged);
+    const updated = await this.productModel.findByIdAndUpdate(
+      id,
+      {
+        ...payload,
+        'audit.updatedAt': new Date(),
+      },
+      { new: true }
+    ).exec();
+    if (!updated) {
+      throw new NotFoundException(`Product with id ${id} not found`);
+    }
+    return {
+      id: updated._id.toString(),
+      name: updated.name,
+      category: updated.category,
+      description: updated.description,
+      price: updated.price,
+      image: updated.image,
+      stock: updated.stock,
+      status: updated.status,
+    };
   }
 
   async remove(id: string): Promise<void> {
-    if (!this.productsRepository) {
+    if (!this.productModel) {
       const index = this.fallbackProducts.findIndex((item) => item.id === id);
       if (index === -1) {
         throw new NotFoundException(`Product with id ${id} not found`);
@@ -92,8 +155,8 @@ export class ProductsService {
       return;
     }
 
-    const result = await this.productsRepository.delete(id);
-    if (!result.affected) {
+    const result = await this.productModel.findByIdAndDelete(id).exec();
+    if (!result) {
       throw new NotFoundException(`Product with id ${id} not found`);
     }
   }

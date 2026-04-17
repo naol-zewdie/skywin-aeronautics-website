@@ -1,13 +1,13 @@
 import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
+import { MongooseModule } from '@nestjs/mongoose';
 import { CareersController } from './careers.controller';
-import { CareerOpeningEntity } from './entities/career-opening.entity';
+import { CareerOpening, CareerOpeningSchema } from './schemas/career-opening.schema';
 import { CareersService } from './careers.service';
 
 @Module({
   imports:
     process.env.ENABLE_DB === 'true'
-      ? [TypeOrmModule.forFeature([CareerOpeningEntity])]
+      ? [MongooseModule.forFeature([{ name: CareerOpening.name, schema: CareerOpeningSchema }])]
       : [],
   controllers: [CareersController],
   providers: [CareersService],

@@ -1,11 +1,11 @@
 import { Injectable, NotFoundException, Optional } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
 import { randomUUID } from 'crypto';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserDto } from './dto/user.dto';
-import { UserEntity } from './entities/user.entity';
-import { Repository } from 'typeorm';
+import { User } from './schemas/user.schema';
 
 @Injectable()
 export class UsersService {
@@ -15,31 +15,40 @@ export class UsersService {
       fullName: 'Amelia Hart',
       email: 'amelia@skywin.aero',
       role: 'admin',
+      status: true,
     },
     {
       id: 'u_002',
       fullName: 'Rohan Mehta',
       email: 'rohan@skywin.aero',
       role: 'operator',
+      status: true,
     },
   ];
 
   constructor(
     @Optional()
-    @InjectRepository(UserEntity)
-    private readonly usersRepository?: Repository<UserEntity>,
+    @InjectModel(User.name)
+    private readonly userModel?: Model<User>,
   ) {}
 
   async findAll(): Promise<UserDto[]> {
-    if (!this.usersRepository) {
+    if (!this.userModel) {
       return this.fallbackUsers;
     }
 
-    return this.usersRepository.find();
+    const users = await this.userModel.find().exec();
+    return users.map(user => ({
+      id: user._id.toString(),
+      fullName: user.fullName,
+      email: user.email,
+      role: user.role,
+      status: user.status,
+    }));
   }
 
   async findOne(id: string): Promise<UserDto> {
-    if (!this.usersRepository) {
+    if (!this.userModel) {
       const user = this.fallbackUsers.find((item) => item.id === id);
       if (!user) {
         throw new NotFoundException(`User with id ${id} not found`);
@@ -47,26 +56,45 @@ export class UsersService {
       return user;
     }
 
-    const user = await this.usersRepository.findOne({ where: { id } });
+    const user = await this.userModel.findById(id).exec();
     if (!user) {
       throw new NotFoundException(`User with id ${id} not found`);
     }
-    return user;
+    return {
+      id: user._id.toString(),
+      fullName: user.fullName,
+      email: user.email,
+      role: user.role,
+      status: user.status,
+    };
   }
 
   async create(payload: CreateUserDto): Promise<UserDto> {
-    if (!this.usersRepository) {
-      const created: UserDto = { id: randomUUID(), ...payload };
+    if (!this.userModel) {
+      const created: UserDto = { id: randomUUID(), status: true, ...payload };
       this.fallbackUsers.push(created);
       return created;
     }
 
-    const created = this.usersRepository.create(payload);
-    return this.usersRepository.save(created);
+    const created = new this.userModel({
+      ...payload,
+      audit: {
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+    });
+    const saved = await created.save();
+    return {
+      id: saved._id.toString(),
+      fullName: saved.fullName,
+      email: saved.email,
+      role: saved.role,
+      status: saved.status,
+    };
   }
 
   async update(id: string, payload: UpdateUserDto): Promise<UserDto> {
-    if (!this.usersRepository) {
+    if (!this.userModel) {
       const index = this.fallbackUsers.findIndex((item) => item.id === id);
       if (index === -1) {
         throw new NotFoundException(`User with id ${id} not found`);
@@ -76,13 +104,28 @@ export class UsersService {
       return this.fallbackUsers[index];
     }
 
-    const user = await this.findOne(id);
-    const merged = this.usersRepository.merge(user, payload);
-    return this.usersRepository.save(merged);
+    const updated = await this.userModel.findByIdAndUpdate(
+      id,
+      {
+        ...payload,
+        'audit.updatedAt': new Date(),
+      },
+      { new: true }
+    ).exec();
+    if (!updated) {
+      throw new NotFoundException(`User with id ${id} not found`);
+    }
+    return {
+      id: updated._id.toString(),
+      fullName: updated.fullName,
+      email: updated.email,
+      role: updated.role,
+      status: updated.status,
+    };
   }
 
   async remove(id: string): Promise<void> {
-    if (!this.usersRepository) {
+    if (!this.userModel) {
       const index = this.fallbackUsers.findIndex((item) => item.id === id);
       if (index === -1) {
         throw new NotFoundException(`User with id ${id} not found`);
@@ -91,8 +134,8 @@ export class UsersService {
       return;
     }
 
-    const result = await this.usersRepository.delete(id);
-    if (!result.affected) {
+    const result = await this.userModel.findByIdAndDelete(id).exec();
+    if (!result) {
       throw new NotFoundException(`User with id ${id} not found`);
     }
   }

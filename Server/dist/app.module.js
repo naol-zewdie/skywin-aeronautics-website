@@ -8,26 +8,26 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AppModule = void 0;
 const common_1 = require("@nestjs/common");
-const typeorm_1 = require("@nestjs/typeorm");
+const mongoose_1 = require("@nestjs/mongoose");
+const config_1 = require("@nestjs/config");
 const auth_module_1 = require("./modules/auth/auth.module");
 const users_module_1 = require("./modules/users/users.module");
 const services_module_1 = require("./modules/services/services.module");
 const products_module_1 = require("./modules/products/products.module");
 const careers_module_1 = require("./modules/careers/careers.module");
-const database_module_1 = require("./database/database.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
 exports.AppModule = AppModule = __decorate([
     (0, common_1.Module)({
         imports: [
-            typeorm_1.TypeOrmModule.forRoot(),
+            config_1.ConfigModule.forRoot({ isGlobal: true }),
+            mongoose_1.MongooseModule.forRoot(process.env.DATABASE_URL || 'mongodb://localhost:27017/skywin'),
             auth_module_1.AuthModule,
             users_module_1.UsersModule,
             services_module_1.ServicesModule,
             products_module_1.ProductsModule,
             careers_module_1.CareersModule,
-            database_module_1.DatabaseModule,
         ],
     })
 ], AppModule);

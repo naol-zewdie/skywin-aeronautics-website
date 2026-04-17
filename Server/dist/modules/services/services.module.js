@@ -8,9 +8,9 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ServicesModule = void 0;
 const common_1 = require("@nestjs/common");
-const typeorm_1 = require("@nestjs/typeorm");
+const mongoose_1 = require("@nestjs/mongoose");
 const services_controller_1 = require("./services.controller");
-const service_entity_1 = require("./entities/service.entity");
+const service_schema_1 = require("./schemas/service.schema");
 const services_service_1 = require("./services.service");
 let ServicesModule = class ServicesModule {
 };
@@ -18,7 +18,7 @@ exports.ServicesModule = ServicesModule;
 exports.ServicesModule = ServicesModule = __decorate([
     (0, common_1.Module)({
         imports: process.env.ENABLE_DB === 'true'
-            ? [typeorm_1.TypeOrmModule.forFeature([service_entity_1.ServiceEntity])]
+            ? [mongoose_1.MongooseModule.forFeature([{ name: service_schema_1.Service.name, schema: service_schema_1.ServiceSchema }])]
             : [],
         controllers: [services_controller_1.ServicesController],
         providers: [services_service_1.ServicesService],

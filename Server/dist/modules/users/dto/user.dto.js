@@ -16,6 +16,7 @@ class UserDto {
     fullName;
     email;
     role;
+    status;
 }
 exports.UserDto = UserDto;
 __decorate([
@@ -34,4 +35,8 @@ __decorate([
     (0, swagger_1.ApiProperty)({ example: 'admin' }),
     __metadata("design:type", String)
 ], UserDto.prototype, "role", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ example: true }),
+    __metadata("design:type", Boolean)
+], UserDto.prototype, "status", void 0);
 //# sourceMappingURL=user.dto.js.map

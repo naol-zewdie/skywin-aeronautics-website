@@ -15,6 +15,11 @@ class ProductDto {
     id;
     name;
     category;
+    description;
+    price;
+    image;
+    stock;
+    status;
 }
 exports.ProductDto = ProductDto;
 __decorate([
@@ -29,4 +34,24 @@ __decorate([
     (0, swagger_1.ApiProperty)({ example: 'Aerospace Structures' }),
     __metadata("design:type", String)
 ], ProductDto.prototype, "category", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ example: 'High-precision wing spar for commercial aircraft' }),
+    __metadata("design:type", String)
+], ProductDto.prototype, "description", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ example: 15000.99 }),
+    __metadata("design:type", Number)
+], ProductDto.prototype, "price", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ example: 'https://example.com/images/wing-spar.jpg' }),
+    __metadata("design:type", String)
+], ProductDto.prototype, "image", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ example: 25 }),
+    __metadata("design:type", Number)
+], ProductDto.prototype, "stock", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ example: true }),
+    __metadata("design:type", Boolean)
+], ProductDto.prototype, "status", void 0);
 //# sourceMappingURL=product.dto.js.map

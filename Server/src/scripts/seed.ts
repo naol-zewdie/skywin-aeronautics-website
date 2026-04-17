@@ -1,12 +1,11 @@
-// Seed script for initializing the database with default data.
-
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from '../app.module';
 
 async function bootstrap() {
   const app = await NestFactory.createApplicationContext(AppModule);
 
-  // Add seed logic here
+  // TODO: Add seed logic here for TypeORM/PostgreSQL
+  console.log('Seed script placeholder - implement based on your entities');
 
   await app.close();
 }

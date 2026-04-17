@@ -4,6 +4,7 @@ const core_1 = require("@nestjs/core");
 const app_module_1 = require("../app.module");
 async function bootstrap() {
     const app = await core_1.NestFactory.createApplicationContext(app_module_1.AppModule);
+    console.log('Seed script placeholder - implement based on your entities');
     await app.close();
 }
 bootstrap();

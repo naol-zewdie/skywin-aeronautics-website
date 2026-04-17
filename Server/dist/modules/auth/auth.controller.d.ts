@@ -1,6 +1,27 @@
-import { AppService } from './auth.service';
-export declare class AppController {
-    private readonly appService;
-    constructor(appService: AppService);
-    getHello(): string;
+import { AuthService } from './auth.service';
+declare class LoginDto {
+    email: string;
+    password: string;
 }
+export declare class AuthController {
+    private readonly authService;
+    constructor(authService: AuthService);
+    login(loginDto: LoginDto): Promise<{
+        token: string;
+        user: {
+            id: any;
+            fullName: any;
+            email: any;
+            role: any;
+            status: any;
+        };
+    }>;
+    getMe(req: any): Promise<{
+        id: import("mongoose").Types.ObjectId;
+        fullName: string;
+        email: string;
+        role: string;
+        status: boolean;
+    }>;
+}
+export {};

@@ -15,6 +15,7 @@ class ServiceDto {
     id;
     name;
     description;
+    status;
 }
 exports.ServiceDto = ServiceDto;
 __decorate([
@@ -31,4 +32,8 @@ __decorate([
     }),
     __metadata("design:type", String)
 ], ServiceDto.prototype, "description", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ example: true }),
+    __metadata("design:type", Boolean)
+], ServiceDto.prototype, "status", void 0);
 //# sourceMappingURL=service.dto.js.map

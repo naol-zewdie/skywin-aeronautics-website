@@ -16,6 +16,8 @@ class CareerOpeningDto {
     title;
     location;
     employmentType;
+    description;
+    status;
 }
 exports.CareerOpeningDto = CareerOpeningDto;
 __decorate([
@@ -34,4 +36,12 @@ __decorate([
     (0, swagger_1.ApiProperty)({ example: 'Full-time' }),
     __metadata("design:type", String)
 ], CareerOpeningDto.prototype, "employmentType", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ example: 'Responsible for aerospace component manufacturing and quality control' }),
+    __metadata("design:type", String)
+], CareerOpeningDto.prototype, "description", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ example: true }),
+    __metadata("design:type", Boolean)
+], CareerOpeningDto.prototype, "status", void 0);
 //# sourceMappingURL=career-opening.dto.js.map

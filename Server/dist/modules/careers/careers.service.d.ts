@@ -1,12 +1,12 @@
+import { Model } from 'mongoose';
 import { CreateCareerOpeningDto } from './dto/create-career-opening.dto';
 import { CareerOpeningDto } from './dto/career-opening.dto';
 import { UpdateCareerOpeningDto } from './dto/update-career-opening.dto';
-import { CareerOpeningEntity } from './entities/career-opening.entity';
-import { Repository } from 'typeorm';
+import { CareerOpening } from './schemas/career-opening.schema';
 export declare class CareersService {
-    private readonly careersRepository?;
+    private readonly careerOpeningModel?;
     private readonly fallbackOpenings;
-    constructor(careersRepository?: Repository<CareerOpeningEntity> | undefined);
+    constructor(careerOpeningModel?: Model<CareerOpening> | undefined);
     findAll(): Promise<CareerOpeningDto[]>;
     findOne(id: string): Promise<CareerOpeningDto>;
     create(payload: CreateCareerOpeningDto): Promise<CareerOpeningDto>;

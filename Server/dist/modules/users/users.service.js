@@ -14,60 +14,88 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UsersService = void 0;
 const common_1 = require("@nestjs/common");
-const typeorm_1 = require("@nestjs/typeorm");
+const mongoose_1 = require("@nestjs/mongoose");
+const mongoose_2 = require("mongoose");
 const crypto_1 = require("crypto");
-const user_entity_1 = require("./entities/user.entity");
-const typeorm_2 = require("typeorm");
+const user_schema_1 = require("./schemas/user.schema");
 let UsersService = class UsersService {
-    usersRepository;
+    userModel;
     fallbackUsers = [
         {
             id: 'u_001',
             fullName: 'Amelia Hart',
             email: 'amelia@skywin.aero',
             role: 'admin',
+            status: true,
         },
         {
             id: 'u_002',
             fullName: 'Rohan Mehta',
             email: 'rohan@skywin.aero',
             role: 'operator',
+            status: true,
         },
     ];
-    constructor(usersRepository) {
-        this.usersRepository = usersRepository;
+    constructor(userModel) {
+        this.userModel = userModel;
     }
     async findAll() {
-        if (!this.usersRepository) {
+        if (!this.userModel) {
             return this.fallbackUsers;
         }
-        return this.usersRepository.find();
+        const users = await this.userModel.find().exec();
+        return users.map(user => ({
+            id: user._id.toString(),
+            fullName: user.fullName,
+            email: user.email,
+            role: user.role,
+            status: user.status,
+        }));
     }
     async findOne(id) {
-        if (!this.usersRepository) {
+        if (!this.userModel) {
             const user = this.fallbackUsers.find((item) => item.id === id);
             if (!user) {
                 throw new common_1.NotFoundException(`User with id ${id} not found`);
             }
             return user;
         }
-        const user = await this.usersRepository.findOne({ where: { id } });
+        const user = await this.userModel.findById(id).exec();
         if (!user) {
             throw new common_1.NotFoundException(`User with id ${id} not found`);
         }
-        return user;
+        return {
+            id: user._id.toString(),
+            fullName: user.fullName,
+            email: user.email,
+            role: user.role,
+            status: user.status,
+        };
     }
     async create(payload) {
-        if (!this.usersRepository) {
-            const created = { id: (0, crypto_1.randomUUID)(), ...payload };
+        if (!this.userModel) {
+            const created = { id: (0, crypto_1.randomUUID)(), status: true, ...payload };
             this.fallbackUsers.push(created);
             return created;
         }
-        const created = this.usersRepository.create(payload);
-        return this.usersRepository.save(created);
+        const created = new this.userModel({
+            ...payload,
+            audit: {
+                createdAt: new Date(),
+                updatedAt: new Date(),
+            },
+        });
+        const saved = await created.save();
+        return {
+            id: saved._id.toString(),
+            fullName: saved.fullName,
+            email: saved.email,
+            role: saved.role,
+            status: saved.status,
+        };
     }
     async update(id, payload) {
-        if (!this.usersRepository) {
+        if (!this.userModel) {
             const index = this.fallbackUsers.findIndex((item) => item.id === id);
             if (index === -1) {
                 throw new common_1.NotFoundException(`User with id ${id} not found`);
@@ -75,12 +103,23 @@ let UsersService = class UsersService {
             this.fallbackUsers[index] = { ...this.fallbackUsers[index], ...payload };
             return this.fallbackUsers[index];
         }
-        const user = await this.findOne(id);
-        const merged = this.usersRepository.merge(user, payload);
-        return this.usersRepository.save(merged);
+        const updated = await this.userModel.findByIdAndUpdate(id, {
+            ...payload,
+            'audit.updatedAt': new Date(),
+        }, { new: true }).exec();
+        if (!updated) {
+            throw new common_1.NotFoundException(`User with id ${id} not found`);
+        }
+        return {
+            id: updated._id.toString(),
+            fullName: updated.fullName,
+            email: updated.email,
+            role: updated.role,
+            status: updated.status,
+        };
     }
     async remove(id) {
-        if (!this.usersRepository) {
+        if (!this.userModel) {
             const index = this.fallbackUsers.findIndex((item) => item.id === id);
             if (index === -1) {
                 throw new common_1.NotFoundException(`User with id ${id} not found`);
@@ -88,8 +127,8 @@ let UsersService = class UsersService {
             this.fallbackUsers.splice(index, 1);
             return;
         }
-        const result = await this.usersRepository.delete(id);
-        if (!result.affected) {
+        const result = await this.userModel.findByIdAndDelete(id).exec();
+        if (!result) {
             throw new common_1.NotFoundException(`User with id ${id} not found`);
         }
     }
@@ -98,7 +137,7 @@ exports.UsersService = UsersService;
 exports.UsersService = UsersService = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, common_1.Optional)()),
-    __param(0, (0, typeorm_1.InjectRepository)(user_entity_1.UserEntity)),
-    __metadata("design:paramtypes", [typeorm_2.Repository])
+    __param(0, (0, mongoose_1.InjectModel)(user_schema_1.User.name)),
+    __metadata("design:paramtypes", [mongoose_2.Model])
 ], UsersService);
 //# sourceMappingURL=users.service.js.map

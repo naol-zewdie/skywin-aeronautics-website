@@ -12,4 +12,10 @@ export class CareerOpeningDto {
 
   @ApiProperty({ example: 'Full-time' })
   employmentType: string;
+
+  @ApiProperty({ example: 'Responsible for aerospace component manufacturing and quality control' })
+  description: string;
+
+  @ApiProperty({ example: true })
+  status: boolean;
 }

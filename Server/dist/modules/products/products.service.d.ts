@@ -1,12 +1,12 @@
+import { Model } from 'mongoose';
 import { CreateProductDto } from './dto/create-product.dto';
 import { ProductDto } from './dto/product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
-import { ProductEntity } from './entities/product.entity';
-import { Repository } from 'typeorm';
+import { Product } from './schemas/product.schema';
 export declare class ProductsService {
-    private readonly productsRepository?;
+    private readonly productModel?;
     private readonly fallbackProducts;
-    constructor(productsRepository?: Repository<ProductEntity> | undefined);
+    constructor(productModel?: Model<Product> | undefined);
     findAll(): Promise<ProductDto[]>;
     findOne(id: string): Promise<ProductDto>;
     create(payload: CreateProductDto): Promise<ProductDto>;

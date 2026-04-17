@@ -3,4 +3,5 @@ export declare class UserDto {
     fullName: string;
     email: string;
     role: string;
+    status: boolean;
 }

@@ -14,58 +14,103 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ProductsService = void 0;
 const common_1 = require("@nestjs/common");
-const typeorm_1 = require("@nestjs/typeorm");
+const mongoose_1 = require("@nestjs/mongoose");
+const mongoose_2 = require("mongoose");
 const crypto_1 = require("crypto");
-const product_entity_1 = require("./entities/product.entity");
-const typeorm_2 = require("typeorm");
+const product_schema_1 = require("./schemas/product.schema");
 let ProductsService = class ProductsService {
-    productsRepository;
+    productModel;
     fallbackProducts = [
         {
             id: 'p_001',
             name: 'Wing Spar Assembly',
             category: 'Aerospace Structures',
+            description: 'High-precision wing spar for commercial aircraft',
+            price: 15000.99,
+            image: 'https://example.com/images/wing-spar.jpg',
+            stock: 25,
+            status: true,
         },
         {
             id: 'p_002',
             name: 'Engine Mount Bracket',
             category: 'Powertrain Components',
+            description: 'Durable engine mount bracket for jet engines',
+            price: 8500.50,
+            image: 'https://example.com/images/engine-bracket.jpg',
+            stock: 40,
+            status: true,
         },
     ];
-    constructor(productsRepository) {
-        this.productsRepository = productsRepository;
+    constructor(productModel) {
+        this.productModel = productModel;
     }
     async findAll() {
-        if (!this.productsRepository) {
+        if (!this.productModel) {
             return this.fallbackProducts;
         }
-        return this.productsRepository.find();
+        const products = await this.productModel.find().exec();
+        return products.map(product => ({
+            id: product._id.toString(),
+            name: product.name,
+            category: product.category,
+            description: product.description,
+            price: product.price,
+            image: product.image,
+            stock: product.stock,
+            status: product.status,
+        }));
     }
     async findOne(id) {
-        if (!this.productsRepository) {
+        if (!this.productModel) {
             const product = this.fallbackProducts.find((item) => item.id === id);
             if (!product) {
                 throw new common_1.NotFoundException(`Product with id ${id} not found`);
             }
             return product;
         }
-        const product = await this.productsRepository.findOne({ where: { id } });
+        const product = await this.productModel.findById(id).exec();
         if (!product) {
             throw new common_1.NotFoundException(`Product with id ${id} not found`);
         }
-        return product;
+        return {
+            id: product._id.toString(),
+            name: product.name,
+            category: product.category,
+            description: product.description,
+            price: product.price,
+            image: product.image,
+            stock: product.stock,
+            status: product.status,
+        };
     }
     async create(payload) {
-        if (!this.productsRepository) {
-            const created = { id: (0, crypto_1.randomUUID)(), ...payload };
+        if (!this.productModel) {
+            const created = { id: (0, crypto_1.randomUUID)(), status: true, ...payload };
             this.fallbackProducts.push(created);
             return created;
         }
-        const created = this.productsRepository.create(payload);
-        return this.productsRepository.save(created);
+        const created = new this.productModel({
+            ...payload,
+            audit: {
+                createdAt: new Date(),
+                updatedAt: new Date(),
+            },
+        });
+        const saved = await created.save();
+        return {
+            id: saved._id.toString(),
+            name: saved.name,
+            category: saved.category,
+            description: saved.description,
+            price: saved.price,
+            image: saved.image,
+            stock: saved.stock,
+            status: saved.status,
+        };
     }
     async update(id, payload) {
-        if (!this.productsRepository) {
+        if (!this.productModel) {
             const index = this.fallbackProducts.findIndex((item) => item.id === id);
             if (index === -1) {
                 throw new common_1.NotFoundException(`Product with id ${id} not found`);
@@ -76,12 +121,26 @@ let ProductsService = class ProductsService {
             };
             return this.fallbackProducts[index];
         }
-        const product = await this.findOne(id);
-        const merged = this.productsRepository.merge(product, payload);
-        return this.productsRepository.save(merged);
+        const updated = await this.productModel.findByIdAndUpdate(id, {
+            ...payload,
+            'audit.updatedAt': new Date(),
+        }, { new: true }).exec();
+        if (!updated) {
+            throw new common_1.NotFoundException(`Product with id ${id} not found`);
+        }
+        return {
+            id: updated._id.toString(),
+            name: updated.name,
+            category: updated.category,
+            description: updated.description,
+            price: updated.price,
+            image: updated.image,
+            stock: updated.stock,
+            status: updated.status,
+        };
     }
     async remove(id) {
-        if (!this.productsRepository) {
+        if (!this.productModel) {
             const index = this.fallbackProducts.findIndex((item) => item.id === id);
             if (index === -1) {
                 throw new common_1.NotFoundException(`Product with id ${id} not found`);
@@ -89,8 +148,8 @@ let ProductsService = class ProductsService {
             this.fallbackProducts.splice(index, 1);
             return;
         }
-        const result = await this.productsRepository.delete(id);
-        if (!result.affected) {
+        const result = await this.productModel.findByIdAndDelete(id).exec();
+        if (!result) {
             throw new common_1.NotFoundException(`Product with id ${id} not found`);
         }
     }
@@ -99,7 +158,7 @@ exports.ProductsService = ProductsService;
 exports.ProductsService = ProductsService = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, common_1.Optional)()),
-    __param(0, (0, typeorm_1.InjectRepository)(product_entity_1.ProductEntity)),
-    __metadata("design:paramtypes", [typeorm_2.Repository])
+    __param(0, (0, mongoose_1.InjectModel)(product_schema_1.Product.name)),
+    __metadata("design:paramtypes", [mongoose_2.Model])
 ], ProductsService);
 //# sourceMappingURL=products.service.js.map

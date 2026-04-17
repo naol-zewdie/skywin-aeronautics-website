@@ -1,13 +1,13 @@
 import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
+import { MongooseModule } from '@nestjs/mongoose';
 import { ProductsController } from './products.controller';
-import { ProductEntity } from './entities/product.entity';
+import { Product, ProductSchema } from './schemas/product.schema';
 import { ProductsService } from './products.service';
 
 @Module({
   imports:
     process.env.ENABLE_DB === 'true'
-      ? [TypeOrmModule.forFeature([ProductEntity])]
+      ? [MongooseModule.forFeature([{ name: Product.name, schema: ProductSchema }])]
       : [],
   controllers: [ProductsController],
   providers: [ProductsService],

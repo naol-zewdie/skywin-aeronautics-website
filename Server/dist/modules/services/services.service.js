@@ -14,58 +14,83 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ServicesService = void 0;
 const common_1 = require("@nestjs/common");
-const typeorm_1 = require("@nestjs/typeorm");
+const mongoose_1 = require("@nestjs/mongoose");
+const mongoose_2 = require("mongoose");
 const crypto_1 = require("crypto");
-const service_entity_1 = require("./entities/service.entity");
-const typeorm_2 = require("typeorm");
+const service_schema_1 = require("./schemas/service.schema");
 let ServicesService = class ServicesService {
-    servicesRepository;
+    serviceModel;
     fallbackServices = [
         {
             id: 's_001',
             name: 'Precision CNC Machining',
             description: 'High-accuracy machining for aerospace-grade components.',
+            status: true,
         },
         {
             id: 's_002',
             name: 'Composite Fabrication',
             description: 'Lightweight, high-strength composite structure production.',
+            status: true,
         },
     ];
-    constructor(servicesRepository) {
-        this.servicesRepository = servicesRepository;
+    constructor(serviceModel) {
+        this.serviceModel = serviceModel;
     }
     async findAll() {
-        if (!this.servicesRepository) {
+        if (!this.serviceModel) {
             return this.fallbackServices;
         }
-        return this.servicesRepository.find();
+        const services = await this.serviceModel.find().exec();
+        return services.map(service => ({
+            id: service._id.toString(),
+            name: service.name,
+            description: service.description,
+            status: service.status,
+        }));
     }
     async findOne(id) {
-        if (!this.servicesRepository) {
+        if (!this.serviceModel) {
             const service = this.fallbackServices.find((item) => item.id === id);
             if (!service) {
                 throw new common_1.NotFoundException(`Service with id ${id} not found`);
             }
             return service;
         }
-        const service = await this.servicesRepository.findOne({ where: { id } });
+        const service = await this.serviceModel.findById(id).exec();
         if (!service) {
             throw new common_1.NotFoundException(`Service with id ${id} not found`);
         }
-        return service;
+        return {
+            id: service._id.toString(),
+            name: service.name,
+            description: service.description,
+            status: service.status,
+        };
     }
     async create(payload) {
-        if (!this.servicesRepository) {
-            const created = { id: (0, crypto_1.randomUUID)(), ...payload };
+        if (!this.serviceModel) {
+            const created = { id: (0, crypto_1.randomUUID)(), status: true, ...payload };
             this.fallbackServices.push(created);
             return created;
         }
-        const created = this.servicesRepository.create(payload);
-        return this.servicesRepository.save(created);
+        const created = new this.serviceModel({
+            ...payload,
+            audit: {
+                createdAt: new Date(),
+                updatedAt: new Date(),
+            },
+        });
+        const saved = await created.save();
+        return {
+            id: saved._id.toString(),
+            name: saved.name,
+            description: saved.description,
+            status: saved.status,
+        };
     }
     async update(id, payload) {
-        if (!this.servicesRepository) {
+        if (!this.serviceModel) {
             const index = this.fallbackServices.findIndex((item) => item.id === id);
             if (index === -1) {
                 throw new common_1.NotFoundException(`Service with id ${id} not found`);
@@ -76,12 +101,22 @@ let ServicesService = class ServicesService {
             };
             return this.fallbackServices[index];
         }
-        const service = await this.findOne(id);
-        const merged = this.servicesRepository.merge(service, payload);
-        return this.servicesRepository.save(merged);
+        const updated = await this.serviceModel.findByIdAndUpdate(id, {
+            ...payload,
+            'audit.updatedAt': new Date(),
+        }, { new: true }).exec();
+        if (!updated) {
+            throw new common_1.NotFoundException(`Service with id ${id} not found`);
+        }
+        return {
+            id: updated._id.toString(),
+            name: updated.name,
+            description: updated.description,
+            status: updated.status,
+        };
     }
     async remove(id) {
-        if (!this.servicesRepository) {
+        if (!this.serviceModel) {
             const index = this.fallbackServices.findIndex((item) => item.id === id);
             if (index === -1) {
                 throw new common_1.NotFoundException(`Service with id ${id} not found`);
@@ -89,8 +124,8 @@ let ServicesService = class ServicesService {
             this.fallbackServices.splice(index, 1);
             return;
         }
-        const result = await this.servicesRepository.delete(id);
-        if (!result.affected) {
+        const result = await this.serviceModel.findByIdAndDelete(id).exec();
+        if (!result) {
             throw new common_1.NotFoundException(`Service with id ${id} not found`);
         }
     }
@@ -99,7 +134,7 @@ exports.ServicesService = ServicesService;
 exports.ServicesService = ServicesService = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, common_1.Optional)()),
-    __param(0, (0, typeorm_1.InjectRepository)(service_entity_1.ServiceEntity)),
-    __metadata("design:paramtypes", [typeorm_2.Repository])
+    __param(0, (0, mongoose_1.InjectModel)(service_schema_1.Service.name)),
+    __metadata("design:paramtypes", [mongoose_2.Model])
 ], ServicesService);
 //# sourceMappingURL=services.service.js.map

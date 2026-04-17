@@ -3,4 +3,6 @@ export declare class CareerOpeningDto {
     title: string;
     location: string;
     employmentType: string;
+    description: string;
+    status: boolean;
 }

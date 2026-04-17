@@ -1,12 +1,12 @@
+import { Model } from 'mongoose';
 import { CreateServiceDto } from './dto/create-service.dto';
 import { ServiceDto } from './dto/service.dto';
 import { UpdateServiceDto } from './dto/update-service.dto';
-import { ServiceEntity } from './entities/service.entity';
-import { Repository } from 'typeorm';
+import { Service } from './schemas/service.schema';
 export declare class ServicesService {
-    private readonly servicesRepository?;
+    private readonly serviceModel?;
     private readonly fallbackServices;
-    constructor(servicesRepository?: Repository<ServiceEntity> | undefined);
+    constructor(serviceModel?: Model<Service> | undefined);
     findAll(): Promise<ServiceDto[]>;
     findOne(id: string): Promise<ServiceDto>;
     create(payload: CreateServiceDto): Promise<ServiceDto>;

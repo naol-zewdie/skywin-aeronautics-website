@@ -11,4 +11,7 @@ export class ServiceDto {
     example: 'High-accuracy machining for aerospace-grade components.',
   })
   description: string;
+
+  @ApiProperty({ example: true })
+  status: boolean;
 }

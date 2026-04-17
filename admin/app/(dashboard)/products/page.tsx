@@ -1,0 +1,147 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { Plus } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { DataTable } from '@/components/ui/data-table';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { productsApi } from '@/lib/api';
+import type { Product } from '@/types';
+import { useToast } from '@/hooks/use-toast';
+import { formatCurrency } from '@/lib/utils';
+
+export default function ProductsPage() {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [deleteProduct, setDeleteProduct] = useState<Product | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const { toast } = useToast();
+
+  const fetchProducts = async () => {
+    try {
+      const data = await productsApi.getAll();
+      setProducts(data);
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to load products',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  const handleDelete = async () => {
+    if (!deleteProduct) return;
+
+    setIsDeleting(true);
+    try {
+      await productsApi.delete(deleteProduct.id);
+      toast({
+        title: 'Success',
+        description: 'Product deleted successfully',
+      });
+      fetchProducts();
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to delete product',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsDeleting(false);
+      setDeleteProduct(null);
+    }
+  };
+
+  const columns = [
+    { key: 'name', header: 'Name' },
+    { key: 'category', header: 'Category' },
+    {
+      key: 'price',
+      header: 'Price',
+      cell: (product: Product) => formatCurrency(product.price),
+    },
+    {
+      key: 'stock',
+      header: 'Stock',
+      cell: (product: Product) => (
+        <span
+          className={
+            product.stock < 10 ? 'text-red-600 font-medium' : ''
+          }
+        >
+          {product.stock}
+        </span>
+      ),
+    },
+    { key: 'status', header: 'Status' },
+  ];
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">Products</h1>
+          <p className="text-muted-foreground">
+            Manage your product catalog
+          </p>
+        </div>
+        <Button asChild>
+          <Link href="/products/new">
+            <Plus className="mr-2 h-4 w-4" />
+            Add Product
+          </Link>
+        </Button>
+      </div>
+
+      <DataTable
+        data={products}
+        columns={columns}
+        isLoading={isLoading}
+        basePath="/products"
+        onDelete={setDeleteProduct}
+        idKey="id"
+        statusKey="status"
+        emptyMessage="No products found. Create your first product to get started."
+      />
+
+      <AlertDialog open={!!deleteProduct} onOpenChange={() => setDeleteProduct(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete the product &quot;{deleteProduct?.name}&quot;.
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? 'Deleting...' : 'Delete'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+}

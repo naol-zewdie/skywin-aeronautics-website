@@ -8,9 +8,9 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CareersModule = void 0;
 const common_1 = require("@nestjs/common");
-const typeorm_1 = require("@nestjs/typeorm");
+const mongoose_1 = require("@nestjs/mongoose");
 const careers_controller_1 = require("./careers.controller");
-const career_opening_entity_1 = require("./entities/career-opening.entity");
+const career_opening_schema_1 = require("./schemas/career-opening.schema");
 const careers_service_1 = require("./careers.service");
 let CareersModule = class CareersModule {
 };
@@ -18,7 +18,7 @@ exports.CareersModule = CareersModule;
 exports.CareersModule = CareersModule = __decorate([
     (0, common_1.Module)({
         imports: process.env.ENABLE_DB === 'true'
-            ? [typeorm_1.TypeOrmModule.forFeature([career_opening_entity_1.CareerOpeningEntity])]
+            ? [mongoose_1.MongooseModule.forFeature([{ name: career_opening_schema_1.CareerOpening.name, schema: career_opening_schema_1.CareerOpeningSchema }])]
             : [],
         controllers: [careers_controller_1.CareersController],
         providers: [careers_service_1.CareersService],

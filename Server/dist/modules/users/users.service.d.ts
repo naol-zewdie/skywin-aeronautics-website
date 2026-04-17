@@ -1,12 +1,12 @@
+import { Model } from 'mongoose';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserDto } from './dto/user.dto';
-import { UserEntity } from './entities/user.entity';
-import { Repository } from 'typeorm';
+import { User } from './schemas/user.schema';
 export declare class UsersService {
-    private readonly usersRepository?;
+    private readonly userModel?;
     private readonly fallbackUsers;
-    constructor(usersRepository?: Repository<UserEntity> | undefined);
+    constructor(userModel?: Model<User> | undefined);
     findAll(): Promise<UserDto[]>;
     findOne(id: string): Promise<UserDto>;
     create(payload: CreateUserDto): Promise<UserDto>;

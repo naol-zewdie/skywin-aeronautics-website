@@ -14,60 +14,93 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CareersService = void 0;
 const common_1 = require("@nestjs/common");
-const typeorm_1 = require("@nestjs/typeorm");
+const mongoose_1 = require("@nestjs/mongoose");
+const mongoose_2 = require("mongoose");
 const crypto_1 = require("crypto");
-const career_opening_entity_1 = require("./entities/career-opening.entity");
-const typeorm_2 = require("typeorm");
+const career_opening_schema_1 = require("./schemas/career-opening.schema");
 let CareersService = class CareersService {
-    careersRepository;
+    careerOpeningModel;
     fallbackOpenings = [
         {
             id: 'c_001',
             title: 'Manufacturing Engineer',
             location: 'Bangalore, India',
             employmentType: 'Full-time',
+            description: 'Responsible for aerospace component manufacturing and quality control',
+            status: true,
         },
         {
             id: 'c_002',
             title: 'Quality Assurance Specialist',
             location: 'Pune, India',
             employmentType: 'Full-time',
+            description: 'Ensure compliance with aerospace quality standards',
+            status: true,
         },
     ];
-    constructor(careersRepository) {
-        this.careersRepository = careersRepository;
+    constructor(careerOpeningModel) {
+        this.careerOpeningModel = careerOpeningModel;
     }
     async findAll() {
-        if (!this.careersRepository) {
+        if (!this.careerOpeningModel) {
             return this.fallbackOpenings;
         }
-        return this.careersRepository.find();
+        const openings = await this.careerOpeningModel.find().exec();
+        return openings.map(opening => ({
+            id: opening._id.toString(),
+            title: opening.title,
+            location: opening.location,
+            employmentType: opening.employmentType,
+            description: opening.description,
+            status: opening.status,
+        }));
     }
     async findOne(id) {
-        if (!this.careersRepository) {
+        if (!this.careerOpeningModel) {
             const opening = this.fallbackOpenings.find((item) => item.id === id);
             if (!opening) {
                 throw new common_1.NotFoundException(`Career opening with id ${id} not found`);
             }
             return opening;
         }
-        const opening = await this.careersRepository.findOne({ where: { id } });
+        const opening = await this.careerOpeningModel.findById(id).exec();
         if (!opening) {
             throw new common_1.NotFoundException(`Career opening with id ${id} not found`);
         }
-        return opening;
+        return {
+            id: opening._id.toString(),
+            title: opening.title,
+            location: opening.location,
+            employmentType: opening.employmentType,
+            description: opening.description,
+            status: opening.status,
+        };
     }
     async create(payload) {
-        if (!this.careersRepository) {
-            const created = { id: (0, crypto_1.randomUUID)(), ...payload };
+        if (!this.careerOpeningModel) {
+            const created = { id: (0, crypto_1.randomUUID)(), status: true, ...payload };
             this.fallbackOpenings.push(created);
             return created;
         }
-        const created = this.careersRepository.create(payload);
-        return this.careersRepository.save(created);
+        const created = new this.careerOpeningModel({
+            ...payload,
+            audit: {
+                createdAt: new Date(),
+                updatedAt: new Date(),
+            },
+        });
+        const saved = await created.save();
+        return {
+            id: saved._id.toString(),
+            title: saved.title,
+            location: saved.location,
+            employmentType: saved.employmentType,
+            description: saved.description,
+            status: saved.status,
+        };
     }
     async update(id, payload) {
-        if (!this.careersRepository) {
+        if (!this.careerOpeningModel) {
             const index = this.fallbackOpenings.findIndex((item) => item.id === id);
             if (index === -1) {
                 throw new common_1.NotFoundException(`Career opening with id ${id} not found`);
@@ -78,12 +111,24 @@ let CareersService = class CareersService {
             };
             return this.fallbackOpenings[index];
         }
-        const opening = await this.findOne(id);
-        const merged = this.careersRepository.merge(opening, payload);
-        return this.careersRepository.save(merged);
+        const updated = await this.careerOpeningModel.findByIdAndUpdate(id, {
+            ...payload,
+            'audit.updatedAt': new Date(),
+        }, { new: true }).exec();
+        if (!updated) {
+            throw new common_1.NotFoundException(`Career opening with id ${id} not found`);
+        }
+        return {
+            id: updated._id.toString(),
+            title: updated.title,
+            location: updated.location,
+            employmentType: updated.employmentType,
+            description: updated.description,
+            status: updated.status,
+        };
     }
     async remove(id) {
-        if (!this.careersRepository) {
+        if (!this.careerOpeningModel) {
             const index = this.fallbackOpenings.findIndex((item) => item.id === id);
             if (index === -1) {
                 throw new common_1.NotFoundException(`Career opening with id ${id} not found`);
@@ -91,8 +136,8 @@ let CareersService = class CareersService {
             this.fallbackOpenings.splice(index, 1);
             return;
         }
-        const result = await this.careersRepository.delete(id);
-        if (!result.affected) {
+        const result = await this.careerOpeningModel.findByIdAndDelete(id).exec();
+        if (!result) {
             throw new common_1.NotFoundException(`Career opening with id ${id} not found`);
         }
     }
@@ -101,7 +146,7 @@ exports.CareersService = CareersService;
 exports.CareersService = CareersService = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, common_1.Optional)()),
-    __param(0, (0, typeorm_1.InjectRepository)(career_opening_entity_1.CareerOpeningEntity)),
-    __metadata("design:paramtypes", [typeorm_2.Repository])
+    __param(0, (0, mongoose_1.InjectModel)(career_opening_schema_1.CareerOpening.name)),
+    __metadata("design:paramtypes", [mongoose_2.Model])
 ], CareersService);
 //# sourceMappingURL=careers.service.js.map

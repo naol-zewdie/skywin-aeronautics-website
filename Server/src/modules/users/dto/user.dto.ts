@@ -12,4 +12,7 @@ export class UserDto {
 
   @ApiProperty({ example: 'admin' })
   role: string;
+
+  @ApiProperty({ example: true })
+  status: boolean;
 }

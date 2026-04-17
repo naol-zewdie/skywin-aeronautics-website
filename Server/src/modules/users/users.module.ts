@@ -1,13 +1,13 @@
 import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
+import { MongooseModule } from '@nestjs/mongoose';
 import { UsersController } from './users.controller';
-import { UserEntity } from './entities/user.entity';
+import { User, UserSchema } from './schemas/user.schema';
 import { UsersService } from './users.service';
 
 @Module({
   imports:
     process.env.ENABLE_DB === 'true'
-      ? [TypeOrmModule.forFeature([UserEntity])]
+      ? [MongooseModule.forFeature([{ name: User.name, schema: UserSchema }])]
       : [],
   controllers: [UsersController],
   providers: [UsersService],
