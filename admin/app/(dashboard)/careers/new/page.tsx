@@ -17,7 +17,7 @@ export default function NewCareerPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
-  const [form, setForm] = useState({ title: '', location: '', employmentType: 'Full-time' as const, description: '', status: true });
+  const [form, setForm] = useState({ title: '', location: '', employmentType: 'Full-time' as 'Full-time' | 'Part-time' | 'Contract' | 'Internship', description: '', status: true });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

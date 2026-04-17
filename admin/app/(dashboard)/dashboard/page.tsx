@@ -1,10 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
 import { dashboardApi } from '@/lib/api';
 import type { DashboardStats } from '@/types';
+import { useAuth } from '@/contexts/AuthContext';
 import {
   Users,
   Package,
@@ -12,11 +15,17 @@ import {
   Briefcase,
   TrendingUp,
   TrendingDown,
+  Search,
+  User,
+  Settings,
+  LogOut,
 } from 'lucide-react';
 
 export default function DashboardPage() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const { user, logout } = useAuth();
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -66,11 +75,36 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Dashboard</h1>
-        <p className="text-muted-foreground">
-          Welcome back! Here's an overview of your system.
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">Dashboard</h1>
+          <p className="text-muted-foreground">
+            Welcome back! Here's an overview of your system.
+          </p>
+        </div>
+        <div className="flex items-center gap-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <input
+              type="text"
+              placeholder="Search..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 pr-4 py-2 border rounded-md bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            />
+          </div>
+          <Card className="p-3">
+            <div className="flex items-center gap-3">
+              <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                <User className="h-4 w-4 text-primary" />
+              </div>
+              <div>
+                <p className="text-sm font-medium">{user?.fullName}</p>
+                <p className="text-xs text-muted-foreground capitalize">{user?.role}</p>
+              </div>
+            </div>
+          </Card>
+        </div>
       </div>
 
       {/* Stats Grid */}
@@ -106,6 +140,42 @@ export default function DashboardPage() {
           </Card>
         ))}
       </div>
+
+      {/* Quick Actions */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Quick Actions</CardTitle>
+          <CardDescription>Common tasks you might want to perform</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <Button variant="outline" className="h-auto p-4 flex flex-col items-center gap-2" asChild>
+              <Link href="/products/new">
+                <Package className="h-6 w-6" />
+                <span className="text-sm">Add Product</span>
+              </Link>
+            </Button>
+            <Button variant="outline" className="h-auto p-4 flex flex-col items-center gap-2" asChild>
+              <Link href="/services/new">
+                <Wrench className="h-6 w-6" />
+                <span className="text-sm">Add Service</span>
+              </Link>
+            </Button>
+            <Button variant="outline" className="h-auto p-4 flex flex-col items-center gap-2" asChild>
+              <Link href="/careers/new">
+                <Briefcase className="h-6 w-6" />
+                <span className="text-sm">Post Job</span>
+              </Link>
+            </Button>
+            <Button variant="outline" className="h-auto p-4 flex flex-col items-center gap-2" asChild>
+              <Link href="/users/new">
+                <Users className="h-6 w-6" />
+                <span className="text-sm">Add User</span>
+              </Link>
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Recent Activity */}
       <Card>

@@ -22,7 +22,7 @@ export default function EditUserPage() {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [form, setForm] = useState({ fullName: '', email: '', role: 'viewer' as const, status: true });
+  const [form, setForm] = useState({ fullName: '', email: '', role: 'viewer' as 'admin' | 'it' | 'hr' | 'viewer', status: true });
 
   useEffect(() => {
     const fetchUser = async () => {

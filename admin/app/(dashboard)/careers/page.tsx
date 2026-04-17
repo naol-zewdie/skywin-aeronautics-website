@@ -86,15 +86,15 @@ export default function CareersPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Careers</h1>
+          <h1 className="text-3xl font-bold">Career Openings</h1>
           <p className="text-muted-foreground">
-            Manage job openings and applications
+            Manage job postings and applications
           </p>
         </div>
         <Button asChild>
           <Link href="/careers/new">
             <Plus className="mr-2 h-4 w-4" />
-            Add Opening
+            New Opening
           </Link>
         </Button>
       </div>

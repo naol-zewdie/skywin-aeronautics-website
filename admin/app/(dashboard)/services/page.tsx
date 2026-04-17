@@ -91,7 +91,7 @@ export default function ServicesPage() {
         <Button asChild>
           <Link href="/services/new">
             <Plus className="mr-2 h-4 w-4" />
-            Add Service
+            New Service
           </Link>
         </Button>
       </div>

@@ -22,7 +22,7 @@ export default function EditCareerPage() {
   const [career, setCareer] = useState<CareerOpening | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [form, setForm] = useState({ title: '', location: '', employmentType: 'Full-time' as const, description: '', status: true });
+  const [form, setForm] = useState({ title: '', location: '', employmentType: 'Full-time' as 'Full-time' | 'Part-time' | 'Contract' | 'Internship', description: '', status: true });
 
   useEffect(() => {
     const fetchCareer = async () => {

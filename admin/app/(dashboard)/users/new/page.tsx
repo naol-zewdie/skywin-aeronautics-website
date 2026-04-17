@@ -17,7 +17,7 @@ export default function NewUserPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
-  const [form, setForm] = useState({ fullName: '', email: '', role: 'viewer' as const, password: '', status: true });
+  const [form, setForm] = useState({ fullName: '', email: '', role: 'viewer' as 'admin' | 'it' | 'hr' | 'viewer', password: '', status: true });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
