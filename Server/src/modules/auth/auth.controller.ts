@@ -1,0 +1,18 @@
+import { Controller, Get } from '@nestjs/common';
+import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { AppService } from './auth.service';
+
+@ApiTags('Auth')
+@Controller()
+export class AppController {
+  constructor(private readonly appService: AppService) {}
+
+  @Get()
+  @ApiOperation({ summary: 'Backend health check' })
+  @ApiOkResponse({
+    schema: { type: 'string', example: 'Hello World!' },
+  })
+  getHello(): string {
+    return this.appService.getHello();
+  }
+}
