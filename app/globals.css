@@ -40,6 +40,7 @@
     --muted: #a8b2c1;
     --border: #566A80;
     --background-alt: #2d3f52;
+    --font-sans: var(--font-geist-sans), system-ui, sans-serif;
     
     /* Dark mode gradients */
     --gradient-primary: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #60a5fa 100%);

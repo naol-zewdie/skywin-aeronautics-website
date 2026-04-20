@@ -246,7 +246,7 @@ export default function ProductsGrid() {
                 {isDarkMode ? (
                   /* Dark Mode Card */
                   <div 
-                    className="overflow-hidden rounded-3xl bg-[#23364F] shadow-lg transition-all duration-500 hover:shadow-2xl hover:shadow-[#23364F]/50 hover:-translate-y-2 hover:ring-2 hover:ring-[#23364F]/30 ring-offset-4 ring-offset-[color:var(--background)] cursor-pointer"
+                    className="overflow-hidden rounded-3xl bg-[#23364F] shadow-lg transition-all duration-500 hover:shadow-2xl hover:shadow-[#23364F]/50 hover:-translate-y-2 hover:ring-2 hover:ring-[#23364F]/30 ring-offset-4 ring-offset-[color:var(--background)] group cursor-pointer"
                     onClick={() => handleCardClick(index)}
                   >
                     {/* Image Section - Upper Half */}
@@ -254,12 +254,12 @@ export default function ProductsGrid() {
                       <img
                         src={product.images[0]}
                         alt={product.title}
-                        className="h-full w-full object-cover transition-transform duration-500 hover:scale-110 group-hover:brightness-110"
+                        className="h-full w-full object-cover border-0 transition-transform duration-500 hover:scale-110 group-hover:brightness-110"
                       />
                     </div>
                     
                     {/* Text Section - Bottom Half */}
-                    <div className="p-6 bg-gradient-to-br from-[#1e3a8a] via-[#2563eb] to-[#3b82f6]">
+                    <div className="p-6 bg-gradient-to-br from-[#23364F] via-[#2a4663] to-[#315577]">
                       <h3 className="text-xl font-semibold text-white mb-3">
                         {product.title}
                       </h3>
@@ -271,15 +271,15 @@ export default function ProductsGrid() {
                 ) : (
                   /* Light Mode Card */
                   <div 
-                    className="overflow-hidden rounded-3xl bg-[color:var(--background-alt)] shadow-lg transition-all duration-500 hover:shadow-2xl hover:shadow-gray-400/30 hover:-translate-y-2 hover:ring-2 hover:ring-gray-300/50 ring-offset-4 ring-offset-[color:var(--background)] cursor-pointer"
+                    className="h-full overflow-hidden rounded-3xl bg-[color:var(--background)] shadow-lg transition-all duration-500 hover:shadow-2xl hover:shadow-gray-400/30 hover:-translate-y-2 hover:ring-2 hover:ring-gray-300/50 ring-offset-4 ring-offset-[color:var(--background)] group cursor-pointer"
                     onClick={() => handleCardClick(index)}
                   >
                     {/* Image Section - Upper Half */}
-                    <div className="aspect-[4/3] overflow-hidden">
+                    <div className="aspect-[4/3] overflow-hidden border-0">
                       <img
                         src={product.images[0]}
                         alt={product.title}
-                        className="h-full w-full object-cover transition-transform duration-500 hover:scale-110 group-hover:brightness-110"
+                        className="h-full w-full object-cover border-0 transition-transform duration-500 hover:scale-110 group-hover:brightness-110"
                       />
                     </div>
                     
@@ -308,7 +308,7 @@ export default function ProductsGrid() {
                 {isDarkMode ? (
                   /* Dark Mode Card */
                   <div 
-                    className="overflow-hidden rounded-3xl bg-[#23364F] shadow-lg transition-all duration-500 hover:shadow-2xl hover:shadow-[#23364F]/50 hover:-translate-y-2 hover:ring-2 hover:ring-[#23364F]/30 ring-offset-4 ring-offset-[color:var(--background)] cursor-pointer"
+                    className="overflow-hidden rounded-3xl bg-[#23364F] shadow-lg transition-all duration-500 hover:shadow-2xl hover:shadow-[#23364F]/50 hover:-translate-y-2 hover:ring-2 hover:ring-[#23364F]/30 ring-offset-4 ring-offset-[color:var(--background)] group cursor-pointer"
                     onClick={() => handleCardClick(index)}
                   >
                     {/* Image Section - Upper Half */}
@@ -316,12 +316,12 @@ export default function ProductsGrid() {
                       <img
                         src={product.images[0]}
                         alt={product.title}
-                        className="h-full w-full object-cover transition-transform duration-500 hover:scale-110 group-hover:brightness-110"
+                        className="h-full w-full object-cover border-0 transition-transform duration-500 hover:scale-110 group-hover:brightness-110"
                       />
                     </div>
                     
                     {/* Text Section - Bottom Half */}
-                    <div className="p-6 bg-gradient-to-br from-[#1e3a8a] via-[#2563eb] to-[#3b82f6]">
+                    <div className="p-6 bg-gradient-to-br from-[#23364F] via-[#2a4663] to-[#315577]">
                       <h3 className="text-xl font-semibold text-white mb-3">
                         {product.title}
                       </h3>
@@ -333,15 +333,15 @@ export default function ProductsGrid() {
                 ) : (
                   /* Light Mode Card */
                   <div 
-                    className="overflow-hidden rounded-3xl bg-[color:var(--background-alt)] shadow-lg transition-all duration-500 hover:shadow-2xl hover:shadow-gray-400/30 hover:-translate-y-2 hover:ring-2 hover:ring-gray-300/50 ring-offset-4 ring-offset-[color:var(--background)] cursor-pointer"
+                    className="h-full overflow-hidden rounded-3xl bg-[color:var(--background)] shadow-lg transition-all duration-500 hover:shadow-2xl hover:shadow-gray-400/30 hover:-translate-y-2 hover:ring-2 hover:ring-gray-300/50 ring-offset-4 ring-offset-[color:var(--background)] group cursor-pointer"
                     onClick={() => handleCardClick(index)}
                   >
                     {/* Image Section - Upper Half */}
-                    <div className="aspect-[4/3] overflow-hidden">
+                    <div className="aspect-[4/3] overflow-hidden border-0">
                       <img
                         src={product.images[0]}
                         alt={product.title}
-                        className="h-full w-full object-cover transition-transform duration-500 hover:scale-110 group-hover:brightness-110"
+                        className="h-full w-full object-cover border-0 transition-transform duration-500 hover:scale-110 group-hover:brightness-110"
                       />
                     </div>
                     
@@ -362,68 +362,12 @@ export default function ProductsGrid() {
         )}
       </div>
 
-      {/* Right Side - Full Product Page (when card is selected) - Takes 2/3 of page width */}
+      {/* Right Side - Selected Product Details */}
       {selectedCard !== null && (
-        <div className="w-2/3 transition-all duration-500">
-          {/* Full Product Page - No Card Styling */}
-          <div className="bg-[color:var(--background)] h-full p-8 relative">
-            {/* Product Title as Headline Above Image */}
-            <h1 className="text-4xl font-bold text-[color:var(--primary)] mb-6 text-center">
-              {products[selectedCard].title}
-            </h1>
-
-            {/* Main Image at Top */}
-            <div className="mb-8">
-              <div className="aspect-[16/9] overflow-hidden rounded-2xl mx-auto max-w-4xl">
-                <img
-                  src={products[selectedCard].images[selectedImageIndex]}
-                  alt={products[selectedCard].title}
-                  className="h-full w-full object-cover"
-                />
-              </div>
-            </div>
-
-            {/* Photo Slider */}
-            <div className="mb-8">
-              <div className="flex items-center justify-center gap-4">
-                {/* Left Arrow */}
-                <button
-                  onClick={slideLeft}
-                  disabled={sliderPosition === 0}
-                  className="p-2 rounded-full bg-[color:var(--primary)] text-[color:var(--background)] disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[color:var(--accent)] transition-colors"
-                  aria-label="Slide left"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M15 19l-7-7 7-7" />
-                  </svg>
-                </button>
-
-                {/* Photo Thumbnails */}
-                <div className="flex gap-2 overflow-hidden max-w-md">
-                  <div 
-                    className="flex gap-2 transition-transform duration-300"
-                    style={{ transform: `translateX(-${sliderPosition * 100}px)` }}
-                  >
-                    {products[selectedCard].images.map((image, index) => (
-                      <div
-                        key={index}
-                        onClick={() => handleImageClick(index)}
-                        className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden cursor-pointer border-2 transition-all ${
-                          selectedImageIndex === index 
-                            ? 'border-[color:var(--primary)]' 
-                            : 'border-[color:var(--border)] hover:border-[color:var(--accent)]'
-                        }`}
-                      >
-                        <img
-                          src={image}
-                          alt={`${products[selectedCard].title} ${index + 1}`}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
+        <div className="flex-1 lg:w-2/3">
+          <div className="overflow-hidden rounded-3xl bg-[color:var(--background)] shadow-lg">
+            {/* Image Slider */}
+            <div className="relative aspect-[4/3] overflow-hidden">
                 {/* Right Arrow */}
                 <button
                   onClick={slideRight}
@@ -457,7 +401,7 @@ export default function ProductsGrid() {
               </svg>
             </button>
           </div>
-        </div>
+    
       )}
     </div>
   );

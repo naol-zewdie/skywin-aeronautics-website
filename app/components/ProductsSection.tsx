@@ -86,11 +86,11 @@ export default function ProductsSection() {
               </div>
               
               {/* Text Section - Bottom Half */}
-              <div className="p-6 bg-gradient-to-br from-[#1e3a8a] via-[#2563eb] to-[#3b82f6]">
-                <h3 className="text-xl font-semibold text-[#23364F] mb-3">
+              <div className="p-6 bg-gradient-to-br from-[#23364F] via-[#2a4663] to-[#315577]">
+                <h3 className="text-xl font-semibold text-white mb-3">
                   {product.title}
                 </h3>
-                <p className="text-sm leading-6 text-[#23364F]">
+                <p className="text-sm leading-6 text-white/90">
                   {product.shortDescription}
                 </p>
               </div>

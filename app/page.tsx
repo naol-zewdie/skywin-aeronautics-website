@@ -129,8 +129,8 @@ export default function Home() {
           <div className="relative space-y-8">
             <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
               <div className="ml-4 md:ml-6">
-                <p className="text-sm uppercase tracking-[0.3em] text-[#23364F]">Featured products</p>
-                <h2 className="text-3xl font-semibold text-[#23364F]">Selected products</h2>
+                <p className="text-sm uppercase tracking-[0.3em] text-[color:var(--muted)]">Featured products</p>
+                <h2 className="text-3xl font-semibold text-[color:var(--primary)]">Selected products</h2>
               </div>
               <div className="mr-4 md:mr-6">
                 <Button
