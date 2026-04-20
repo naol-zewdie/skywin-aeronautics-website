@@ -42,6 +42,13 @@ let ProductsController = class ProductsController {
         res.setHeader('Content-Disposition', 'attachment; filename=products.csv');
         res.send(csv);
     }
+    async exportPdf(res, search, category) {
+        const products = await this.productsService.findAll({ search, category });
+        const pdfBuffer = await this.productsService.exportToPdf(products);
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', 'attachment; filename=products.pdf');
+        res.send(pdfBuffer);
+    }
     getProduct(id) {
         return this.productsService.findOne(id);
     }
@@ -88,6 +95,19 @@ __decorate([
     __metadata("design:paramtypes", [Object, String, String]),
     __metadata("design:returntype", Promise)
 ], ProductsController.prototype, "exportCsv", null);
+__decorate([
+    (0, common_1.Get)('export/pdf'),
+    (0, roles_guard_1.Roles)(roles_guard_1.Role.ADMIN, roles_guard_1.Role.OPERATOR),
+    (0, swagger_1.ApiOperation)({ summary: 'Export products to PDF' }),
+    (0, swagger_1.ApiQuery)({ name: 'search', required: false }),
+    (0, swagger_1.ApiQuery)({ name: 'category', required: false }),
+    __param(0, (0, common_1.Res)()),
+    __param(1, (0, common_1.Query)('search')),
+    __param(2, (0, common_1.Query)('category')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String, String]),
+    __metadata("design:returntype", Promise)
+], ProductsController.prototype, "exportPdf", null);
 __decorate([
     (0, common_1.Get)(':id'),
     (0, roles_guard_1.Roles)(roles_guard_1.Role.ADMIN, roles_guard_1.Role.OPERATOR, roles_guard_1.Role.VIEWER),

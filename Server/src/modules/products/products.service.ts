@@ -6,6 +6,8 @@ import { CreateProductDto } from './dto/create-product.dto';
 import { ProductDto } from './dto/product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { Product } from './schemas/product.schema';
+import { Parser } from '@json2csv/plainjs';
+import PDFDocument from 'pdfkit';
 
 @Injectable()
 export class ProductsService {
@@ -247,5 +249,72 @@ export class ProductsService {
     if (!result) {
       throw new NotFoundException(`Product with id ${id} not found`);
     }
+  }
+
+  exportToCsv(products: ProductDto[]): string {
+    const fields = ['id', 'name', 'category', 'description', 'price', 'stock', 'status'];
+    const opts = { fields };
+    const parser = new Parser(opts);
+    return parser.parse(products);
+  }
+
+  exportToPdf(products: ProductDto[]): Promise<Buffer> {
+    const doc = new PDFDocument();
+    const chunks: Buffer[] = [];
+
+    return new Promise((resolve, reject) => {
+      doc.on('data', (chunk) => chunks.push(chunk));
+      doc.on('end', () => resolve(Buffer.concat(chunks)));
+      doc.on('error', reject);
+
+      // Title
+      doc.fontSize(24).text('Products Catalog', { align: 'center' });
+      doc.moveDown();
+      doc.fontSize(12).text(`Generated: ${new Date().toLocaleString()}`, { align: 'center' });
+      doc.moveDown(2);
+
+      // Separator line
+      doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke();
+      doc.moveDown();
+
+      products.forEach((product, index) => {
+        // Check if we need a new page
+        if (doc.y > 700) {
+          doc.addPage();
+        }
+
+        // Product name
+        doc.fontSize(16).text(product.name, { underline: true });
+        doc.moveDown(0.5);
+
+        // Product details
+        doc.fontSize(10);
+        doc.text(`Category: ${product.category}`, { continued: true });
+        doc.text(`    Price: $${product.price.toFixed(2)}`, { continued: true });
+        doc.text(`    Stock: ${product.stock}`);
+        doc.text(`Status: ${product.status ? 'Active' : 'Inactive'}`);
+        doc.moveDown(0.5);
+
+        // Description
+        const description = product.description.substring(0, 300);
+        doc.text(description + (product.description.length > 300 ? '...' : ''), { align: 'justify' });
+        doc.moveDown();
+
+        // Image if available
+        if (product.image) {
+          doc.fontSize(9).fillColor('gray').text(`Image: ${product.image}`);
+          doc.fillColor('black');
+          doc.moveDown();
+        }
+
+        // Separator between products
+        if (index < products.length - 1) {
+          doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke();
+          doc.moveDown();
+        }
+      });
+
+      doc.end();
+    });
   }
 }

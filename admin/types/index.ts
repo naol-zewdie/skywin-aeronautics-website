@@ -69,6 +69,24 @@ export interface ActivityItem {
   action: string;
   user: string;
   timestamp: string;
-  entityType: 'user' | 'product' | 'service' | 'career';
+  entityType: 'user' | 'product' | 'service' | 'career' | 'post';
   entityId?: string;
+}
+
+export type ContentType = 'news' | 'blog' | 'event';
+
+export interface Post {
+  id: string;
+  title: string;
+  content: string;
+  type: ContentType;
+  author: string;
+  excerpt?: string;
+  coverImage?: string;
+  tags?: string[];
+  eventDate?: string;
+  eventLocation?: string;
+  status: boolean;
+  views?: number;
+  audit?: AuditInfo;
 }

@@ -14,9 +14,9 @@ export declare class ProductsService {
         maxPrice?: number;
         status?: boolean;
     }): Promise<ProductDto[]>;
-    exportToCsv(products: ProductDto[]): string;
     findOne(id: string): Promise<ProductDto>;
     create(payload: CreateProductDto): Promise<ProductDto>;
     update(id: string, payload: UpdateProductDto): Promise<ProductDto>;
     remove(id: string): Promise<void>;
+    exportToPdf(products: ProductDto[]): Promise<Buffer>;
 }

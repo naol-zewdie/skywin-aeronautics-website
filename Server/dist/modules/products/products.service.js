@@ -11,6 +11,9 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ProductsService = void 0;
 const common_1 = require("@nestjs/common");
@@ -18,6 +21,8 @@ const mongoose_1 = require("@nestjs/mongoose");
 const mongoose_2 = require("mongoose");
 const crypto_1 = require("crypto");
 const product_schema_1 = require("./schemas/product.schema");
+const plainjs_1 = require("@json2csv/plainjs");
+const pdfkit_1 = __importDefault(require("pdfkit"));
 let ProductsService = class ProductsService {
     productModel;
     fallbackProducts = [
@@ -213,6 +218,53 @@ let ProductsService = class ProductsService {
         if (!result) {
             throw new common_1.NotFoundException(`Product with id ${id} not found`);
         }
+    }
+    exportToCsv(products) {
+        const fields = ['id', 'name', 'category', 'description', 'price', 'stock', 'status'];
+        const opts = { fields };
+        const parser = new plainjs_1.Parser(opts);
+        return parser.parse(products);
+    }
+    exportToPdf(products) {
+        const doc = new pdfkit_1.default();
+        const chunks = [];
+        return new Promise((resolve, reject) => {
+            doc.on('data', (chunk) => chunks.push(chunk));
+            doc.on('end', () => resolve(Buffer.concat(chunks)));
+            doc.on('error', reject);
+            doc.fontSize(24).text('Products Catalog', { align: 'center' });
+            doc.moveDown();
+            doc.fontSize(12).text(`Generated: ${new Date().toLocaleString()}`, { align: 'center' });
+            doc.moveDown(2);
+            doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke();
+            doc.moveDown();
+            products.forEach((product, index) => {
+                if (doc.y > 700) {
+                    doc.addPage();
+                }
+                doc.fontSize(16).text(product.name, { underline: true });
+                doc.moveDown(0.5);
+                doc.fontSize(10);
+                doc.text(`Category: ${product.category}`, { continued: true });
+                doc.text(`    Price: $${product.price.toFixed(2)}`, { continued: true });
+                doc.text(`    Stock: ${product.stock}`);
+                doc.text(`Status: ${product.status ? 'Active' : 'Inactive'}`);
+                doc.moveDown(0.5);
+                const description = product.description.substring(0, 300);
+                doc.text(description + (product.description.length > 300 ? '...' : ''), { align: 'justify' });
+                doc.moveDown();
+                if (product.image) {
+                    doc.fontSize(9).fillColor('gray').text(`Image: ${product.image}`);
+                    doc.fillColor('black');
+                    doc.moveDown();
+                }
+                if (index < products.length - 1) {
+                    doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke();
+                    doc.moveDown();
+                }
+            });
+            doc.end();
+        });
     }
 };
 exports.ProductsService = ProductsService;

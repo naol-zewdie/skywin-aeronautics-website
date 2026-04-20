@@ -79,6 +79,24 @@ export class ProductsController {
     res.send(csv);
   }
 
+  @Get('export/pdf')
+  @Roles(Role.ADMIN, Role.OPERATOR)
+  @ApiOperation({ summary: 'Export products to PDF' })
+  @ApiQuery({ name: 'search', required: false })
+  @ApiQuery({ name: 'category', required: false })
+  async exportPdf(
+    @Res() res: Response,
+    @Query('search') search?: string,
+    @Query('category') category?: string,
+  ): Promise<void> {
+    const products = await this.productsService.findAll({ search, category });
+    const pdfBuffer = await this.productsService.exportToPdf(products);
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'attachment; filename=products.pdf');
+    res.send(pdfBuffer);
+  }
+
   @Get(':id')
   @Roles(Role.ADMIN, Role.OPERATOR, Role.VIEWER)
   @ApiOperation({ summary: 'Get product by id' })

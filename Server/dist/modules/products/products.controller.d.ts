@@ -8,6 +8,7 @@ export declare class ProductsController {
     constructor(productsService: ProductsService);
     getProducts(search?: string, category?: string, minPrice?: string, maxPrice?: string, status?: string): Promise<ProductDto[]>;
     exportCsv(res: Response, search?: string, category?: string): Promise<void>;
+    exportPdf(res: Response, search?: string, category?: string): Promise<void>;
     getProduct(id: string): Promise<ProductDto>;
     createProduct(payload: CreateProductDto): Promise<ProductDto>;
     updateProduct(id: string, payload: UpdateProductDto): Promise<ProductDto>;

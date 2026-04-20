@@ -302,6 +302,48 @@ export const dashboardApi = {
   },
 };
 
+// Posts API
+export const postsApi = {
+  getAll: async (): Promise<Post[]> => {
+    const { data } = await api.get<Post[]>('/v1/posts');
+    return data;
+  },
+
+  getById: async (id: string): Promise<Post> => {
+    const { data } = await api.get<Post>(`/v1/posts/${id}`);
+    return data;
+  },
+
+  getByType: async (type: string): Promise<Post[]> => {
+    const { data } = await api.get<Post[]>(`/v1/posts/by-type/${type}`);
+    return data;
+  },
+
+  create: async (post: Omit<Post, 'id' | 'audit'>): Promise<Post> => {
+    const { data } = await api.post<Post>('/v1/posts', post);
+    return data;
+  },
+
+  update: async (id: string, post: Partial<Post>): Promise<Post> => {
+    const { data } = await api.patch<Post>(`/v1/posts/${id}`, post);
+    return data;
+  },
+
+  delete: async (id: string): Promise<void> => {
+    await api.delete(`/v1/posts/${id}`);
+  },
+
+  exportCsv: async (): Promise<Blob> => {
+    const { data } = await api.get('/v1/posts/export/csv', { responseType: 'blob' });
+    return data;
+  },
+
+  exportPdf: async (): Promise<Blob> => {
+    const { data } = await api.get('/v1/posts/export/pdf', { responseType: 'blob' });
+    return data;
+  },
+};
+
 // Upload API
 export const uploadApi = {
   uploadImage: async (file: File): Promise<{ url: string; filename: string; size: number }> => {
