@@ -19,14 +19,17 @@ describe('ServicesService', () => {
     save: jest.fn().mockResolvedValue(true),
   };
 
-  const mockServiceModel = {
-    find: jest.fn(),
-    findById: jest.fn(),
-    findByIdAndUpdate: jest.fn(),
-    findByIdAndDelete: jest.fn(),
-    create: jest.fn(),
-    exec: jest.fn(),
-  };
+  const mockServiceModel = jest.fn().mockImplementation((payload) => ({
+    ...payload,
+    _id: 'new-generated-id',
+    save: jest.fn().mockResolvedValue({ _id: 'new-generated-id', ...payload }),
+  }));
+  mockServiceModel.find = jest.fn();
+  mockServiceModel.findById = jest.fn();
+  mockServiceModel.findByIdAndUpdate = jest.fn();
+  mockServiceModel.findByIdAndDelete = jest.fn();
+  mockServiceModel.create = jest.fn();
+  mockServiceModel.exec = jest.fn();
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({

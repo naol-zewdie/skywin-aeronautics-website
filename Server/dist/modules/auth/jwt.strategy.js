@@ -15,14 +15,29 @@ const passport_1 = require("@nestjs/passport");
 const passport_jwt_1 = require("passport-jwt");
 let JwtStrategy = class JwtStrategy extends (0, passport_1.PassportStrategy)(passport_jwt_1.Strategy) {
     constructor() {
+        const jwtSecret = process.env.JWT_SECRET;
+        if (!jwtSecret) {
+            console.warn('WARNING: JWT_SECRET not set. Using environment variable is required for production.');
+        }
         super({
             jwtFromRequest: passport_jwt_1.ExtractJwt.fromAuthHeaderAsBearerToken(),
             ignoreExpiration: false,
-            secretOrKey: process.env.JWT_SECRET || 'fallback-secret',
+            secretOrKey: jwtSecret || 'temporary-secret-do-not-use-in-production',
+            algorithms: ['HS256'],
         });
     }
     async validate(payload) {
-        return { userId: payload.sub, email: payload.email, role: payload.role };
+        if (payload.type !== 'access') {
+            throw new common_1.UnauthorizedException('Invalid token type');
+        }
+        if (!payload.sub || !payload.email || !payload.role) {
+            throw new common_1.UnauthorizedException('Invalid token payload');
+        }
+        return {
+            userId: payload.sub,
+            email: payload.email,
+            role: payload.role,
+        };
     }
 };
 exports.JwtStrategy = JwtStrategy;

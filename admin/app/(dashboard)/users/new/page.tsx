@@ -17,7 +17,7 @@ export default function NewUserPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
-  const [form, setForm] = useState({ fullName: '', email: '', role: 'viewer' as 'admin' | 'it' | 'hr' | 'viewer', password: '', status: true });
+  const [form, setForm] = useState({ fullName: '', email: '', role: 'viewer' as 'admin' | 'operator' | 'viewer', password: '', status: true });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,8 +26,20 @@ export default function NewUserPage() {
       await usersApi.create(form);
       toast({ title: 'Success', description: 'User created successfully' });
       router.push('/users');
-    } catch {
-      toast({ title: 'Error', description: 'Failed to create user', variant: 'destructive' });
+    } catch (error: any) {
+      console.error('Error creating user:', error);
+      let errorMessage = 'Failed to create user';
+      
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.response?.data?.details?.validationErrors) {
+        const errors = error.response.data.details.validationErrors.map((e: any) => e.message || e);
+        errorMessage = errors.join(', ');
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      toast({ title: 'Error', description: errorMessage, variant: 'destructive' });
     } finally {
       setIsSaving(false);
     }
@@ -53,8 +65,7 @@ export default function NewUserPage() {
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="admin">Admin</SelectItem>
-                    <SelectItem value="it">IT</SelectItem>
-                    <SelectItem value="hr">HR</SelectItem>
+                    <SelectItem value="operator">Operator</SelectItem>
                     <SelectItem value="viewer">Viewer</SelectItem>
                   </SelectContent>
                 </Select>

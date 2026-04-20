@@ -17,10 +17,10 @@ import {
 import { Button } from '@/components/ui/button';
 
 const navigation = [
-  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, roles: ['admin', 'it', 'hr', 'viewer'] },
-  { name: 'Products', href: '/products', icon: Package, roles: ['admin', 'it'] },
-  { name: 'Services', href: '/services', icon: Wrench, roles: ['admin', 'it'] },
-  { name: 'Careers', href: '/careers', icon: Briefcase, roles: ['admin', 'hr'] },
+  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, roles: ['admin', 'operator', 'viewer'] },
+  { name: 'Products', href: '/products', icon: Package, roles: ['admin', 'operator'] },
+  { name: 'Services', href: '/services', icon: Wrench, roles: ['admin', 'operator'] },
+  { name: 'Careers', href: '/careers', icon: Briefcase, roles: ['admin', 'operator'] },
   { name: 'Users', href: '/users', icon: Users, roles: ['admin'] },
   { name: 'Settings', href: '/settings', icon: Settings, roles: ['admin'] },
 ];
@@ -35,8 +35,10 @@ export function Sidebar() {
     <div className="flex h-full w-64 flex-col border-r bg-card">
       {/* Logo */}
       <div className="flex h-16 items-center border-b px-6">
-        <Shield className="mr-2 h-6 w-6 text-primary" />
-        <span className="text-lg font-semibold">Skywin Admin</span>
+        <Link href="/dashboard" className="flex items-center hover:opacity-80 transition-opacity">
+          <Shield className="mr-2 h-6 w-6 text-primary" />
+          <span className="text-lg font-semibold">Skywin Admin</span>
+        </Link>
       </div>
 
       {/* User Info */}

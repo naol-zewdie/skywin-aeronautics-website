@@ -38,22 +38,101 @@ export class ProductsService {
     private readonly productModel?: Model<Product>,
   ) {}
 
-  async findAll(): Promise<ProductDto[]> {
-    if (!this.productModel) {
-      return this.fallbackProducts;
+  async findAll(filters?: {
+    search?: string;
+    category?: string;
+    minPrice?: number;
+    maxPrice?: number;
+    status?: boolean;
+  }): Promise<ProductDto[]> {
+    let products = this.fallbackProducts;
+
+    if (this.productModel) {
+      const query: any = {};
+      
+      if (filters?.search) {
+        query.$or = [
+          { name: { $regex: filters.search, $options: 'i' } },
+          { description: { $regex: filters.search, $options: 'i' } },
+        ];
+      }
+      
+      if (filters?.category) {
+        query.category = { $regex: filters.category, $options: 'i' };
+      }
+      
+      if (filters?.status !== undefined) {
+        query.status = filters.status;
+      }
+      
+      if (filters?.minPrice !== undefined || filters?.maxPrice !== undefined) {
+        query.price = {};
+        if (filters.minPrice !== undefined) query.price.$gte = filters.minPrice;
+        if (filters.maxPrice !== undefined) query.price.$lte = filters.maxPrice;
+      }
+      
+      const dbProducts = await this.productModel.find(query).exec();
+      products = dbProducts.map(product => ({
+        id: product._id.toString(),
+        name: product.name,
+        category: product.category,
+        description: product.description,
+        price: product.price,
+        image: product.image,
+        stock: product.stock,
+        status: product.status,
+      }));
     }
 
-    const products = await this.productModel.find().exec();
-    return products.map(product => ({
-      id: product._id.toString(),
-      name: product.name,
-      category: product.category,
-      description: product.description,
-      price: product.price,
-      image: product.image,
-      stock: product.stock,
-      status: product.status,
-    }));
+    // Apply filters to fallback data too
+    if (filters) {
+      if (filters.search) {
+        const searchLower = filters.search.toLowerCase();
+        products = products.filter(p =>
+          p.name.toLowerCase().includes(searchLower) ||
+          p.description.toLowerCase().includes(searchLower)
+        );
+      }
+      
+      if (filters.category) {
+        const catLower = filters.category.toLowerCase();
+        products = products.filter(p =>
+          p.category.toLowerCase().includes(catLower)
+        );
+      }
+      
+      if (filters.status !== undefined) {
+        products = products.filter(p => p.status === filters.status);
+      }
+      
+      const minPrice = filters.minPrice;
+      const maxPrice = filters.maxPrice;
+      
+      if (minPrice !== undefined) {
+        products = products.filter(p => p.price >= minPrice);
+      }
+      
+      if (maxPrice !== undefined) {
+        products = products.filter(p => p.price <= maxPrice);
+      }
+    }
+
+    return products;
+  }
+
+  exportToCsv(products: ProductDto[]): string {
+    const headers = ['ID', 'Name', 'Category', 'Description', 'Price', 'Stock', 'Status'];
+    const rows = products.map(p => [
+      p.id,
+      `"${p.name}"`,
+      `"${p.category}"`,
+      `"${p.description?.replace(/"/g, '""') || ''}"`,
+      p.price,
+      p.stock,
+      p.status ? 'Active' : 'Inactive',
+    ]);
+    
+    return [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
   }
 
   async findOne(id: string): Promise<ProductDto> {
@@ -82,6 +161,15 @@ export class ProductsService {
   }
 
   async create(payload: CreateProductDto): Promise<ProductDto> {
+    // Check for duplicate product name
+    const existingProducts = await this.findAll();
+    const isDuplicate = existingProducts.some(
+      p => p.name.toLowerCase() === payload.name.toLowerCase()
+    );
+    if (isDuplicate) {
+      throw new Error('Product name already exists');
+    }
+
     if (!this.productModel) {
       const created: ProductDto = { id: randomUUID(), status: true, ...payload };
       this.fallbackProducts.push(created);

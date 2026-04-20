@@ -11,9 +11,11 @@ const common_1 = require("@nestjs/common");
 const jwt_1 = require("@nestjs/jwt");
 const passport_1 = require("@nestjs/passport");
 const mongoose_1 = require("@nestjs/mongoose");
+const config_1 = require("@nestjs/config");
 const auth_controller_1 = require("./auth.controller");
 const auth_service_1 = require("./auth.service");
 const jwt_strategy_1 = require("./jwt.strategy");
+const jwt_auth_guard_1 = require("./jwt-auth.guard");
 const user_schema_1 = require("../users/schemas/user.schema");
 let AuthModule = class AuthModule {
 };
@@ -22,17 +24,25 @@ exports.AuthModule = AuthModule = __decorate([
     (0, common_1.Module)({
         imports: [
             passport_1.PassportModule.register({ defaultStrategy: 'jwt' }),
-            jwt_1.JwtModule.register({
-                secret: process.env.JWT_SECRET || 'fallback-secret',
-                signOptions: { expiresIn: '7d' },
+            jwt_1.JwtModule.registerAsync({
+                imports: [config_1.ConfigModule],
+                useFactory: async (configService) => {
+                    const expiresIn = configService.get('JWT_EXPIRES_IN', '15m');
+                    return {
+                        secret: configService.get('JWT_SECRET'),
+                        signOptions: {
+                            expiresIn: expiresIn,
+                            algorithm: 'HS256',
+                        },
+                    };
+                },
+                inject: [config_1.ConfigService],
             }),
-            ...(process.env.ENABLE_DB === 'true'
-                ? [mongoose_1.MongooseModule.forFeature([{ name: user_schema_1.User.name, schema: user_schema_1.UserSchema }])]
-                : []),
+            ...(process.env.ENABLE_DB === 'true' ? [mongoose_1.MongooseModule.forFeature([{ name: user_schema_1.User.name, schema: user_schema_1.UserSchema }])] : []),
         ],
         controllers: [auth_controller_1.AuthController],
-        providers: [auth_service_1.AuthService, jwt_strategy_1.JwtStrategy],
-        exports: [auth_service_1.AuthService],
+        providers: [auth_service_1.AuthService, jwt_strategy_1.JwtStrategy, jwt_auth_guard_1.JwtAuthGuard],
+        exports: [auth_service_1.AuthService, jwt_auth_guard_1.JwtAuthGuard],
     })
 ], AuthModule);
 //# sourceMappingURL=auth.module.js.map

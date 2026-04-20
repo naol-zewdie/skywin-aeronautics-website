@@ -2,14 +2,14 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Upload, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Skeleton } from '@/components/ui/skeleton';
-import { productsApi } from '@/lib/api';
+import { productsApi, uploadApi } from '@/lib/api';
 import type { Product } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
@@ -21,6 +21,7 @@ export default function EditProductPage() {
   const [product, setProduct] = useState<Product | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
 
   const [form, setForm] = useState({
     name: '',
@@ -28,9 +29,42 @@ export default function EditProductPage() {
     description: '',
     price: 0,
     image: '',
+    imageUrl: '',
     stock: 0,
     status: true,
   });
+
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [imageInputType, setImageInputType] = useState<'upload' | 'url'>('upload');
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setSelectedFile(file);
+    setIsUploading(true);
+
+    try {
+      const uploadResult = await uploadApi.uploadImage(file);
+      setForm({ ...form, image: uploadResult.url, imageUrl: '' });
+      toast({ title: 'Success', description: 'Image uploaded successfully' });
+    } catch {
+      toast({ title: 'Error', description: 'Failed to upload image', variant: 'destructive' });
+      setSelectedFile(null);
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setForm({ ...form, imageUrl: e.target.value, image: e.target.value });
+    setSelectedFile(null);
+  };
+
+  const handleRemoveImage = () => {
+    setSelectedFile(null);
+    setForm({ ...form, image: '', imageUrl: '' });
+  };
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -42,7 +76,8 @@ export default function EditProductPage() {
           category: data.category,
           description: data.description,
           price: data.price,
-          image: data.image,
+          image: data.image || '',
+          imageUrl: data.image || '',
           stock: data.stock,
           status: data.status,
         });
@@ -60,11 +95,31 @@ export default function EditProductPage() {
     e.preventDefault();
     setIsSaving(true);
     try {
-      await productsApi.update(params.id as string, form);
+      const { imageUrl, image, ...data } = form;
+      const productData: any = { ...data };
+      if (image) {
+        productData.image = image;
+      }
+      await productsApi.update(params.id as string, productData);
       toast({ title: 'Success', description: 'Product updated successfully' });
       router.push('/products');
-    } catch {
-      toast({ title: 'Error', description: 'Failed to update product', variant: 'destructive' });
+    } catch (error: any) {
+      console.error('Error updating product:', error);
+      let errorMessage = 'Failed to update product';
+      
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.response?.data) {
+        if (Array.isArray(error.response.data.message)) {
+          errorMessage = error.response.data.message.join(', ');
+        } else {
+          errorMessage = JSON.stringify(error.response.data);
+        }
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      toast({ title: 'Error', description: errorMessage, variant: 'destructive' });
     } finally {
       setIsSaving(false);
     }
@@ -113,8 +168,46 @@ export default function EditProductPage() {
                 <Input id="stock" type="number" min="0" value={form.stock} onChange={(e) => setForm({ ...form, stock: parseInt(e.target.value) || 0 })} required />
               </div>
               <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="image">Image URL</Label>
-                <Input id="image" type="url" value={form.image} onChange={(e) => setForm({ ...form, image: e.target.value })} required />
+                <Label>Image (Optional)</Label>
+                <div className="flex gap-2 mb-2">
+                  <Button
+                    type="button"
+                    variant={imageInputType === 'upload' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setImageInputType('upload')}
+                  >
+                    Upload File
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={imageInputType === 'url' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setImageInputType('url')}
+                  >
+                    Image URL
+                  </Button>
+                </div>
+                {imageInputType === 'upload' ? (
+                  <div className="flex gap-2">
+                    <Input type="file" accept="image/*" onChange={handleFileSelect} disabled={isUploading} />
+                    {form.image && (
+                      <Button type="button" variant="outline" size="icon" onClick={handleRemoveImage}><X className="h-4 w-4" /></Button>
+                    )}
+                  </div>
+                ) : (
+                  <div className="flex gap-2">
+                    <Input type="url" placeholder="https://example.com/image.jpg" value={form.imageUrl} onChange={handleUrlChange} />
+                    {form.imageUrl && (
+                      <Button type="button" variant="outline" size="icon" onClick={handleRemoveImage}><X className="h-4 w-4" /></Button>
+                    )}
+                  </div>
+                )}
+                {isUploading && <p className="text-sm text-muted-foreground">Uploading...</p>}
+                {form.image && (
+                  <div className="mt-2">
+                    <img src={form.image.startsWith('http') ? form.image : `http://localhost:3001${form.image}`} alt="Preview" className="max-h-40 rounded-md border" />
+                  </div>
+                )}
               </div>
               <div className="space-y-2 md:col-span-2">
                 <Label htmlFor="description">Description</Label>

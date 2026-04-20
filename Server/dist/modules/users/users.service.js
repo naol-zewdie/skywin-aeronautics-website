@@ -94,7 +94,11 @@ let UsersService = class UsersService {
             status: saved.status,
         };
     }
-    async update(id, payload) {
+    async update(id, payload, currentUserId) {
+        const targetUser = await this.findOne(id);
+        if (targetUser.role === 'admin' && currentUserId !== id) {
+            throw new Error('Cannot edit another admin account');
+        }
         if (!this.userModel) {
             const index = this.fallbackUsers.findIndex((item) => item.id === id);
             if (index === -1) {
@@ -118,7 +122,10 @@ let UsersService = class UsersService {
             status: updated.status,
         };
     }
-    async remove(id) {
+    async remove(id, currentUserId) {
+        if (id === currentUserId) {
+            throw new Error('Cannot delete your own account');
+        }
         if (!this.userModel) {
             const index = this.fallbackUsers.findIndex((item) => item.id === id);
             if (index === -1) {

@@ -7,7 +7,14 @@ export declare class ProductsService {
     private readonly productModel?;
     private readonly fallbackProducts;
     constructor(productModel?: Model<Product> | undefined);
-    findAll(): Promise<ProductDto[]>;
+    findAll(filters?: {
+        search?: string;
+        category?: string;
+        minPrice?: number;
+        maxPrice?: number;
+        status?: boolean;
+    }): Promise<ProductDto[]>;
+    exportToCsv(products: ProductDto[]): string;
     findOne(id: string): Promise<ProductDto>;
     create(payload: CreateProductDto): Promise<ProductDto>;
     update(id: string, payload: UpdateProductDto): Promise<ProductDto>;

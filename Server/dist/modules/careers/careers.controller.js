@@ -19,6 +19,8 @@ const create_career_opening_dto_1 = require("./dto/create-career-opening.dto");
 const career_opening_dto_1 = require("./dto/career-opening.dto");
 const update_career_opening_dto_1 = require("./dto/update-career-opening.dto");
 const careers_service_1 = require("./careers.service");
+const jwt_auth_guard_1 = require("../auth/jwt-auth.guard");
+const roles_guard_1 = require("../../common/guards/roles.guard");
 let CareersController = class CareersController {
     careersService;
     constructor(careersService) {
@@ -43,6 +45,7 @@ let CareersController = class CareersController {
 exports.CareersController = CareersController;
 __decorate([
     (0, common_1.Get)(),
+    (0, roles_guard_1.Roles)(roles_guard_1.Role.ADMIN, roles_guard_1.Role.OPERATOR, roles_guard_1.Role.VIEWER),
     (0, swagger_1.ApiOperation)({ summary: 'List open career positions' }),
     (0, swagger_1.ApiOkResponse)({ type: career_opening_dto_1.CareerOpeningDto, isArray: true }),
     __metadata("design:type", Function),
@@ -51,8 +54,9 @@ __decorate([
 ], CareersController.prototype, "getOpenings", null);
 __decorate([
     (0, common_1.Get)(':id'),
+    (0, roles_guard_1.Roles)(roles_guard_1.Role.ADMIN, roles_guard_1.Role.OPERATOR, roles_guard_1.Role.VIEWER),
     (0, swagger_1.ApiOperation)({ summary: 'Get career opening by id' }),
-    (0, swagger_1.ApiParam)({ name: 'id', type: 'string' }),
+    (0, swagger_1.ApiParam)({ name: 'id', type: 'string', description: 'Career Opening ID' }),
     (0, swagger_1.ApiOkResponse)({ type: career_opening_dto_1.CareerOpeningDto }),
     __param(0, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
@@ -61,6 +65,7 @@ __decorate([
 ], CareersController.prototype, "getOpening", null);
 __decorate([
     (0, common_1.Post)(),
+    (0, roles_guard_1.Roles)(roles_guard_1.Role.ADMIN, roles_guard_1.Role.OPERATOR),
     (0, swagger_1.ApiOperation)({ summary: 'Create career opening' }),
     (0, swagger_1.ApiCreatedResponse)({ type: career_opening_dto_1.CareerOpeningDto }),
     __param(0, (0, common_1.Body)()),
@@ -70,8 +75,9 @@ __decorate([
 ], CareersController.prototype, "createOpening", null);
 __decorate([
     (0, common_1.Patch)(':id'),
+    (0, roles_guard_1.Roles)(roles_guard_1.Role.ADMIN, roles_guard_1.Role.OPERATOR),
     (0, swagger_1.ApiOperation)({ summary: 'Update career opening' }),
-    (0, swagger_1.ApiParam)({ name: 'id', type: 'string' }),
+    (0, swagger_1.ApiParam)({ name: 'id', type: 'string', description: 'Career Opening ID' }),
     (0, swagger_1.ApiOkResponse)({ type: career_opening_dto_1.CareerOpeningDto }),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.Body)()),
@@ -82,8 +88,9 @@ __decorate([
 __decorate([
     (0, common_1.Delete)(':id'),
     (0, common_1.HttpCode)(204),
+    (0, roles_guard_1.Roles)(roles_guard_1.Role.ADMIN, roles_guard_1.Role.OPERATOR),
     (0, swagger_1.ApiOperation)({ summary: 'Delete career opening' }),
-    (0, swagger_1.ApiParam)({ name: 'id', type: 'string' }),
+    (0, swagger_1.ApiParam)({ name: 'id', type: 'string', description: 'Career Opening ID' }),
     (0, swagger_1.ApiNoContentResponse)({ description: 'Career opening deleted' }),
     __param(0, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
@@ -93,6 +100,8 @@ __decorate([
 exports.CareersController = CareersController = __decorate([
     (0, swagger_1.ApiTags)('Careers'),
     (0, common_1.Controller)('careers'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+    (0, swagger_1.ApiBearerAuth)('JWT-auth'),
     __metadata("design:paramtypes", [careers_service_1.CareersService])
 ], CareersController);
 //# sourceMappingURL=careers.controller.js.map

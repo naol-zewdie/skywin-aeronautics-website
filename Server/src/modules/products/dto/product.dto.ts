@@ -16,8 +16,8 @@ export class ProductDto {
   @ApiProperty({ example: 15000.99 })
   price: number;
 
-  @ApiProperty({ example: 'https://example.com/images/wing-spar.jpg' })
-  image: string;
+  @ApiProperty({ example: 'https://example.com/images/wing-spar.jpg', required: false })
+  image?: string;
 
   @ApiProperty({ example: 25 })
   stock: number;

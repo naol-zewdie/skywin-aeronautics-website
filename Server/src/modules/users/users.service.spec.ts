@@ -21,14 +21,17 @@ describe('UsersService', () => {
     save: jest.fn().mockResolvedValue(true),
   };
 
-  const mockUserModel = {
-    find: jest.fn(),
-    findById: jest.fn(),
-    findByIdAndUpdate: jest.fn(),
-    findByIdAndDelete: jest.fn(),
-    create: jest.fn(),
-    exec: jest.fn(),
-  };
+  const mockUserModel = jest.fn().mockImplementation((payload) => ({
+    ...payload,
+    _id: 'new-generated-id',
+    save: jest.fn().mockResolvedValue({ _id: 'new-generated-id', ...payload }),
+  }));
+  mockUserModel.find = jest.fn();
+  mockUserModel.findById = jest.fn();
+  mockUserModel.findByIdAndUpdate = jest.fn();
+  mockUserModel.findByIdAndDelete = jest.fn();
+  mockUserModel.create = jest.fn();
+  mockUserModel.exec = jest.fn();
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -178,6 +181,10 @@ describe('UsersService', () => {
         fullName: 'Updated Name',
       };
 
+      mockUserModel.findById.mockReturnValue({
+        exec: jest.fn().mockResolvedValue(mockUser),
+      });
+
       mockUserModel.findByIdAndUpdate.mockReturnValue({
         exec: jest.fn().mockResolvedValue({
           ...mockUser,
@@ -185,7 +192,7 @@ describe('UsersService', () => {
         }),
       });
 
-      const result = await service.update('507f1f77bcf86cd799439011', updateUserDto);
+      const result = await service.update('507f1f77bcf86cd799439011', updateUserDto, '507f1f77bcf86cd799439011');
 
       expect(result).toHaveProperty('fullName', 'Updated Name');
       expect(mockUserModel.findByIdAndUpdate).toHaveBeenCalledWith(
@@ -199,7 +206,7 @@ describe('UsersService', () => {
     });
 
     it('should throw NotFoundException when updating non-existent user', async () => {
-      mockUserModel.findByIdAndUpdate.mockReturnValue({
+      mockUserModel.findById.mockReturnValue({
         exec: jest.fn().mockResolvedValue(null),
       });
 

@@ -93,7 +93,14 @@ export class UsersService {
     };
   }
 
-  async update(id: string, payload: UpdateUserDto): Promise<UserDto> {
+  async update(id: string, payload: UpdateUserDto, currentUserId?: string): Promise<UserDto> {
+    const targetUser = await this.findOne(id);
+
+    // Prevent admin from editing another admin
+    if (targetUser.role === 'admin' && currentUserId !== id) {
+      throw new Error('Cannot edit another admin account');
+    }
+
     if (!this.userModel) {
       const index = this.fallbackUsers.findIndex((item) => item.id === id);
       if (index === -1) {
@@ -124,7 +131,12 @@ export class UsersService {
     };
   }
 
-  async remove(id: string): Promise<void> {
+  async remove(id: string, currentUserId?: string): Promise<void> {
+    // Prevent deleting the logged-in user
+    if (id === currentUserId) {
+      throw new Error('Cannot delete your own account');
+    }
+
     if (!this.userModel) {
       const index = this.fallbackUsers.findIndex((item) => item.id === id);
       if (index === -1) {

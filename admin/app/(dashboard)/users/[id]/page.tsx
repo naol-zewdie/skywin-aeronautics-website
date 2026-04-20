@@ -22,7 +22,7 @@ export default function EditUserPage() {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [form, setForm] = useState({ fullName: '', email: '', role: 'viewer' as 'admin' | 'it' | 'hr' | 'viewer', status: true });
+  const [form, setForm] = useState({ fullName: '', email: '', role: 'viewer' as 'admin' | 'operator' | 'viewer', status: true });
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -47,8 +47,17 @@ export default function EditUserPage() {
       await usersApi.update(params.id as string, form);
       toast({ title: 'Success', description: 'User updated successfully' });
       router.push('/users');
-    } catch {
-      toast({ title: 'Error', description: 'Failed to update user', variant: 'destructive' });
+    } catch (error: any) {
+      console.error('Error updating user:', error);
+      let errorMessage = 'Failed to update user';
+      
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      toast({ title: 'Error', description: errorMessage, variant: 'destructive' });
     } finally {
       setIsSaving(false);
     }
@@ -75,8 +84,7 @@ export default function EditUserPage() {
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="admin">Admin</SelectItem>
-                    <SelectItem value="it">IT</SelectItem>
-                    <SelectItem value="hr">HR</SelectItem>
+                    <SelectItem value="operator">Operator</SelectItem>
                     <SelectItem value="viewer">Viewer</SelectItem>
                   </SelectContent>
                 </Select>

@@ -23,14 +23,17 @@ describe('ProductsService', () => {
     save: jest.fn().mockResolvedValue(true),
   };
 
-  const mockProductModel = {
-    find: jest.fn(),
-    findById: jest.fn(),
-    findByIdAndUpdate: jest.fn(),
-    findByIdAndDelete: jest.fn(),
-    create: jest.fn(),
-    exec: jest.fn(),
-  };
+  const mockProductModel = jest.fn().mockImplementation((payload) => ({
+    ...payload,
+    _id: 'new-generated-id',
+    save: jest.fn().mockResolvedValue({ _id: 'new-generated-id', ...payload }),
+  }));
+  mockProductModel.find = jest.fn();
+  mockProductModel.findById = jest.fn();
+  mockProductModel.findByIdAndUpdate = jest.fn();
+  mockProductModel.findByIdAndDelete = jest.fn();
+  mockProductModel.create = jest.fn();
+  mockProductModel.exec = jest.fn();
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({

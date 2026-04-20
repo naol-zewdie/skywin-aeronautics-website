@@ -21,14 +21,17 @@ describe('CareersService', () => {
     save: jest.fn().mockResolvedValue(true),
   };
 
-  const mockCareerOpeningModel = {
-    find: jest.fn(),
-    findById: jest.fn(),
-    findByIdAndUpdate: jest.fn(),
-    findByIdAndDelete: jest.fn(),
-    create: jest.fn(),
-    exec: jest.fn(),
-  };
+  const mockCareerOpeningModel = jest.fn().mockImplementation((payload) => ({
+    ...payload,
+    _id: 'new-generated-id',
+    save: jest.fn().mockResolvedValue({ _id: 'new-generated-id', ...payload }),
+  }));
+  mockCareerOpeningModel.find = jest.fn();
+  mockCareerOpeningModel.findById = jest.fn();
+  mockCareerOpeningModel.findByIdAndUpdate = jest.fn();
+  mockCareerOpeningModel.findByIdAndDelete = jest.fn();
+  mockCareerOpeningModel.create = jest.fn();
+  mockCareerOpeningModel.exec = jest.fn();
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -152,7 +155,7 @@ describe('CareersService', () => {
     });
 
     it('should validate description minimum length', async () => {
-      const shortDesc = 'Too short description';
+      const shortDesc = 'Short desc';
       expect(shortDesc.length).toBeLessThan(20);
     });
 

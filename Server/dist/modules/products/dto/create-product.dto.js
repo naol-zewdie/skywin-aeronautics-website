@@ -34,7 +34,6 @@ __decorate([
     (0, class_validator_1.IsString)({ message: 'Category must be a string' }),
     (0, class_validator_1.MinLength)(2, { message: 'Category must be at least 2 characters' }),
     (0, class_validator_1.MaxLength)(50, { message: 'Category cannot exceed 50 characters' }),
-    (0, class_validator_1.Matches)(/^[a-zA-Z\s]+$/, { message: 'Category can only contain letters and spaces' }),
     __metadata("design:type", String)
 ], CreateProductDto.prototype, "category", void 0);
 __decorate([
@@ -48,11 +47,11 @@ __decorate([
     (0, swagger_1.ApiProperty)({ example: 15000.99, description: 'Product price' }),
     (0, class_validator_1.IsNumber)({}, { message: 'Price must be a number' }),
     (0, class_validator_1.Min)(0, { message: 'Price cannot be negative' }),
-    (0, class_validator_1.Max)(1000000, { message: 'Price cannot exceed 1,000,000' }),
     __metadata("design:type", Number)
 ], CreateProductDto.prototype, "price", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: 'https://example.com/images/wing-spar.jpg', description: 'Product image URL' }),
+    (0, swagger_1.ApiProperty)({ example: 'https://example.com/images/wing-spar.jpg', description: 'Product image URL', required: false }),
+    (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsUrl)({}, { message: 'Image must be a valid URL' }),
     (0, class_validator_1.MaxLength)(500, { message: 'Image URL cannot exceed 500 characters' }),
     __metadata("design:type", String)
@@ -61,7 +60,6 @@ __decorate([
     (0, swagger_1.ApiProperty)({ example: 25, description: 'Product stock quantity' }),
     (0, class_validator_1.IsNumber)({}, { message: 'Stock must be a number' }),
     (0, class_validator_1.Min)(0, { message: 'Stock cannot be negative' }),
-    (0, class_validator_1.Max)(100000, { message: 'Stock cannot exceed 100,000' }),
     __metadata("design:type", Number)
 ], CreateProductDto.prototype, "stock", void 0);
 __decorate([

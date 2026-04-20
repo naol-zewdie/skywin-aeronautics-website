@@ -31,10 +31,19 @@ export default function ProductsPage() {
     try {
       const data = await productsApi.getAll();
       setProducts(data);
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Error loading products:', error);
+      let errorMessage = 'Failed to load products';
+      
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
       toast({
         title: 'Error',
-        description: 'Failed to load products',
+        description: errorMessage,
         variant: 'destructive',
       });
     } finally {
@@ -57,10 +66,19 @@ export default function ProductsPage() {
         description: 'Product deleted successfully',
       });
       fetchProducts();
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Error deleting product:', error);
+      let errorMessage = 'Failed to delete product';
+      
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
       toast({
         title: 'Error',
-        description: 'Failed to delete product',
+        description: errorMessage,
         variant: 'destructive',
       });
     } finally {

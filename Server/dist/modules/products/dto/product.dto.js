@@ -43,7 +43,7 @@ __decorate([
     __metadata("design:type", Number)
 ], ProductDto.prototype, "price", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: 'https://example.com/images/wing-spar.jpg' }),
+    (0, swagger_1.ApiProperty)({ example: 'https://example.com/images/wing-spar.jpg', required: false }),
     __metadata("design:type", String)
 ], ProductDto.prototype, "image", void 0);
 __decorate([

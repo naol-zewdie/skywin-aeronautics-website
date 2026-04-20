@@ -19,6 +19,8 @@ const create_user_dto_1 = require("./dto/create-user.dto");
 const update_user_dto_1 = require("./dto/update-user.dto");
 const user_dto_1 = require("./dto/user.dto");
 const users_service_1 = require("./users.service");
+const jwt_auth_guard_1 = require("../auth/jwt-auth.guard");
+const roles_guard_1 = require("../../common/guards/roles.guard");
 let UsersController = class UsersController {
     usersService;
     constructor(usersService) {
@@ -34,16 +36,21 @@ let UsersController = class UsersController {
         return this.usersService.create(payload);
     }
     updateUser(id, payload) {
-        return this.usersService.update(id, payload);
+        const req = this.req || {};
+        const currentUserId = req.user?.sub;
+        return this.usersService.update(id, payload, currentUserId);
     }
     removeUser(id) {
-        return this.usersService.remove(id);
+        const req = this.req || {};
+        const currentUserId = req.user?.sub;
+        return this.usersService.remove(id, currentUserId);
     }
 };
 exports.UsersController = UsersController;
 __decorate([
     (0, common_1.Get)(),
-    (0, swagger_1.ApiOperation)({ summary: 'List all users' }),
+    (0, roles_guard_1.Roles)(roles_guard_1.Role.ADMIN),
+    (0, swagger_1.ApiOperation)({ summary: 'List all users (Admin only)' }),
     (0, swagger_1.ApiOkResponse)({ type: user_dto_1.UserDto, isArray: true }),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
@@ -51,8 +58,9 @@ __decorate([
 ], UsersController.prototype, "getUsers", null);
 __decorate([
     (0, common_1.Get)(':id'),
-    (0, swagger_1.ApiOperation)({ summary: 'Get user by id' }),
-    (0, swagger_1.ApiParam)({ name: 'id', type: 'string' }),
+    (0, roles_guard_1.Roles)(roles_guard_1.Role.ADMIN),
+    (0, swagger_1.ApiOperation)({ summary: 'Get user by id (Admin only)' }),
+    (0, swagger_1.ApiParam)({ name: 'id', type: 'string', description: 'User ID' }),
     (0, swagger_1.ApiOkResponse)({ type: user_dto_1.UserDto }),
     __param(0, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
@@ -61,7 +69,8 @@ __decorate([
 ], UsersController.prototype, "getUser", null);
 __decorate([
     (0, common_1.Post)(),
-    (0, swagger_1.ApiOperation)({ summary: 'Create user' }),
+    (0, roles_guard_1.Roles)(roles_guard_1.Role.ADMIN),
+    (0, swagger_1.ApiOperation)({ summary: 'Create user (Admin only)' }),
     (0, swagger_1.ApiCreatedResponse)({ type: user_dto_1.UserDto }),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
@@ -70,8 +79,9 @@ __decorate([
 ], UsersController.prototype, "createUser", null);
 __decorate([
     (0, common_1.Patch)(':id'),
-    (0, swagger_1.ApiOperation)({ summary: 'Update user' }),
-    (0, swagger_1.ApiParam)({ name: 'id', type: 'string' }),
+    (0, roles_guard_1.Roles)(roles_guard_1.Role.ADMIN),
+    (0, swagger_1.ApiOperation)({ summary: 'Update user (Admin only)' }),
+    (0, swagger_1.ApiParam)({ name: 'id', type: 'string', description: 'User ID' }),
     (0, swagger_1.ApiOkResponse)({ type: user_dto_1.UserDto }),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.Body)()),
@@ -82,8 +92,9 @@ __decorate([
 __decorate([
     (0, common_1.Delete)(':id'),
     (0, common_1.HttpCode)(204),
-    (0, swagger_1.ApiOperation)({ summary: 'Delete user' }),
-    (0, swagger_1.ApiParam)({ name: 'id', type: 'string' }),
+    (0, roles_guard_1.Roles)(roles_guard_1.Role.ADMIN),
+    (0, swagger_1.ApiOperation)({ summary: 'Delete user (Admin only)' }),
+    (0, swagger_1.ApiParam)({ name: 'id', type: 'string', description: 'User ID' }),
     (0, swagger_1.ApiNoContentResponse)({ description: 'User deleted' }),
     __param(0, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
@@ -93,6 +104,8 @@ __decorate([
 exports.UsersController = UsersController = __decorate([
     (0, swagger_1.ApiTags)('Users'),
     (0, common_1.Controller)('users'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+    (0, swagger_1.ApiBearerAuth)('JWT-auth'),
     __metadata("design:paramtypes", [users_service_1.UsersService])
 ], UsersController);
 //# sourceMappingURL=users.controller.js.map

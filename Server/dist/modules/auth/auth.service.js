@@ -44,6 +44,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
+var AuthService_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AuthService = void 0;
 const common_1 = require("@nestjs/common");
@@ -52,32 +53,33 @@ const mongoose_1 = require("@nestjs/mongoose");
 const mongoose_2 = require("mongoose");
 const bcrypt = __importStar(require("bcrypt"));
 const user_schema_1 = require("../users/schemas/user.schema");
-let AuthService = class AuthService {
+let AuthService = AuthService_1 = class AuthService {
     jwtService;
     userModel;
+    logger = new common_1.Logger(AuthService_1.name);
     fallbackUsers = [
         {
             id: 'u_001',
             fullName: 'Amelia Hart',
             email: 'admin@skywin.aero',
             role: 'admin',
-            password: 'admin123',
+            passwordHash: '$2b$10$hsSWtDbNM/Xw/6ZPzKpqIun2BrysA.pZDD0dNFEwAPqilPvc9pxbi',
             status: true,
         },
         {
             id: 'u_002',
             fullName: 'Rohan Mehta',
-            email: 'rohan@skywin.aero',
+            email: 'it@skywin.aero',
             role: 'it',
-            password: 'rohan123',
+            passwordHash: '$2b$10$L1CpHR7/g0NUcZzQCrG7weSZQ1kcaDLwYyDIVMHXD.bZoNY9nzqcC',
             status: true,
         },
         {
             id: 'u_003',
             fullName: 'Sara Chen',
-            email: 'sara@skywin.aero',
+            email: 'hr@skywin.aero',
             role: 'hr',
-            password: 'sara123',
+            passwordHash: '$2b$10$1fAq96Wwbe1RKHz41P2qHeQbhr6ie55YDizegZIh/WAySizk3COBq',
             status: true,
         },
     ];
@@ -86,37 +88,111 @@ let AuthService = class AuthService {
         this.userModel = userModel;
     }
     async validateUser(email, password) {
+        const invalidCredentialsError = new common_1.UnauthorizedException('Authentication failed');
         if (!this.userModel) {
             const user = this.fallbackUsers.find((u) => u.email === email);
-            if (!user || user.password !== password) {
-                throw new common_1.UnauthorizedException('Invalid credentials');
+            if (!user || !user.status) {
+                await bcrypt.compare('dummy', '$2b$10$dummyhashfordummycomparison');
+                throw invalidCredentialsError;
             }
-            const { password: _, ...result } = user;
+            const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
+            if (!isPasswordValid) {
+                throw invalidCredentialsError;
+            }
+            const { passwordHash: _, ...result } = user;
             return result;
         }
         const user = await this.userModel.findOne({ email }).exec();
-        if (!user) {
-            throw new common_1.UnauthorizedException('Invalid credentials');
+        if (!user || !user.status) {
+            await bcrypt.compare('dummy', '$2b$10$dummyhashfordummycomparison');
+            throw invalidCredentialsError;
         }
         const isPasswordValid = await bcrypt.compare(password, user.password);
         if (!isPasswordValid) {
-            throw new common_1.UnauthorizedException('Invalid credentials');
+            throw invalidCredentialsError;
         }
-        const { password: _, ...result } = user.toObject();
-        return result;
+        return {
+            id: user._id.toString(),
+            fullName: user.fullName,
+            email: user.email,
+            role: user.role,
+            status: user.status,
+        };
     }
     async login(user) {
-        const payload = { email: user.email, sub: user.id || user._id, role: user.role };
+        const tokens = await this.generateTokens({
+            email: user.email,
+            sub: user.id,
+            role: user.role,
+        });
+        this.logger.log(`User logged in: ${user.email} (${user.role})`);
         return {
-            token: this.jwtService.sign(payload),
-            user: {
-                id: user.id || user._id?.toString(),
-                fullName: user.fullName,
-                email: user.email,
-                role: user.role,
-                status: user.status,
-            },
+            ...tokens,
+            user,
         };
+    }
+    async refreshToken(refreshToken) {
+        try {
+            const payload = this.jwtService.verify(refreshToken, {
+                secret: process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET,
+            });
+            if (payload.type !== 'refresh') {
+                throw new common_1.UnauthorizedException('Invalid token type');
+            }
+            const user = await this.getMe(payload.sub);
+            if (!user || !user.status) {
+                throw new common_1.UnauthorizedException('User not found or inactive');
+            }
+            return this.generateTokens({
+                email: payload.email,
+                sub: payload.sub,
+                role: payload.role,
+            });
+        }
+        catch (error) {
+            this.logger.warn('Token refresh failed', error);
+            throw new common_1.UnauthorizedException('Invalid or expired refresh token');
+        }
+    }
+    async generateTokens(payload) {
+        const accessTokenExpiresIn = process.env.JWT_EXPIRES_IN || '15m';
+        const refreshTokenExpiresIn = process.env.JWT_REFRESH_EXPIRES_IN || '7d';
+        const [accessToken, refreshToken] = await Promise.all([
+            this.jwtService.signAsync({
+                email: payload.email,
+                sub: payload.sub,
+                role: payload.role,
+                type: 'access',
+            }, {
+                expiresIn: accessTokenExpiresIn,
+            }),
+            this.jwtService.signAsync({
+                email: payload.email,
+                sub: payload.sub,
+                role: payload.role,
+                type: 'refresh',
+            }, {
+                expiresIn: refreshTokenExpiresIn,
+                secret: process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET,
+            }),
+        ]);
+        const expiresInSeconds = this.parseExpirationToSeconds(accessTokenExpiresIn);
+        const expiresAt = Date.now() + expiresInSeconds * 1000;
+        return { accessToken, refreshToken, expiresAt };
+    }
+    parseExpirationToSeconds(expiresIn) {
+        const match = expiresIn.match(/^(\d+)([smhd])$/);
+        if (!match)
+            return 900;
+        const value = parseInt(match[1], 10);
+        const unit = match[2];
+        const multipliers = {
+            s: 1,
+            m: 60,
+            h: 3600,
+            d: 86400,
+        };
+        return value * (multipliers[unit] || 60);
     }
     async getMe(userId) {
         if (!this.userModel) {
@@ -124,7 +200,7 @@ let AuthService = class AuthService {
             if (!user) {
                 throw new common_1.UnauthorizedException('User not found');
             }
-            const { password: _, ...result } = user;
+            const { passwordHash: _, ...result } = user;
             return result;
         }
         const user = await this.userModel.findById(userId).exec();
@@ -139,9 +215,12 @@ let AuthService = class AuthService {
             status: user.status,
         };
     }
+    async logout(userId) {
+        this.logger.log(`User logged out: ${userId}`);
+    }
 };
 exports.AuthService = AuthService;
-exports.AuthService = AuthService = __decorate([
+exports.AuthService = AuthService = AuthService_1 = __decorate([
     (0, common_1.Injectable)(),
     __param(1, (0, common_1.Optional)()),
     __param(1, (0, mongoose_1.InjectModel)(user_schema_1.User.name)),

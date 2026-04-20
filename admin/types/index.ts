@@ -2,7 +2,7 @@ export interface User {
   id: string;
   fullName: string;
   email: string;
-  role: 'admin' | 'it' | 'hr' | 'viewer';
+  role: 'admin' | 'operator' | 'viewer';
   status: boolean;
   audit?: AuditInfo;
 }
@@ -20,7 +20,7 @@ export interface Product {
   category: string;
   description: string;
   price: number;
-  image: string;
+  image?: string;
   stock: number;
   status: boolean;
   audit?: AuditInfo;
@@ -50,7 +50,9 @@ export interface LoginCredentials {
 }
 
 export interface AuthResponse {
-  token: string;
+  token: string;        // accessToken (for backward compatibility)
+  refreshToken: string;
+  expiresAt: number;    // Timestamp when access token expires
   user: User;
 }
 
