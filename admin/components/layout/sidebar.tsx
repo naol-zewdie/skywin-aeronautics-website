@@ -13,6 +13,7 @@ import {
   Settings,
   LogOut,
   Shield,
+  Newspaper,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -21,6 +22,7 @@ const navigation = [
   { name: 'Products', href: '/products', icon: Package, roles: ['admin', 'operator'] },
   { name: 'Services', href: '/services', icon: Wrench, roles: ['admin', 'operator'] },
   { name: 'Careers', href: '/careers', icon: Briefcase, roles: ['admin', 'operator'] },
+  { name: 'Posts', href: '/posts', icon: Newspaper, roles: ['admin', 'operator'] },
   { name: 'Users', href: '/users', icon: Users, roles: ['admin'] },
   { name: 'Settings', href: '/settings', icon: Settings, roles: ['admin'] },
 ];
