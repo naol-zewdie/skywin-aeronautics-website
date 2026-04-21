@@ -75,42 +75,31 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Dashboard</h1>
+          <h1 className="text-2xl md:text-3xl font-bold">Dashboard</h1>
           <p className="text-muted-foreground">
             Welcome back! Here's an overview of your system.
           </p>
         </div>
-        <div className="flex items-center gap-4">
-          <div className="relative">
+        <div className="flex items-center gap-4 w-full sm:w-auto">
+          <div className="relative w-full sm:w-64">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <input
               type="text"
               placeholder="Search..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 pr-4 py-2 border rounded-md bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              className="pl-10 pr-4 py-2 border rounded-md bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring w-full"
             />
           </div>
-          <Card className="p-3">
-            <div className="flex items-center gap-3">
-              <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                <User className="h-4 w-4 text-primary" />
-              </div>
-              <div>
-                <p className="text-sm font-medium">{user?.fullName}</p>
-                <p className="text-xs text-muted-foreground capitalize">{user?.role}</p>
-              </div>
-            </div>
-          </Card>
         </div>
       </div>
 
       {/* Stats Grid */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         {statCards.map((stat) => (
-          <Card key={stat.title}>
+          <Card key={stat.title} className="bg-gradient-to-br from-card to-blue-50/20 dark:to-blue-950/10 border-blue-100/50 dark:border-blue-900/20 midnight-border">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
               <stat.icon className="h-4 w-4 text-muted-foreground" />
@@ -142,13 +131,13 @@ export default function DashboardPage() {
       </div>
 
       {/* Quick Actions */}
-      <Card>
+      <Card className="midnight-border">
         <CardHeader>
-          <CardTitle>Quick Actions</CardTitle>
+          <CardTitle className="midnight-text">Quick Actions</CardTitle>
           <CardDescription>Common tasks you might want to perform</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3">
             <Button variant="outline" className="h-auto p-4 flex flex-col items-center gap-2" asChild>
               <Link href="/products/new">
                 <Package className="h-6 w-6" />
@@ -178,9 +167,9 @@ export default function DashboardPage() {
       </Card>
 
       {/* Recent Activity */}
-      <Card>
+      <Card className="midnight-border">
         <CardHeader>
-          <CardTitle>Recent Activity</CardTitle>
+          <CardTitle className="midnight-text">Recent Activity</CardTitle>
           <CardDescription>Latest actions performed in the system</CardDescription>
         </CardHeader>
         <CardContent>
@@ -211,6 +200,8 @@ export default function DashboardPage() {
                         ? 'bg-green-100 text-green-800'
                         : activity.entityType === 'service'
                         ? 'bg-purple-100 text-purple-800'
+                        : activity.entityType === 'post'
+                        ? 'bg-pink-100 text-pink-800'
                         : 'bg-orange-100 text-orange-800'
                     }`}
                   >
