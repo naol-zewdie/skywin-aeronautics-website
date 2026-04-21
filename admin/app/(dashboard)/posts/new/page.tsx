@@ -12,11 +12,14 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { postsApi, uploadApi } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
 
 export default function NewPostPage() {
   const router = useRouter();
   const { toast } = useToast();
+  const { hasRole } = useAuth();
+  const isAdmin = hasRole(['admin']);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [form, setForm] = useState({
@@ -30,7 +33,7 @@ export default function NewPostPage() {
     tags: '',
     eventDate: '',
     eventLocation: '',
-    status: true,
+    status: false,
   });
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [imageInputType, setImageInputType] = useState<'upload' | 'url'>('upload');
@@ -83,7 +86,8 @@ export default function NewPostPage() {
       if (postData.tags) finalData.tags = postData.tags.split(',').map(t => t.trim()).filter(t => t);
       if (postData.eventDate && postData.type === 'event') finalData.eventDate = new Date(postData.eventDate).toISOString();
       if (postData.eventLocation && postData.type === 'event') finalData.eventLocation = postData.eventLocation;
-      if (postData.status !== undefined) finalData.status = postData.status;
+      // Only include status if user is admin
+      if (isAdmin && postData.status !== undefined) finalData.status = postData.status;
       
       await postsApi.create(finalData);
       toast({ title: 'Success', description: 'Post created successfully' });
@@ -267,14 +271,16 @@ export default function NewPostPage() {
                 </>
               )}
 
-              <div className="flex items-center space-x-2 pt-6">
-                <Switch
-                  id="status"
-                  checked={form.status}
-                  onCheckedChange={(checked) => setForm({ ...form, status: checked })}
-                />
-                <Label htmlFor="status">Published</Label>
-              </div>
+              {isAdmin && (
+                <div className="flex items-center space-x-2 pt-6">
+                  <Switch
+                    id="status"
+                    checked={form.status}
+                    onCheckedChange={(checked) => setForm({ ...form, status: checked })}
+                  />
+                  <Label htmlFor="status">Published</Label>
+                </div>
+              )}
             </div>
 
             <div className="flex gap-2 pt-4">

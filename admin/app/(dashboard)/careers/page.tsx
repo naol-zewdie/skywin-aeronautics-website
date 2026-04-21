@@ -18,6 +18,7 @@ import {
 import { careersApi } from '@/lib/api';
 import type { CareerOpening } from '@/types';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 import { Badge } from '@/components/ui/badge';
 
 export default function CareersPage() {
@@ -26,11 +27,16 @@ export default function CareersPage() {
   const [deleteCareer, setDeleteCareer] = useState<CareerOpening | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const { toast } = useToast();
+  const { hasRole } = useAuth();
+  const canManage = hasRole(['admin', 'operator']);
+  const isAdmin = hasRole(['admin']);
 
   const fetchCareers = async () => {
     try {
       const data = await careersApi.getAll();
-      setCareers(data);
+      // Filter to show only active items for non-admins
+      const filteredData = isAdmin ? data : data.filter(c => c.status);
+      setCareers(filteredData);
     } catch (error) {
       toast({
         title: 'Error',
@@ -93,6 +99,32 @@ export default function CareersPage() {
     }
   };
 
+  const handleToggleStatus = async (career: CareerOpening) => {
+    try {
+      await careersApi.toggleStatus(career.id);
+      toast({
+        title: 'Success',
+        description: `Career status toggled successfully`,
+      });
+      fetchCareers();
+    } catch (error: any) {
+      console.error('Error toggling career status:', error);
+      let errorMessage = 'Failed to toggle career status';
+      
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      toast({
+        title: 'Error',
+        description: errorMessage,
+        variant: 'destructive',
+      });
+    }
+  };
+
   const columns = [
     { key: 'title', header: 'Title' },
     { key: 'location', header: 'Location' },
@@ -124,12 +156,14 @@ export default function CareersPage() {
             <Download className="mr-2 h-4 w-4" />
             Export PDF
           </Button>
-          <Button asChild>
-            <Link href="/careers/new">
-              <Plus className="mr-2 h-4 w-4" />
-              New Opening
-            </Link>
-          </Button>
+          {canManage && (
+            <Button asChild>
+              <Link href="/careers/new">
+                <Plus className="mr-2 h-4 w-4" />
+                New Opening
+              </Link>
+            </Button>
+          )}
         </div>
       </div>
 
@@ -138,7 +172,11 @@ export default function CareersPage() {
         columns={columns}
         isLoading={isLoading}
         basePath="/careers"
-        onDelete={setDeleteCareer}
+        onDelete={canManage ? setDeleteCareer : undefined}
+        onToggleStatus={isAdmin ? handleToggleStatus : undefined}
+        canEdit={canManage}
+        canDelete={canManage}
+        canToggle={isAdmin}
         idKey="id"
         statusKey="status"
         emptyMessage="No job openings found. Create your first opening to get started."

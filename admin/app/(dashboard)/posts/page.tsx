@@ -24,11 +24,14 @@ export default function PostsPage() {
   const { hasRole } = useAuth();
 
   const canManage = hasRole(['admin', 'operator']);
+  const isAdmin = hasRole(['admin']);
 
   const fetchPosts = async () => {
     try {
       const data = await postsApi.getAll();
-      setPosts(data);
+      // Filter to show only active items for non-admins
+      const filteredData = isAdmin ? data : data.filter(p => p.status);
+      setPosts(filteredData);
     } catch (error: any) {
       console.error('Error loading posts:', error);
       let errorMessage = 'Failed to load posts';
@@ -99,6 +102,25 @@ export default function PostsPage() {
       toast({ title: 'Success', description: 'Posts exported to PDF' });
     } catch (error: any) {
       toast({ title: 'Error', description: 'Failed to export posts', variant: 'destructive' });
+    }
+  };
+
+  const handleToggleStatus = async (post: Post) => {
+    try {
+      await postsApi.toggleStatus(post.id);
+      toast({ title: 'Success', description: 'Post status toggled successfully' });
+      fetchPosts();
+    } catch (error: any) {
+      console.error('Error toggling post status:', error);
+      let errorMessage = 'Failed to toggle post status';
+      
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      toast({ title: 'Error', description: errorMessage, variant: 'destructive' });
     }
   };
 
@@ -180,8 +202,12 @@ export default function PostsPage() {
             isLoading={isLoading}
             basePath="/posts"
             onDelete={canManage ? setDeletePost : undefined}
+            onToggleStatus={isAdmin ? handleToggleStatus : undefined}
             canEdit={canManage}
             canDelete={canManage}
+            canToggle={isAdmin}
+            idKey="id"
+            statusKey="status"
           />
         </CardContent>
       </Card>

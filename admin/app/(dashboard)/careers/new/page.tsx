@@ -11,19 +11,28 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { careersApi } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
 
 export default function NewCareerPage() {
   const router = useRouter();
   const { toast } = useToast();
+  const { hasRole } = useAuth();
+  const isAdmin = hasRole(['admin']);
   const [isSaving, setIsSaving] = useState(false);
-  const [form, setForm] = useState({ title: '', location: '', employmentType: 'Full-time' as 'Full-time' | 'Part-time' | 'Contract' | 'Internship', description: '', status: true });
+  const [form, setForm] = useState({ title: '', location: '', employmentType: 'Full-time' as 'Full-time' | 'Part-time' | 'Contract' | 'Internship', description: '', status: false });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
     try {
-      await careersApi.create(form);
+      const { status, ...data } = form;
+      const careerData: any = { ...data };
+      // Only include status if user is admin
+      if (isAdmin) {
+        careerData.status = status;
+      }
+      await careersApi.create(careerData);
       toast({ title: 'Success', description: 'Job opening created successfully' });
       router.push('/careers');
     } catch {
@@ -58,7 +67,9 @@ export default function NewCareerPage() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="flex items-center space-x-2 pt-6"><Switch id="status" checked={form.status} onCheckedChange={(checked) => setForm({ ...form, status: checked })} /><Label htmlFor="status">Active</Label></div>
+              {isAdmin && (
+                <div className="flex items-center space-x-2 pt-6"><Switch id="status" checked={form.status} onCheckedChange={(checked) => setForm({ ...form, status: checked })} /><Label htmlFor="status">Active</Label></div>
+              )}
             </div>
             <div className="space-y-2"><Label htmlFor="description">Description</Label><textarea id="description" className="flex min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} required /><p className="text-xs text-muted-foreground">20-2000 characters</p></div>
             <div className="flex gap-2 pt-4">
