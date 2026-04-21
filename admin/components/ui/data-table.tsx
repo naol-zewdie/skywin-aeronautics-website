@@ -11,7 +11,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
-import { Edit, Trash2, MoreHorizontal, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Edit, Trash2, MoreHorizontal, ChevronLeft, ChevronRight, Power } from 'lucide-react';
 import Link from 'next/link';
 import * as React from 'react';
 import { cn } from '@/lib/utils';
@@ -29,8 +29,10 @@ interface DataTableProps<T extends object> {
   isLoading?: boolean;
   onEdit?: (item: T) => void;
   onDelete?: (item: T) => void;
+  onToggleStatus?: (item: T) => void;
   canEdit?: boolean;
   canDelete?: boolean;
+  canToggle?: boolean;
   basePath?: string;
   idKey?: keyof T;
   statusKey?: keyof T;
@@ -43,8 +45,10 @@ export function DataTable<T extends object>({
   isLoading,
   onEdit,
   onDelete,
+  onToggleStatus,
   canEdit = true,
   canDelete = true,
+  canToggle = false,
   basePath,
   idKey = 'id' as keyof T,
   statusKey = 'status' as keyof T,
@@ -80,7 +84,7 @@ export function DataTable<T extends object>({
                 {column.header}
               </TableHead>
             ))}
-            {(canEdit || canDelete) && (
+            {(canEdit || canDelete || canToggle) && (
               <TableHead className="w-[100px]">Actions</TableHead>
             )}
           </TableRow>
@@ -108,9 +112,19 @@ export function DataTable<T extends object>({
                   )}
                 </TableCell>
               ))}
-              {(canEdit || canDelete) && (
+              {(canEdit || canDelete || canToggle) && (
                 <TableCell>
                   <div className="flex items-center gap-2">
+                    {canToggle && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => onToggleStatus?.(item)}
+                        title="Toggle status"
+                      >
+                        <Power className="h-4 w-4" />
+                      </Button>
+                    )}
                     {canEdit && (
                       basePath ? (
                         <Button
