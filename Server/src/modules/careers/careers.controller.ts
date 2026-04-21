@@ -10,6 +10,7 @@ import {
   Res,
   UseGuards,
   Query,
+  Req,
 } from '@nestjs/common';
 import type { Response } from 'express';
 import {
@@ -58,8 +59,18 @@ export class CareersController {
   @ApiCreatedResponse({ type: CareerOpeningDto })
   createOpening(
     @Body() payload: CreateCareerOpeningDto,
+    @Req() req,
   ): Promise<CareerOpeningDto> {
-    return this.careersService.create(payload);
+    return this.careersService.create(payload, req.user?.role);
+  }
+
+  @Patch(':id/toggle-status')
+  @Roles(Role.ADMIN)
+  @ApiOperation({ summary: 'Toggle career opening status (Admin only)' })
+  @ApiParam({ name: 'id', type: 'string', description: 'Career Opening ID' })
+  @ApiOkResponse({ type: CareerOpeningDto })
+  toggleOpeningStatus(@Param('id') id: string): Promise<CareerOpeningDto> {
+    return this.careersService.toggleStatus(id);
   }
 
   @Patch(':id')
@@ -70,8 +81,9 @@ export class CareersController {
   updateOpening(
     @Param('id') id: string,
     @Body() payload: UpdateCareerOpeningDto,
+    @Req() req,
   ): Promise<CareerOpeningDto> {
-    return this.careersService.update(id, payload);
+    return this.careersService.update(id, payload, req.user?.role);
   }
 
   @Delete(':id')

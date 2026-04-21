@@ -10,6 +10,7 @@ import {
   Query,
   Res,
   UseGuards,
+  Req,
 } from '@nestjs/common';
 import {
   ApiCreatedResponse,
@@ -133,8 +134,17 @@ export class PostsController {
   @Roles(Role.ADMIN, Role.OPERATOR)
   @ApiOperation({ summary: 'Create new post' })
   @ApiCreatedResponse({ type: PostDto })
-  createPost(@Body() payload: CreatePostDto): Promise<PostDto> {
-    return this.postsService.create(payload);
+  createPost(@Body() payload: CreatePostDto, @Req() req): Promise<PostDto> {
+    return this.postsService.create(payload, req.user?.role);
+  }
+
+  @Patch(':id/toggle-status')
+  @Roles(Role.ADMIN)
+  @ApiOperation({ summary: 'Toggle post status (Admin only)' })
+  @ApiParam({ name: 'id', type: 'string', description: 'Post ID' })
+  @ApiOkResponse({ type: PostDto })
+  togglePostStatus(@Param('id') id: string): Promise<PostDto> {
+    return this.postsService.toggleStatus(id);
   }
 
   @Patch(':id')
@@ -145,8 +155,9 @@ export class PostsController {
   updatePost(
     @Param('id') id: string,
     @Body() payload: UpdatePostDto,
+    @Req() req,
   ): Promise<PostDto> {
-    return this.postsService.update(id, payload);
+    return this.postsService.update(id, payload, req.user?.role);
   }
 
   @Delete(':id')

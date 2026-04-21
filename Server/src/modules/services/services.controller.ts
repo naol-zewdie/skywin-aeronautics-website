@@ -10,6 +10,7 @@ import {
   Res,
   UseGuards,
   Query,
+  Req,
 } from '@nestjs/common';
 import type { Response } from 'express';
 import {
@@ -56,8 +57,17 @@ export class ServicesController {
   @Roles(Role.ADMIN, Role.OPERATOR)
   @ApiOperation({ summary: 'Create service' })
   @ApiCreatedResponse({ type: ServiceDto })
-  createService(@Body() payload: CreateServiceDto): Promise<ServiceDto> {
-    return this.servicesService.create(payload);
+  createService(@Body() payload: CreateServiceDto, @Req() req): Promise<ServiceDto> {
+    return this.servicesService.create(payload, req.user?.role);
+  }
+
+  @Patch(':id/toggle-status')
+  @Roles(Role.ADMIN)
+  @ApiOperation({ summary: 'Toggle service status (Admin only)' })
+  @ApiParam({ name: 'id', type: 'string', description: 'Service ID' })
+  @ApiOkResponse({ type: ServiceDto })
+  toggleServiceStatus(@Param('id') id: string): Promise<ServiceDto> {
+    return this.servicesService.toggleStatus(id);
   }
 
   @Patch(':id')
@@ -68,8 +78,9 @@ export class ServicesController {
   updateService(
     @Param('id') id: string,
     @Body() payload: UpdateServiceDto,
+    @Req() req,
   ): Promise<ServiceDto> {
-    return this.servicesService.update(id, payload);
+    return this.servicesService.update(id, payload, req.user?.role);
   }
 
   @Delete(':id')
