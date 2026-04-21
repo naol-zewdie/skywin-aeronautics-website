@@ -35,67 +35,16 @@ export interface LoginResult {
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
 
-  // In production, these should come from environment variables or a secure vault
-  private readonly fallbackUsers = [
-    {
-      id: 'u_001',
-      fullName: 'Amelia Hart',
-      email: 'admin@skywin.aero',
-      role: 'admin',
-      // Hashed password: 'admin123' (change in production!)
-      passwordHash: '$2b$10$hsSWtDbNM/Xw/6ZPzKpqIun2BrysA.pZDD0dNFEwAPqilPvc9pxbi',
-      status: true,
-    },
-    {
-      id: 'u_002',
-      fullName: 'Rohan Mehta',
-      email: 'it@skywin.aero',
-      role: 'it',
-      // Hashed password: 'it123' (change in production!)
-      passwordHash: '$2b$10$L1CpHR7/g0NUcZzQCrG7weSZQ1kcaDLwYyDIVMHXD.bZoNY9nzqcC',
-      status: true,
-    },
-    {
-      id: 'u_003',
-      fullName: 'Sara Chen',
-      email: 'hr@skywin.aero',
-      role: 'hr',
-      // Hashed password: 'hr123' (change in production!)
-      passwordHash: '$2b$10$1fAq96Wwbe1RKHz41P2qHeQbhr6ie55YDizegZIh/WAySizk3COBq',
-      status: true,
-    },
-  ];
-
   constructor(
     private jwtService: JwtService,
-    @Optional()
     @InjectModel(User.name)
-    private userModel?: Model<User>,
+    private userModel: Model<User>,
   ) {}
 
   async validateUser(email: string, password: string): Promise<{ id: string; fullName: string; email: string; role: string; status: boolean }> {
     // Security: Generic error message to prevent user enumeration
     const invalidCredentialsError = new UnauthorizedException('Authentication failed');
 
-    // Fallback mode (no DB)
-    if (!this.userModel) {
-      const user = this.fallbackUsers.find((u) => u.email === email);
-      if (!user || !user.status) {
-        // Use constant-time comparison to prevent timing attacks
-        await bcrypt.compare('dummy', '$2b$10$dummyhashfordummycomparison');
-        throw invalidCredentialsError;
-      }
-
-      const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
-      if (!isPasswordValid) {
-        throw invalidCredentialsError;
-      }
-
-      const { passwordHash: _, ...result } = user;
-      return result;
-    }
-
-    // DB mode
     const user = await this.userModel.findOne({ email }).exec();
     if (!user || !user.status) {
       // Prevent timing attacks
@@ -214,17 +163,6 @@ export class AuthService {
   }
 
   async getMe(userId: string): Promise<{ id: string; fullName: string; email: string; role: string; status: boolean } | null> {
-    // Fallback mode
-    if (!this.userModel) {
-      const user = this.fallbackUsers.find((u) => u.id === userId);
-      if (!user) {
-        throw new UnauthorizedException('User not found');
-      }
-      const { passwordHash: _, ...result } = user;
-      return result;
-    }
-
-    // DB mode
     const user = await this.userModel.findById(userId).exec();
     if (!user) {
       throw new UnauthorizedException('User not found');

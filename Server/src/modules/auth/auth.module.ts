@@ -26,7 +26,7 @@ import { User, UserSchema } from '../users/schemas/user.schema';
       },
       inject: [ConfigService],
     }),
-    ...(process.env.ENABLE_DB === 'true' ? [MongooseModule.forFeature([{ name: User.name, schema: UserSchema }])] : []),
+    MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
   ],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy, JwtAuthGuard],
