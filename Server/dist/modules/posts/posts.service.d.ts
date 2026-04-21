@@ -4,9 +4,8 @@ import { PostDto } from './dto/post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { Post, ContentType } from './schemas/post.schema';
 export declare class PostsService {
-    private readonly postModel?;
-    private readonly fallbackPosts;
-    constructor(postModel?: Model<Post> | undefined);
+    private readonly postModel;
+    constructor(postModel: Model<Post>);
     findAll(filters?: {
         type?: ContentType;
         search?: string;
@@ -16,9 +15,10 @@ export declare class PostsService {
     }): Promise<PostDto[]>;
     findByType(type: ContentType): Promise<PostDto[]>;
     findOne(id: string): Promise<PostDto>;
-    create(payload: CreatePostDto): Promise<PostDto>;
-    update(id: string, payload: UpdatePostDto): Promise<PostDto>;
+    create(payload: CreatePostDto, userRole?: string): Promise<PostDto>;
+    update(id: string, payload: UpdatePostDto, userRole?: string): Promise<PostDto>;
     remove(id: string): Promise<void>;
+    toggleStatus(id: string): Promise<PostDto>;
     exportToCsv(posts: PostDto[]): string;
     exportToPdf(posts: PostDto[]): Promise<Buffer>;
     private mapToDto;

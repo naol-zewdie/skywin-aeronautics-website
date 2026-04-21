@@ -26,10 +26,9 @@ export interface LoginResult {
 }
 export declare class AuthService {
     private jwtService;
-    private userModel?;
+    private userModel;
     private readonly logger;
-    private readonly fallbackUsers;
-    constructor(jwtService: JwtService, userModel?: Model<User> | undefined);
+    constructor(jwtService: JwtService, userModel: Model<User>);
     validateUser(email: string, password: string): Promise<{
         id: string;
         fullName: string;

@@ -57,11 +57,14 @@ let PostsController = class PostsController {
     getPost(id) {
         return this.postsService.findOne(id);
     }
-    createPost(payload) {
-        return this.postsService.create(payload);
+    createPost(payload, req) {
+        return this.postsService.create(payload, req.user?.role);
     }
-    updatePost(id, payload) {
-        return this.postsService.update(id, payload);
+    togglePostStatus(id) {
+        return this.postsService.toggleStatus(id);
+    }
+    updatePost(id, payload, req) {
+        return this.postsService.update(id, payload, req.user?.role);
     }
     removePost(id) {
         return this.postsService.remove(id);
@@ -153,10 +156,22 @@ __decorate([
     (0, swagger_1.ApiOperation)({ summary: 'Create new post' }),
     (0, swagger_1.ApiCreatedResponse)({ type: post_dto_1.PostDto }),
     __param(0, (0, common_1.Body)()),
+    __param(1, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [create_post_dto_1.CreatePostDto]),
+    __metadata("design:paramtypes", [create_post_dto_1.CreatePostDto, Object]),
     __metadata("design:returntype", Promise)
 ], PostsController.prototype, "createPost", null);
+__decorate([
+    (0, common_1.Patch)(':id/toggle-status'),
+    (0, roles_guard_1.Roles)(roles_guard_1.Role.ADMIN),
+    (0, swagger_1.ApiOperation)({ summary: 'Toggle post status (Admin only)' }),
+    (0, swagger_1.ApiParam)({ name: 'id', type: 'string', description: 'Post ID' }),
+    (0, swagger_1.ApiOkResponse)({ type: post_dto_1.PostDto }),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], PostsController.prototype, "togglePostStatus", null);
 __decorate([
     (0, common_1.Patch)(':id'),
     (0, roles_guard_1.Roles)(roles_guard_1.Role.ADMIN, roles_guard_1.Role.OPERATOR),
@@ -165,8 +180,9 @@ __decorate([
     (0, swagger_1.ApiOkResponse)({ type: post_dto_1.PostDto }),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.Body)()),
+    __param(2, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, update_post_dto_1.UpdatePostDto]),
+    __metadata("design:paramtypes", [String, update_post_dto_1.UpdatePostDto, Object]),
     __metadata("design:returntype", Promise)
 ], PostsController.prototype, "updatePost", null);
 __decorate([

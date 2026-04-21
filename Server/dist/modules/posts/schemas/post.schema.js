@@ -70,7 +70,7 @@ __decorate([
     __metadata("design:type", String)
 ], Post.prototype, "eventLocation", void 0);
 __decorate([
-    (0, mongoose_1.Prop)({ required: true, default: true }),
+    (0, mongoose_1.Prop)({ required: true, default: false }),
     __metadata("design:type", Boolean)
 ], Post.prototype, "status", void 0);
 __decorate([

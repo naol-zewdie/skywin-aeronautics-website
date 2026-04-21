@@ -8,8 +8,9 @@ export declare class ServicesController {
     constructor(servicesService: ServicesService);
     getServices(): Promise<ServiceDto[]>;
     getService(id: string): Promise<ServiceDto>;
-    createService(payload: CreateServiceDto): Promise<ServiceDto>;
-    updateService(id: string, payload: UpdateServiceDto): Promise<ServiceDto>;
+    createService(payload: CreateServiceDto, req: any): Promise<ServiceDto>;
+    toggleServiceStatus(id: string): Promise<ServiceDto>;
+    updateService(id: string, payload: UpdateServiceDto, req: any): Promise<ServiceDto>;
     removeService(id: string): Promise<void>;
     exportCsv(res: Response, search?: string): Promise<void>;
     exportPdf(res: Response, search?: string): Promise<void>;

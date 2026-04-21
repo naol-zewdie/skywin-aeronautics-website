@@ -48,7 +48,7 @@ __decorate([
     __metadata("design:type", Number)
 ], Product.prototype, "stock", void 0);
 __decorate([
-    (0, mongoose_1.Prop)({ required: true, default: true }),
+    (0, mongoose_1.Prop)({ required: true, default: false }),
     __metadata("design:type", Boolean)
 ], Product.prototype, "status", void 0);
 __decorate([

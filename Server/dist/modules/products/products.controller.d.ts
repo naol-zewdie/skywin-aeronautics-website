@@ -10,7 +10,8 @@ export declare class ProductsController {
     exportCsv(res: Response, search?: string, category?: string): Promise<void>;
     exportPdf(res: Response, search?: string, category?: string): Promise<void>;
     getProduct(id: string): Promise<ProductDto>;
-    createProduct(payload: CreateProductDto): Promise<ProductDto>;
-    updateProduct(id: string, payload: UpdateProductDto): Promise<ProductDto>;
+    createProduct(payload: CreateProductDto, req: any): Promise<ProductDto>;
+    toggleProductStatus(id: string): Promise<ProductDto>;
+    updateProduct(id: string, payload: UpdateProductDto, req: any): Promise<ProductDto>;
     removeProduct(id: string): Promise<void>;
 }

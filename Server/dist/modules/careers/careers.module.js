@@ -17,9 +17,7 @@ let CareersModule = class CareersModule {
 exports.CareersModule = CareersModule;
 exports.CareersModule = CareersModule = __decorate([
     (0, common_1.Module)({
-        imports: process.env.ENABLE_DB === 'true'
-            ? [mongoose_1.MongooseModule.forFeature([{ name: career_opening_schema_1.CareerOpening.name, schema: career_opening_schema_1.CareerOpeningSchema }])]
-            : [],
+        imports: [mongoose_1.MongooseModule.forFeature([{ name: career_opening_schema_1.CareerOpening.name, schema: career_opening_schema_1.CareerOpeningSchema }])],
         controllers: [careers_controller_1.CareersController],
         providers: [careers_service_1.CareersService],
     })

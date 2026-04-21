@@ -19,35 +19,15 @@ exports.UsersService = void 0;
 const common_1 = require("@nestjs/common");
 const mongoose_1 = require("@nestjs/mongoose");
 const mongoose_2 = require("mongoose");
-const crypto_1 = require("crypto");
 const plainjs_1 = require("@json2csv/plainjs");
 const pdfkit_1 = __importDefault(require("pdfkit"));
 const user_schema_1 = require("./schemas/user.schema");
 let UsersService = class UsersService {
     userModel;
-    fallbackUsers = [
-        {
-            id: 'u_001',
-            fullName: 'Amelia Hart',
-            email: 'amelia@skywin.aero',
-            role: 'admin',
-            status: true,
-        },
-        {
-            id: 'u_002',
-            fullName: 'Rohan Mehta',
-            email: 'rohan@skywin.aero',
-            role: 'operator',
-            status: true,
-        },
-    ];
     constructor(userModel) {
         this.userModel = userModel;
     }
     async findAll() {
-        if (!this.userModel) {
-            return this.fallbackUsers;
-        }
         const users = await this.userModel.find().exec();
         return users.map(user => ({
             id: user._id.toString(),
@@ -58,13 +38,6 @@ let UsersService = class UsersService {
         }));
     }
     async findOne(id) {
-        if (!this.userModel) {
-            const user = this.fallbackUsers.find((item) => item.id === id);
-            if (!user) {
-                throw new common_1.NotFoundException(`User with id ${id} not found`);
-            }
-            return user;
-        }
         const user = await this.userModel.findById(id).exec();
         if (!user) {
             throw new common_1.NotFoundException(`User with id ${id} not found`);
@@ -78,11 +51,6 @@ let UsersService = class UsersService {
         };
     }
     async create(payload) {
-        if (!this.userModel) {
-            const created = { id: (0, crypto_1.randomUUID)(), status: true, ...payload };
-            this.fallbackUsers.push(created);
-            return created;
-        }
         const created = new this.userModel({
             ...payload,
             audit: {
@@ -104,14 +72,6 @@ let UsersService = class UsersService {
         if (targetUser.role === 'admin' && currentUserId !== id) {
             throw new Error('Cannot edit another admin account');
         }
-        if (!this.userModel) {
-            const index = this.fallbackUsers.findIndex((item) => item.id === id);
-            if (index === -1) {
-                throw new common_1.NotFoundException(`User with id ${id} not found`);
-            }
-            this.fallbackUsers[index] = { ...this.fallbackUsers[index], ...payload };
-            return this.fallbackUsers[index];
-        }
         const updated = await this.userModel.findByIdAndUpdate(id, {
             ...payload,
             'audit.updatedAt': new Date(),
@@ -130,14 +90,6 @@ let UsersService = class UsersService {
     async remove(id, currentUserId) {
         if (id === currentUserId) {
             throw new Error('Cannot delete your own account');
-        }
-        if (!this.userModel) {
-            const index = this.fallbackUsers.findIndex((item) => item.id === id);
-            if (index === -1) {
-                throw new common_1.NotFoundException(`User with id ${id} not found`);
-            }
-            this.fallbackUsers.splice(index, 1);
-            return;
         }
         const result = await this.userModel.findByIdAndDelete(id).exec();
         if (!result) {
@@ -185,7 +137,6 @@ let UsersService = class UsersService {
 exports.UsersService = UsersService;
 exports.UsersService = UsersService = __decorate([
     (0, common_1.Injectable)(),
-    __param(0, (0, common_1.Optional)()),
     __param(0, (0, mongoose_1.InjectModel)(user_schema_1.User.name)),
     __metadata("design:paramtypes", [mongoose_2.Model])
 ], UsersService);

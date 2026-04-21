@@ -32,11 +32,14 @@ let CareersController = class CareersController {
     getOpening(id) {
         return this.careersService.findOne(id);
     }
-    createOpening(payload) {
-        return this.careersService.create(payload);
+    createOpening(payload, req) {
+        return this.careersService.create(payload, req.user?.role);
     }
-    updateOpening(id, payload) {
-        return this.careersService.update(id, payload);
+    toggleOpeningStatus(id) {
+        return this.careersService.toggleStatus(id);
+    }
+    updateOpening(id, payload, req) {
+        return this.careersService.update(id, payload, req.user?.role);
     }
     removeOpening(id) {
         return this.careersService.remove(id);
@@ -83,10 +86,22 @@ __decorate([
     (0, swagger_1.ApiOperation)({ summary: 'Create career opening' }),
     (0, swagger_1.ApiCreatedResponse)({ type: career_opening_dto_1.CareerOpeningDto }),
     __param(0, (0, common_1.Body)()),
+    __param(1, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [create_career_opening_dto_1.CreateCareerOpeningDto]),
+    __metadata("design:paramtypes", [create_career_opening_dto_1.CreateCareerOpeningDto, Object]),
     __metadata("design:returntype", Promise)
 ], CareersController.prototype, "createOpening", null);
+__decorate([
+    (0, common_1.Patch)(':id/toggle-status'),
+    (0, roles_guard_1.Roles)(roles_guard_1.Role.ADMIN),
+    (0, swagger_1.ApiOperation)({ summary: 'Toggle career opening status (Admin only)' }),
+    (0, swagger_1.ApiParam)({ name: 'id', type: 'string', description: 'Career Opening ID' }),
+    (0, swagger_1.ApiOkResponse)({ type: career_opening_dto_1.CareerOpeningDto }),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], CareersController.prototype, "toggleOpeningStatus", null);
 __decorate([
     (0, common_1.Patch)(':id'),
     (0, roles_guard_1.Roles)(roles_guard_1.Role.ADMIN, roles_guard_1.Role.OPERATOR),
@@ -95,8 +110,9 @@ __decorate([
     (0, swagger_1.ApiOkResponse)({ type: career_opening_dto_1.CareerOpeningDto }),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.Body)()),
+    __param(2, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, update_career_opening_dto_1.UpdateCareerOpeningDto]),
+    __metadata("design:paramtypes", [String, update_career_opening_dto_1.UpdateCareerOpeningDto, Object]),
     __metadata("design:returntype", Promise)
 ], CareersController.prototype, "updateOpening", null);
 __decorate([

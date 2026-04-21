@@ -32,11 +32,14 @@ let ServicesController = class ServicesController {
     getService(id) {
         return this.servicesService.findOne(id);
     }
-    createService(payload) {
-        return this.servicesService.create(payload);
+    createService(payload, req) {
+        return this.servicesService.create(payload, req.user?.role);
     }
-    updateService(id, payload) {
-        return this.servicesService.update(id, payload);
+    toggleServiceStatus(id) {
+        return this.servicesService.toggleStatus(id);
+    }
+    updateService(id, payload, req) {
+        return this.servicesService.update(id, payload, req.user?.role);
     }
     removeService(id) {
         return this.servicesService.remove(id);
@@ -83,10 +86,22 @@ __decorate([
     (0, swagger_1.ApiOperation)({ summary: 'Create service' }),
     (0, swagger_1.ApiCreatedResponse)({ type: service_dto_1.ServiceDto }),
     __param(0, (0, common_1.Body)()),
+    __param(1, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [create_service_dto_1.CreateServiceDto]),
+    __metadata("design:paramtypes", [create_service_dto_1.CreateServiceDto, Object]),
     __metadata("design:returntype", Promise)
 ], ServicesController.prototype, "createService", null);
+__decorate([
+    (0, common_1.Patch)(':id/toggle-status'),
+    (0, roles_guard_1.Roles)(roles_guard_1.Role.ADMIN),
+    (0, swagger_1.ApiOperation)({ summary: 'Toggle service status (Admin only)' }),
+    (0, swagger_1.ApiParam)({ name: 'id', type: 'string', description: 'Service ID' }),
+    (0, swagger_1.ApiOkResponse)({ type: service_dto_1.ServiceDto }),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], ServicesController.prototype, "toggleServiceStatus", null);
 __decorate([
     (0, common_1.Patch)(':id'),
     (0, roles_guard_1.Roles)(roles_guard_1.Role.ADMIN, roles_guard_1.Role.OPERATOR),
@@ -95,8 +110,9 @@ __decorate([
     (0, swagger_1.ApiOkResponse)({ type: service_dto_1.ServiceDto }),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.Body)()),
+    __param(2, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, update_service_dto_1.UpdateServiceDto]),
+    __metadata("design:paramtypes", [String, update_service_dto_1.UpdateServiceDto, Object]),
     __metadata("design:returntype", Promise)
 ], ServicesController.prototype, "updateService", null);
 __decorate([

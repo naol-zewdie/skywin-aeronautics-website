@@ -38,7 +38,7 @@ __decorate([
     __metadata("design:type", String)
 ], CareerOpening.prototype, "description", void 0);
 __decorate([
-    (0, mongoose_1.Prop)({ required: true, default: true }),
+    (0, mongoose_1.Prop)({ required: true, default: false }),
     __metadata("design:type", Boolean)
 ], CareerOpening.prototype, "status", void 0);
 __decorate([

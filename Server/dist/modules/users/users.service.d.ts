@@ -4,9 +4,8 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { UserDto } from './dto/user.dto';
 import { User } from './schemas/user.schema';
 export declare class UsersService {
-    private readonly userModel?;
-    private readonly fallbackUsers;
-    constructor(userModel?: Model<User> | undefined);
+    private readonly userModel;
+    constructor(userModel: Model<User>);
     findAll(): Promise<UserDto[]>;
     findOne(id: string): Promise<UserDto>;
     create(payload: CreateUserDto): Promise<UserDto>;

@@ -12,7 +12,8 @@ export declare class PostsController {
     exportCsv(res: Response, type?: ContentType, search?: string, author?: string): Promise<void>;
     exportPdf(res: Response, type?: ContentType, search?: string, author?: string): Promise<void>;
     getPost(id: string): Promise<PostDto>;
-    createPost(payload: CreatePostDto): Promise<PostDto>;
-    updatePost(id: string, payload: UpdatePostDto): Promise<PostDto>;
+    createPost(payload: CreatePostDto, req: any): Promise<PostDto>;
+    togglePostStatus(id: string): Promise<PostDto>;
+    updatePost(id: string, payload: UpdatePostDto, req: any): Promise<PostDto>;
     removePost(id: string): Promise<void>;
 }

@@ -17,9 +17,7 @@ let ServicesModule = class ServicesModule {
 exports.ServicesModule = ServicesModule;
 exports.ServicesModule = ServicesModule = __decorate([
     (0, common_1.Module)({
-        imports: process.env.ENABLE_DB === 'true'
-            ? [mongoose_1.MongooseModule.forFeature([{ name: service_schema_1.Service.name, schema: service_schema_1.ServiceSchema }])]
-            : [],
+        imports: [mongoose_1.MongooseModule.forFeature([{ name: service_schema_1.Service.name, schema: service_schema_1.ServiceSchema }])],
         controllers: [services_controller_1.ServicesController],
         providers: [services_service_1.ServicesService],
     })

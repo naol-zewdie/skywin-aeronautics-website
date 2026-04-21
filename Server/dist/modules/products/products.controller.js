@@ -52,11 +52,14 @@ let ProductsController = class ProductsController {
     getProduct(id) {
         return this.productsService.findOne(id);
     }
-    createProduct(payload) {
-        return this.productsService.create(payload);
+    createProduct(payload, req) {
+        return this.productsService.create(payload, req.user?.role);
     }
-    updateProduct(id, payload) {
-        return this.productsService.update(id, payload);
+    toggleProductStatus(id) {
+        return this.productsService.toggleStatus(id);
+    }
+    updateProduct(id, payload, req) {
+        return this.productsService.update(id, payload, req.user?.role);
     }
     removeProduct(id) {
         return this.productsService.remove(id);
@@ -125,10 +128,22 @@ __decorate([
     (0, swagger_1.ApiOperation)({ summary: 'Create product' }),
     (0, swagger_1.ApiCreatedResponse)({ type: product_dto_1.ProductDto }),
     __param(0, (0, common_1.Body)()),
+    __param(1, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [create_product_dto_1.CreateProductDto]),
+    __metadata("design:paramtypes", [create_product_dto_1.CreateProductDto, Object]),
     __metadata("design:returntype", Promise)
 ], ProductsController.prototype, "createProduct", null);
+__decorate([
+    (0, common_1.Patch)(':id/toggle-status'),
+    (0, roles_guard_1.Roles)(roles_guard_1.Role.ADMIN),
+    (0, swagger_1.ApiOperation)({ summary: 'Toggle product status (Admin only)' }),
+    (0, swagger_1.ApiParam)({ name: 'id', type: 'string', description: 'Product ID' }),
+    (0, swagger_1.ApiOkResponse)({ type: product_dto_1.ProductDto }),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], ProductsController.prototype, "toggleProductStatus", null);
 __decorate([
     (0, common_1.Patch)(':id'),
     (0, roles_guard_1.Roles)(roles_guard_1.Role.ADMIN, roles_guard_1.Role.OPERATOR),
@@ -137,8 +152,9 @@ __decorate([
     (0, swagger_1.ApiOkResponse)({ type: product_dto_1.ProductDto }),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.Body)()),
+    __param(2, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, update_product_dto_1.UpdateProductDto]),
+    __metadata("design:paramtypes", [String, update_product_dto_1.UpdateProductDto, Object]),
     __metadata("design:returntype", Promise)
 ], ProductsController.prototype, "updateProduct", null);
 __decorate([

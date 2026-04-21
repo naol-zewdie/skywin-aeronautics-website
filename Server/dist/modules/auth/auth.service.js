@@ -57,51 +57,12 @@ let AuthService = AuthService_1 = class AuthService {
     jwtService;
     userModel;
     logger = new common_1.Logger(AuthService_1.name);
-    fallbackUsers = [
-        {
-            id: 'u_001',
-            fullName: 'Amelia Hart',
-            email: 'admin@skywin.aero',
-            role: 'admin',
-            passwordHash: '$2b$10$hsSWtDbNM/Xw/6ZPzKpqIun2BrysA.pZDD0dNFEwAPqilPvc9pxbi',
-            status: true,
-        },
-        {
-            id: 'u_002',
-            fullName: 'Rohan Mehta',
-            email: 'it@skywin.aero',
-            role: 'it',
-            passwordHash: '$2b$10$L1CpHR7/g0NUcZzQCrG7weSZQ1kcaDLwYyDIVMHXD.bZoNY9nzqcC',
-            status: true,
-        },
-        {
-            id: 'u_003',
-            fullName: 'Sara Chen',
-            email: 'hr@skywin.aero',
-            role: 'hr',
-            passwordHash: '$2b$10$1fAq96Wwbe1RKHz41P2qHeQbhr6ie55YDizegZIh/WAySizk3COBq',
-            status: true,
-        },
-    ];
     constructor(jwtService, userModel) {
         this.jwtService = jwtService;
         this.userModel = userModel;
     }
     async validateUser(email, password) {
         const invalidCredentialsError = new common_1.UnauthorizedException('Authentication failed');
-        if (!this.userModel) {
-            const user = this.fallbackUsers.find((u) => u.email === email);
-            if (!user || !user.status) {
-                await bcrypt.compare('dummy', '$2b$10$dummyhashfordummycomparison');
-                throw invalidCredentialsError;
-            }
-            const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
-            if (!isPasswordValid) {
-                throw invalidCredentialsError;
-            }
-            const { passwordHash: _, ...result } = user;
-            return result;
-        }
         const user = await this.userModel.findOne({ email }).exec();
         if (!user || !user.status) {
             await bcrypt.compare('dummy', '$2b$10$dummyhashfordummycomparison');
@@ -195,14 +156,6 @@ let AuthService = AuthService_1 = class AuthService {
         return value * (multipliers[unit] || 60);
     }
     async getMe(userId) {
-        if (!this.userModel) {
-            const user = this.fallbackUsers.find((u) => u.id === userId);
-            if (!user) {
-                throw new common_1.UnauthorizedException('User not found');
-            }
-            const { passwordHash: _, ...result } = user;
-            return result;
-        }
         const user = await this.userModel.findById(userId).exec();
         if (!user) {
             throw new common_1.UnauthorizedException('User not found');
@@ -222,7 +175,6 @@ let AuthService = AuthService_1 = class AuthService {
 exports.AuthService = AuthService;
 exports.AuthService = AuthService = AuthService_1 = __decorate([
     (0, common_1.Injectable)(),
-    __param(1, (0, common_1.Optional)()),
     __param(1, (0, mongoose_1.InjectModel)(user_schema_1.User.name)),
     __metadata("design:paramtypes", [jwt_1.JwtService,
         mongoose_2.Model])

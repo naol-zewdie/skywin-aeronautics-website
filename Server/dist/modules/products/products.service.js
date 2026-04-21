@@ -19,104 +19,48 @@ exports.ProductsService = void 0;
 const common_1 = require("@nestjs/common");
 const mongoose_1 = require("@nestjs/mongoose");
 const mongoose_2 = require("mongoose");
-const crypto_1 = require("crypto");
 const product_schema_1 = require("./schemas/product.schema");
 const plainjs_1 = require("@json2csv/plainjs");
 const pdfkit_1 = __importDefault(require("pdfkit"));
 let ProductsService = class ProductsService {
     productModel;
-    fallbackProducts = [
-        {
-            id: 'p_001',
-            name: 'Wing Spar Assembly',
-            category: 'Aerospace Structures',
-            description: 'High-precision wing spar for commercial aircraft',
-            price: 15000.99,
-            image: 'https://example.com/images/wing-spar.jpg',
-            stock: 25,
-            status: true,
-        },
-        {
-            id: 'p_002',
-            name: 'Engine Mount Bracket',
-            category: 'Powertrain Components',
-            description: 'Durable engine mount bracket for jet engines',
-            price: 8500.50,
-            image: 'https://example.com/images/engine-bracket.jpg',
-            stock: 40,
-            status: true,
-        },
-    ];
     constructor(productModel) {
         this.productModel = productModel;
     }
     async findAll(filters) {
-        let products = this.fallbackProducts;
-        if (this.productModel) {
-            const query = {};
-            if (filters?.search) {
-                query.$or = [
-                    { name: { $regex: filters.search, $options: 'i' } },
-                    { description: { $regex: filters.search, $options: 'i' } },
-                ];
-            }
-            if (filters?.category) {
-                query.category = { $regex: filters.category, $options: 'i' };
-            }
-            if (filters?.status !== undefined) {
-                query.status = filters.status;
-            }
-            if (filters?.minPrice !== undefined || filters?.maxPrice !== undefined) {
-                query.price = {};
-                if (filters.minPrice !== undefined)
-                    query.price.$gte = filters.minPrice;
-                if (filters.maxPrice !== undefined)
-                    query.price.$lte = filters.maxPrice;
-            }
-            const dbProducts = await this.productModel.find(query).exec();
-            products = dbProducts.map(product => ({
-                id: product._id.toString(),
-                name: product.name,
-                category: product.category,
-                description: product.description,
-                price: product.price,
-                image: product.image,
-                stock: product.stock,
-                status: product.status,
-            }));
+        const query = {};
+        if (filters?.search) {
+            query.$or = [
+                { name: { $regex: filters.search, $options: 'i' } },
+                { description: { $regex: filters.search, $options: 'i' } },
+            ];
         }
-        if (filters) {
-            if (filters.search) {
-                const searchLower = filters.search.toLowerCase();
-                products = products.filter(p => p.name.toLowerCase().includes(searchLower) ||
-                    p.description.toLowerCase().includes(searchLower));
-            }
-            if (filters.category) {
-                const catLower = filters.category.toLowerCase();
-                products = products.filter(p => p.category.toLowerCase().includes(catLower));
-            }
-            if (filters.status !== undefined) {
-                products = products.filter(p => p.status === filters.status);
-            }
-            const minPrice = filters.minPrice;
-            const maxPrice = filters.maxPrice;
-            if (minPrice !== undefined) {
-                products = products.filter(p => p.price >= minPrice);
-            }
-            if (maxPrice !== undefined) {
-                products = products.filter(p => p.price <= maxPrice);
-            }
+        if (filters?.category) {
+            query.category = { $regex: filters.category, $options: 'i' };
         }
-        return products;
+        if (filters?.status !== undefined) {
+            query.status = filters.status;
+        }
+        if (filters?.minPrice !== undefined || filters?.maxPrice !== undefined) {
+            query.price = {};
+            if (filters.minPrice !== undefined)
+                query.price.$gte = filters.minPrice;
+            if (filters.maxPrice !== undefined)
+                query.price.$lte = filters.maxPrice;
+        }
+        const products = await this.productModel.find(query).exec();
+        return products.map(product => ({
+            id: product._id.toString(),
+            name: product.name,
+            category: product.category,
+            description: product.description,
+            price: product.price,
+            image: product.image,
+            stock: product.stock,
+            status: product.status,
+        }));
     }
     async findOne(id) {
-        if (!this.productModel) {
-            const product = this.fallbackProducts.find((item) => item.id === id);
-            if (!product) {
-                throw new common_1.NotFoundException(`Product with id ${id} not found`);
-            }
-            return product;
-        }
         const product = await this.productModel.findById(id).exec();
         if (!product) {
             throw new common_1.NotFoundException(`Product with id ${id} not found`);
@@ -132,19 +76,17 @@ let ProductsService = class ProductsService {
             status: product.status,
         };
     }
-    async create(payload) {
-        const existingProducts = await this.findAll();
-        const isDuplicate = existingProducts.some(p => p.name.toLowerCase() === payload.name.toLowerCase());
-        if (isDuplicate) {
+    async create(payload, userRole) {
+        const existingProduct = await this.productModel.findOne({
+            name: { $regex: `^${payload.name}$`, $options: 'i' }
+        }).exec();
+        if (existingProduct) {
             throw new common_1.ConflictException('Product name already exists');
         }
-        if (!this.productModel) {
-            const created = { id: (0, crypto_1.randomUUID)(), status: true, ...payload };
-            this.fallbackProducts.push(created);
-            return created;
-        }
+        const status = userRole === 'admin' ? (payload.status ?? false) : false;
         const created = new this.productModel({
             ...payload,
+            status,
             audit: {
                 createdAt: new Date(),
                 updatedAt: new Date(),
@@ -162,17 +104,9 @@ let ProductsService = class ProductsService {
             status: saved.status,
         };
     }
-    async update(id, payload) {
-        if (!this.productModel) {
-            const index = this.fallbackProducts.findIndex((item) => item.id === id);
-            if (index === -1) {
-                throw new common_1.NotFoundException(`Product with id ${id} not found`);
-            }
-            this.fallbackProducts[index] = {
-                ...this.fallbackProducts[index],
-                ...payload,
-            };
-            return this.fallbackProducts[index];
+    async update(id, payload, userRole) {
+        if (userRole !== 'admin' && payload.status !== undefined) {
+            delete payload.status;
         }
         const updated = await this.productModel.findByIdAndUpdate(id, {
             ...payload,
@@ -193,18 +127,29 @@ let ProductsService = class ProductsService {
         };
     }
     async remove(id) {
-        if (!this.productModel) {
-            const index = this.fallbackProducts.findIndex((item) => item.id === id);
-            if (index === -1) {
-                throw new common_1.NotFoundException(`Product with id ${id} not found`);
-            }
-            this.fallbackProducts.splice(index, 1);
-            return;
-        }
         const result = await this.productModel.findByIdAndDelete(id).exec();
         if (!result) {
             throw new common_1.NotFoundException(`Product with id ${id} not found`);
         }
+    }
+    async toggleStatus(id) {
+        const product = await this.productModel.findById(id).exec();
+        if (!product) {
+            throw new common_1.NotFoundException(`Product with id ${id} not found`);
+        }
+        product.status = !product.status;
+        product.audit.updatedAt = new Date();
+        const saved = await product.save();
+        return {
+            id: saved._id.toString(),
+            name: saved.name,
+            category: saved.category,
+            description: saved.description,
+            price: saved.price,
+            image: saved.image,
+            stock: saved.stock,
+            status: saved.status,
+        };
     }
     exportToCsv(products) {
         const fields = ['id', 'name', 'category', 'description', 'price', 'stock', 'status'];
@@ -257,7 +202,6 @@ let ProductsService = class ProductsService {
 exports.ProductsService = ProductsService;
 exports.ProductsService = ProductsService = __decorate([
     (0, common_1.Injectable)(),
-    __param(0, (0, common_1.Optional)()),
     __param(0, (0, mongoose_1.InjectModel)(product_schema_1.Product.name)),
     __metadata("design:paramtypes", [mongoose_2.Model])
 ], ProductsService);

@@ -19,37 +19,15 @@ exports.CareersService = void 0;
 const common_1 = require("@nestjs/common");
 const mongoose_1 = require("@nestjs/mongoose");
 const mongoose_2 = require("mongoose");
-const crypto_1 = require("crypto");
 const plainjs_1 = require("@json2csv/plainjs");
 const pdfkit_1 = __importDefault(require("pdfkit"));
 const career_opening_schema_1 = require("./schemas/career-opening.schema");
 let CareersService = class CareersService {
     careerOpeningModel;
-    fallbackOpenings = [
-        {
-            id: 'c_001',
-            title: 'Manufacturing Engineer',
-            location: 'Bangalore, India',
-            employmentType: 'Full-time',
-            description: 'Responsible for aerospace component manufacturing and quality control',
-            status: true,
-        },
-        {
-            id: 'c_002',
-            title: 'Quality Assurance Specialist',
-            location: 'Pune, India',
-            employmentType: 'Full-time',
-            description: 'Ensure compliance with aerospace quality standards',
-            status: true,
-        },
-    ];
     constructor(careerOpeningModel) {
         this.careerOpeningModel = careerOpeningModel;
     }
     async findAll() {
-        if (!this.careerOpeningModel) {
-            return this.fallbackOpenings;
-        }
         const openings = await this.careerOpeningModel.find().exec();
         return openings.map(opening => ({
             id: opening._id.toString(),
@@ -61,13 +39,6 @@ let CareersService = class CareersService {
         }));
     }
     async findOne(id) {
-        if (!this.careerOpeningModel) {
-            const opening = this.fallbackOpenings.find((item) => item.id === id);
-            if (!opening) {
-                throw new common_1.NotFoundException(`Career opening with id ${id} not found`);
-            }
-            return opening;
-        }
         const opening = await this.careerOpeningModel.findById(id).exec();
         if (!opening) {
             throw new common_1.NotFoundException(`Career opening with id ${id} not found`);
@@ -81,14 +52,11 @@ let CareersService = class CareersService {
             status: opening.status,
         };
     }
-    async create(payload) {
-        if (!this.careerOpeningModel) {
-            const created = { id: (0, crypto_1.randomUUID)(), status: true, ...payload };
-            this.fallbackOpenings.push(created);
-            return created;
-        }
+    async create(payload, userRole) {
+        const status = userRole === 'admin' ? (payload.status ?? false) : false;
         const created = new this.careerOpeningModel({
             ...payload,
+            status,
             audit: {
                 createdAt: new Date(),
                 updatedAt: new Date(),
@@ -104,17 +72,9 @@ let CareersService = class CareersService {
             status: saved.status,
         };
     }
-    async update(id, payload) {
-        if (!this.careerOpeningModel) {
-            const index = this.fallbackOpenings.findIndex((item) => item.id === id);
-            if (index === -1) {
-                throw new common_1.NotFoundException(`Career opening with id ${id} not found`);
-            }
-            this.fallbackOpenings[index] = {
-                ...this.fallbackOpenings[index],
-                ...payload,
-            };
-            return this.fallbackOpenings[index];
+    async update(id, payload, userRole) {
+        if (userRole !== 'admin' && payload.status !== undefined) {
+            delete payload.status;
         }
         const updated = await this.careerOpeningModel.findByIdAndUpdate(id, {
             ...payload,
@@ -133,18 +93,27 @@ let CareersService = class CareersService {
         };
     }
     async remove(id) {
-        if (!this.careerOpeningModel) {
-            const index = this.fallbackOpenings.findIndex((item) => item.id === id);
-            if (index === -1) {
-                throw new common_1.NotFoundException(`Career opening with id ${id} not found`);
-            }
-            this.fallbackOpenings.splice(index, 1);
-            return;
-        }
         const result = await this.careerOpeningModel.findByIdAndDelete(id).exec();
         if (!result) {
             throw new common_1.NotFoundException(`Career opening with id ${id} not found`);
         }
+    }
+    async toggleStatus(id) {
+        const opening = await this.careerOpeningModel.findById(id).exec();
+        if (!opening) {
+            throw new common_1.NotFoundException(`Career opening with id ${id} not found`);
+        }
+        opening.status = !opening.status;
+        opening.audit.updatedAt = new Date();
+        const saved = await opening.save();
+        return {
+            id: saved._id.toString(),
+            title: saved.title,
+            location: saved.location,
+            employmentType: saved.employmentType,
+            description: saved.description,
+            status: saved.status,
+        };
     }
     exportToCsv(openings) {
         const fields = ['id', 'title', 'location', 'employmentType', 'description', 'status'];
@@ -189,7 +158,6 @@ let CareersService = class CareersService {
 exports.CareersService = CareersService;
 exports.CareersService = CareersService = __decorate([
     (0, common_1.Injectable)(),
-    __param(0, (0, common_1.Optional)()),
     __param(0, (0, mongoose_1.InjectModel)(career_opening_schema_1.CareerOpening.name)),
     __metadata("design:paramtypes", [mongoose_2.Model])
 ], CareersService);
