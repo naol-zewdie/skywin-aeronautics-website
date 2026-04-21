@@ -39,7 +39,7 @@ export class Post {
   @Prop({ required: false })
   eventLocation?: string;
 
-  @Prop({ required: true, default: true })
+  @Prop({ required: true, default: false })
   status: boolean;
 
   @Prop({ required: false, default: 0 })

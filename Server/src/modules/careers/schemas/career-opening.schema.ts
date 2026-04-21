@@ -18,7 +18,7 @@ export class CareerOpening {
   @Prop({ required: true })
   description: string;
 
-  @Prop({ required: true, default: true })
+  @Prop({ required: true, default: false })
   status: boolean;
 
   @Prop({ type: Audit })

@@ -24,7 +24,7 @@ export class Product {
   @Prop({ required: true })
   stock: number;
 
-  @Prop({ required: true, default: true })
+  @Prop({ required: true, default: false })
   status: boolean;
 
   @Prop({ type: Audit })
