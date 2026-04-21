@@ -1,1 +1,79 @@
+# Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Production build
+dist/
+build/
+*.tsbuildinfo
+
+# Environment variables
 .env
+.env.local
+.env.*.local
+.env.development
+.env.test
+.env.production
+
+# IDE and editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+
+# Testing
+coverage/
+.nyc_output/
+
+# Misc
+.cache/
+temp/
+tmp/
+*.tmp
+
+# Uploaded files (keep folder but not contents)
+uploads/*
+!uploads/.gitkeep
+
+# Database
+*.sqlite
+*.sqlite3
+*.db
+
+# MongoDB
+/data
+
+# SSL certificates
+*.pem
+*.key
+*.crt
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Optional npm cache directory
+.npm
+
+# TypeScript
+*.tsbuildinfo
+
+# NestJS
+/dist
+/node_modules
