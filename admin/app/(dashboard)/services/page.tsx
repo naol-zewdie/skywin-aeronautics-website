@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Plus } from 'lucide-react';
+import { Plus, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { DataTable } from '@/components/ui/data-table';
 import {
@@ -69,6 +69,30 @@ export default function ServicesPage() {
     }
   };
 
+  const handleExport = async (type: 'csv' | 'pdf') => {
+    try {
+      const blob = type === 'csv' ? await servicesApi.exportCsv() : await servicesApi.exportPdf();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `services.${type}`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      toast({
+        title: 'Success',
+        description: `Services exported as ${type.toUpperCase()}`,
+      });
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: `Failed to export as ${type.toUpperCase()}`,
+        variant: 'destructive',
+      });
+    }
+  };
+
   const columns = [
     { key: 'name', header: 'Name' },
     {
@@ -88,12 +112,22 @@ export default function ServicesPage() {
             Manage your service offerings
           </p>
         </div>
-        <Button asChild>
-          <Link href="/services/new">
-            <Plus className="mr-2 h-4 w-4" />
-            New Service
-          </Link>
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => handleExport('csv')}>
+            <Download className="mr-2 h-4 w-4" />
+            Export CSV
+          </Button>
+          <Button variant="outline" onClick={() => handleExport('pdf')}>
+            <Download className="mr-2 h-4 w-4" />
+            Export PDF
+          </Button>
+          <Button asChild>
+            <Link href="/services/new">
+              <Plus className="mr-2 h-4 w-4" />
+              New Service
+            </Link>
+          </Button>
+        </div>
       </div>
 
       <DataTable

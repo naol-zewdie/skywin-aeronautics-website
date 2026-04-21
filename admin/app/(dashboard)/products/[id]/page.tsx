@@ -154,18 +154,22 @@ export default function EditProductPage() {
               <div className="space-y-2">
                 <Label htmlFor="name">Name</Label>
                 <Input id="name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
+                <p className="text-xs text-muted-foreground">2-100 characters</p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="category">Category</Label>
                 <Input id="category" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} required />
+                <p className="text-xs text-muted-foreground">2-50 characters</p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="price">Price ($)</Label>
                 <Input id="price" type="number" step="0.01" min="0" value={form.price} onChange={(e) => setForm({ ...form, price: parseFloat(e.target.value) || 0 })} required />
+                <p className="text-xs text-muted-foreground">Must be 0 or greater</p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="stock">Stock</Label>
                 <Input id="stock" type="number" min="0" value={form.stock} onChange={(e) => setForm({ ...form, stock: parseInt(e.target.value) || 0 })} required />
+                <p className="text-xs text-muted-foreground">Must be 0 or greater</p>
               </div>
               <div className="space-y-2 md:col-span-2">
                 <Label>Image (Optional)</Label>
@@ -212,6 +216,7 @@ export default function EditProductPage() {
               <div className="space-y-2 md:col-span-2">
                 <Label htmlFor="description">Description</Label>
                 <textarea id="description" className="flex min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} required />
+                <p className="text-xs text-muted-foreground">10-1000 characters</p>
               </div>
               <div className="flex items-center space-x-2">
                 <Switch id="status" checked={form.status} onCheckedChange={(checked) => setForm({ ...form, status: checked })} />

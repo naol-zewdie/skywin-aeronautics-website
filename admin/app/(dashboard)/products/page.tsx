@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Plus } from 'lucide-react';
+import { Plus, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { DataTable } from '@/components/ui/data-table';
 import {
@@ -19,6 +19,7 @@ import { productsApi } from '@/lib/api';
 import type { Product } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { formatCurrency } from '@/lib/utils';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -26,6 +27,8 @@ export default function ProductsPage() {
   const [deleteProduct, setDeleteProduct] = useState<Product | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const { toast } = useToast();
+  const { hasRole } = useAuth();
+  const canManage = hasRole(['admin', 'operator']);
 
   const fetchProducts = async () => {
     try {
@@ -87,6 +90,30 @@ export default function ProductsPage() {
     }
   };
 
+  const handleExport = async (type: 'csv' | 'pdf') => {
+    try {
+      const blob = type === 'csv' ? await productsApi.exportCsv() : await productsApi.exportPdf();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `products.${type}`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      toast({
+        title: 'Success',
+        description: `Products exported as ${type.toUpperCase()}`,
+      });
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: `Failed to export as ${type.toUpperCase()}`,
+        variant: 'destructive',
+      });
+    }
+  };
+
   const columns = [
     { key: 'name', header: 'Name' },
     { key: 'category', header: 'Category' },
@@ -120,12 +147,24 @@ export default function ProductsPage() {
             Manage your product catalog
           </p>
         </div>
-        <Button asChild>
-          <Link href="/products/new">
-            <Plus className="mr-2 h-4 w-4" />
-            New Product
-          </Link>
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => handleExport('csv')}>
+            <Download className="mr-2 h-4 w-4" />
+            Export CSV
+          </Button>
+          <Button variant="outline" onClick={() => handleExport('pdf')}>
+            <Download className="mr-2 h-4 w-4" />
+            Export PDF
+          </Button>
+          {canManage && (
+            <Button asChild>
+              <Link href="/products/new">
+                <Plus className="mr-2 h-4 w-4" />
+                New Product
+              </Link>
+            </Button>
+          )}
+        </div>
       </div>
 
       <DataTable
@@ -133,7 +172,9 @@ export default function ProductsPage() {
         columns={columns}
         isLoading={isLoading}
         basePath="/products"
-        onDelete={setDeleteProduct}
+        onDelete={canManage ? setDeleteProduct : undefined}
+        canEdit={canManage}
+        canDelete={canManage}
         idKey="id"
         statusKey="status"
         emptyMessage="No products found. Create your first product to get started."
