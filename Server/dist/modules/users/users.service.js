@@ -11,12 +11,17 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UsersService = void 0;
 const common_1 = require("@nestjs/common");
 const mongoose_1 = require("@nestjs/mongoose");
 const mongoose_2 = require("mongoose");
 const crypto_1 = require("crypto");
+const plainjs_1 = require("@json2csv/plainjs");
+const pdfkit_1 = __importDefault(require("pdfkit"));
 const user_schema_1 = require("./schemas/user.schema");
 let UsersService = class UsersService {
     userModel;
@@ -138,6 +143,43 @@ let UsersService = class UsersService {
         if (!result) {
             throw new common_1.NotFoundException(`User with id ${id} not found`);
         }
+    }
+    exportToCsv(users) {
+        const fields = ['id', 'fullName', 'email', 'role', 'status'];
+        const opts = { fields };
+        const parser = new plainjs_1.Parser(opts);
+        return parser.parse(users);
+    }
+    exportToPdf(users) {
+        const doc = new pdfkit_1.default();
+        const chunks = [];
+        return new Promise((resolve, reject) => {
+            doc.on('data', (chunk) => chunks.push(chunk));
+            doc.on('end', () => resolve(Buffer.concat(chunks)));
+            doc.on('error', reject);
+            doc.fontSize(24).text('Users List', { align: 'center' });
+            doc.moveDown();
+            doc.fontSize(12).text(`Generated: ${new Date().toLocaleString()}`, { align: 'center' });
+            doc.moveDown(2);
+            doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke();
+            doc.moveDown();
+            users.forEach((user, index) => {
+                if (doc.y > 700) {
+                    doc.addPage();
+                }
+                doc.fontSize(16).font('Helvetica-Bold').text(`${index + 1}. ${user.fullName}`, { continued: false });
+                doc.moveDown(0.5);
+                doc.fontSize(12).font('Helvetica').text(`Email: ${user.email}`);
+                doc.moveDown(0.3);
+                doc.fontSize(12).text(`Role: ${user.role}`);
+                doc.moveDown(0.3);
+                doc.fontSize(12).text(`Status: ${user.status ? 'Active' : 'Inactive'}`);
+                doc.moveDown(1);
+                doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke();
+                doc.moveDown(1);
+            });
+            doc.end();
+        });
     }
 };
 exports.UsersService = UsersService;

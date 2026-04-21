@@ -109,19 +109,6 @@ let ProductsService = class ProductsService {
         }
         return products;
     }
-    exportToCsv(products) {
-        const headers = ['ID', 'Name', 'Category', 'Description', 'Price', 'Stock', 'Status'];
-        const rows = products.map(p => [
-            p.id,
-            `"${p.name}"`,
-            `"${p.category}"`,
-            `"${p.description?.replace(/"/g, '""') || ''}"`,
-            p.price,
-            p.stock,
-            p.status ? 'Active' : 'Inactive',
-        ]);
-        return [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
-    }
     async findOne(id) {
         if (!this.productModel) {
             const product = this.fallbackProducts.find((item) => item.id === id);
@@ -149,7 +136,7 @@ let ProductsService = class ProductsService {
         const existingProducts = await this.findAll();
         const isDuplicate = existingProducts.some(p => p.name.toLowerCase() === payload.name.toLowerCase());
         if (isDuplicate) {
-            throw new Error('Product name already exists');
+            throw new common_1.ConflictException('Product name already exists');
         }
         if (!this.productModel) {
             const created = { id: (0, crypto_1.randomUUID)(), status: true, ...payload };

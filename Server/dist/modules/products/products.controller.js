@@ -144,8 +144,8 @@ __decorate([
 __decorate([
     (0, common_1.Delete)(':id'),
     (0, common_1.HttpCode)(204),
-    (0, roles_guard_1.Roles)(roles_guard_1.Role.ADMIN),
-    (0, swagger_1.ApiOperation)({ summary: 'Delete product (Admin only)' }),
+    (0, roles_guard_1.Roles)(roles_guard_1.Role.ADMIN, roles_guard_1.Role.OPERATOR),
+    (0, swagger_1.ApiOperation)({ summary: 'Delete product' }),
     (0, swagger_1.ApiParam)({ name: 'id', type: 'string', description: 'Product ID' }),
     (0, swagger_1.ApiNoContentResponse)({ description: 'Product deleted' }),
     __param(0, (0, common_1.Param)('id')),

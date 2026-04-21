@@ -11,12 +11,17 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ServicesService = void 0;
 const common_1 = require("@nestjs/common");
 const mongoose_1 = require("@nestjs/mongoose");
 const mongoose_2 = require("mongoose");
 const crypto_1 = require("crypto");
+const plainjs_1 = require("@json2csv/plainjs");
+const pdfkit_1 = __importDefault(require("pdfkit"));
 const service_schema_1 = require("./schemas/service.schema");
 let ServicesService = class ServicesService {
     serviceModel;
@@ -128,6 +133,41 @@ let ServicesService = class ServicesService {
         if (!result) {
             throw new common_1.NotFoundException(`Service with id ${id} not found`);
         }
+    }
+    exportToCsv(services) {
+        const fields = ['id', 'name', 'description', 'status'];
+        const opts = { fields };
+        const parser = new plainjs_1.Parser(opts);
+        return parser.parse(services);
+    }
+    exportToPdf(services) {
+        const doc = new pdfkit_1.default();
+        const chunks = [];
+        return new Promise((resolve, reject) => {
+            doc.on('data', (chunk) => chunks.push(chunk));
+            doc.on('end', () => resolve(Buffer.concat(chunks)));
+            doc.on('error', reject);
+            doc.fontSize(24).text('Services Catalog', { align: 'center' });
+            doc.moveDown();
+            doc.fontSize(12).text(`Generated: ${new Date().toLocaleString()}`, { align: 'center' });
+            doc.moveDown(2);
+            doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke();
+            doc.moveDown();
+            services.forEach((service, index) => {
+                if (doc.y > 700) {
+                    doc.addPage();
+                }
+                doc.fontSize(16).font('Helvetica-Bold').text(`${index + 1}. ${service.name}`, { continued: false });
+                doc.moveDown(0.5);
+                doc.fontSize(12).font('Helvetica').text(`Description: ${service.description}`);
+                doc.moveDown(0.3);
+                doc.fontSize(12).text(`Status: ${service.status ? 'Active' : 'Inactive'}`);
+                doc.moveDown(1);
+                doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke();
+                doc.moveDown(1);
+            });
+            doc.end();
+        });
     }
 };
 exports.ServicesService = ServicesService;

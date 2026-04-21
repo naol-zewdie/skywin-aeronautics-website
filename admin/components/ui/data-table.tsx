@@ -13,6 +13,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { Edit, Trash2, MoreHorizontal, ChevronLeft, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
+import * as React from 'react';
+import { cn } from '@/lib/utils';
 
 interface Column<T> {
   key: keyof T | string;
@@ -69,7 +71,7 @@ export function DataTable<T extends object>({
   }
 
   return (
-    <div className="rounded-md border">
+    <div className="rounded-md border overflow-x-auto midnight-border">
       <Table>
         <TableHeader>
           <TableRow>

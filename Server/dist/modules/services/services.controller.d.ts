@@ -1,3 +1,4 @@
+import type { Response } from 'express';
 import { CreateServiceDto } from './dto/create-service.dto';
 import { ServiceDto } from './dto/service.dto';
 import { UpdateServiceDto } from './dto/update-service.dto';
@@ -10,4 +11,6 @@ export declare class ServicesController {
     createService(payload: CreateServiceDto): Promise<ServiceDto>;
     updateService(id: string, payload: UpdateServiceDto): Promise<ServiceDto>;
     removeService(id: string): Promise<void>;
+    exportCsv(res: Response, search?: string): Promise<void>;
+    exportPdf(res: Response, search?: string): Promise<void>;
 }

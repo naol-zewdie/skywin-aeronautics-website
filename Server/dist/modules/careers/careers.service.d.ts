@@ -12,4 +12,6 @@ export declare class CareersService {
     create(payload: CreateCareerOpeningDto): Promise<CareerOpeningDto>;
     update(id: string, payload: UpdateCareerOpeningDto): Promise<CareerOpeningDto>;
     remove(id: string): Promise<void>;
+    exportToCsv(openings: CareerOpeningDto[]): string;
+    exportToPdf(openings: CareerOpeningDto[]): Promise<Buffer>;
 }

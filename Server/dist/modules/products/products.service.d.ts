@@ -18,5 +18,6 @@ export declare class ProductsService {
     create(payload: CreateProductDto): Promise<ProductDto>;
     update(id: string, payload: UpdateProductDto): Promise<ProductDto>;
     remove(id: string): Promise<void>;
+    exportToCsv(products: ProductDto[]): string;
     exportToPdf(products: ProductDto[]): Promise<Buffer>;
 }

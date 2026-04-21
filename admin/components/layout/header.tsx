@@ -1,9 +1,10 @@
 'use client';
 
-import { Bell, Search, Menu } from 'lucide-react';
+import { Bell, Search, Menu, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/contexts/AuthContext';
+import Link from 'next/link';
 
 interface HeaderProps {
   onMenuClick?: () => void;
@@ -47,10 +48,15 @@ export function Header({ onMenuClick }: HeaderProps) {
         </Button>
 
         {/* User Info */}
-        <div className="hidden md:block text-right">
-          <p className="text-sm font-medium">{user?.fullName}</p>
-          <p className="text-xs text-muted-foreground">{user?.email}</p>
-        </div>
+        <Link href="/settings" className="hidden md:flex items-center gap-3 hover:opacity-80 transition-opacity">
+          <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+            <User className="h-4 w-4 text-primary" />
+          </div>
+          <div className="text-right">
+            <p className="text-sm font-medium">{user?.fullName}</p>
+            <p className="text-xs text-muted-foreground">{user?.email}</p>
+          </div>
+        </Link>
       </div>
     </header>
   );

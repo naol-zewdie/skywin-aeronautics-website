@@ -41,6 +41,20 @@ let ServicesController = class ServicesController {
     removeService(id) {
         return this.servicesService.remove(id);
     }
+    async exportCsv(res, search) {
+        const services = await this.servicesService.findAll();
+        const csv = this.servicesService.exportToCsv(services);
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', 'attachment; filename=services.csv');
+        res.send(csv);
+    }
+    async exportPdf(res, search) {
+        const services = await this.servicesService.findAll();
+        const pdfBuffer = await this.servicesService.exportToPdf(services);
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', 'attachment; filename=services.pdf');
+        res.send(pdfBuffer);
+    }
 };
 exports.ServicesController = ServicesController;
 __decorate([
@@ -88,8 +102,8 @@ __decorate([
 __decorate([
     (0, common_1.Delete)(':id'),
     (0, common_1.HttpCode)(204),
-    (0, roles_guard_1.Roles)(roles_guard_1.Role.ADMIN),
-    (0, swagger_1.ApiOperation)({ summary: 'Delete service (Admin only)' }),
+    (0, roles_guard_1.Roles)(roles_guard_1.Role.ADMIN, roles_guard_1.Role.OPERATOR),
+    (0, swagger_1.ApiOperation)({ summary: 'Delete service' }),
     (0, swagger_1.ApiParam)({ name: 'id', type: 'string', description: 'Service ID' }),
     (0, swagger_1.ApiNoContentResponse)({ description: 'Service deleted' }),
     __param(0, (0, common_1.Param)('id')),
@@ -97,6 +111,26 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], ServicesController.prototype, "removeService", null);
+__decorate([
+    (0, common_1.Get)('export/csv'),
+    (0, roles_guard_1.Roles)(roles_guard_1.Role.ADMIN, roles_guard_1.Role.OPERATOR),
+    (0, swagger_1.ApiOperation)({ summary: 'Export services to CSV' }),
+    __param(0, (0, common_1.Res)()),
+    __param(1, (0, common_1.Query)('search')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String]),
+    __metadata("design:returntype", Promise)
+], ServicesController.prototype, "exportCsv", null);
+__decorate([
+    (0, common_1.Get)('export/pdf'),
+    (0, roles_guard_1.Roles)(roles_guard_1.Role.ADMIN, roles_guard_1.Role.OPERATOR),
+    (0, swagger_1.ApiOperation)({ summary: 'Export services to PDF' }),
+    __param(0, (0, common_1.Res)()),
+    __param(1, (0, common_1.Query)('search')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String]),
+    __metadata("design:returntype", Promise)
+], ServicesController.prototype, "exportPdf", null);
 exports.ServicesController = ServicesController = __decorate([
     (0, swagger_1.ApiTags)('Services'),
     (0, common_1.Controller)('services'),

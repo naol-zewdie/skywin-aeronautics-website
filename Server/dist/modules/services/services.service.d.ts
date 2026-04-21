@@ -12,4 +12,6 @@ export declare class ServicesService {
     create(payload: CreateServiceDto): Promise<ServiceDto>;
     update(id: string, payload: UpdateServiceDto): Promise<ServiceDto>;
     remove(id: string): Promise<void>;
+    exportToCsv(services: ServiceDto[]): string;
+    exportToPdf(services: ServiceDto[]): Promise<Buffer>;
 }

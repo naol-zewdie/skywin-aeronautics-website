@@ -12,4 +12,6 @@ export declare class UsersService {
     create(payload: CreateUserDto): Promise<UserDto>;
     update(id: string, payload: UpdateUserDto, currentUserId?: string): Promise<UserDto>;
     remove(id: string, currentUserId?: string): Promise<void>;
+    exportToCsv(users: UserDto[]): string;
+    exportToPdf(users: UserDto[]): Promise<Buffer>;
 }

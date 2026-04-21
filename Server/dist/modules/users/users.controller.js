@@ -45,6 +45,20 @@ let UsersController = class UsersController {
         const currentUserId = req.user?.sub;
         return this.usersService.remove(id, currentUserId);
     }
+    async exportCsv(res, search) {
+        const users = await this.usersService.findAll();
+        const csv = this.usersService.exportToCsv(users);
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', 'attachment; filename=users.csv');
+        res.send(csv);
+    }
+    async exportPdf(res, search) {
+        const users = await this.usersService.findAll();
+        const pdfBuffer = await this.usersService.exportToPdf(users);
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', 'attachment; filename=users.pdf');
+        res.send(pdfBuffer);
+    }
 };
 exports.UsersController = UsersController;
 __decorate([
@@ -101,6 +115,26 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], UsersController.prototype, "removeUser", null);
+__decorate([
+    (0, common_1.Get)('export/csv'),
+    (0, roles_guard_1.Roles)(roles_guard_1.Role.ADMIN),
+    (0, swagger_1.ApiOperation)({ summary: 'Export users to CSV' }),
+    __param(0, (0, common_1.Res)()),
+    __param(1, (0, common_1.Query)('search')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String]),
+    __metadata("design:returntype", Promise)
+], UsersController.prototype, "exportCsv", null);
+__decorate([
+    (0, common_1.Get)('export/pdf'),
+    (0, roles_guard_1.Roles)(roles_guard_1.Role.ADMIN),
+    (0, swagger_1.ApiOperation)({ summary: 'Export users to PDF' }),
+    __param(0, (0, common_1.Res)()),
+    __param(1, (0, common_1.Query)('search')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String]),
+    __metadata("design:returntype", Promise)
+], UsersController.prototype, "exportPdf", null);
 exports.UsersController = UsersController = __decorate([
     (0, swagger_1.ApiTags)('Users'),
     (0, common_1.Controller)('users'),

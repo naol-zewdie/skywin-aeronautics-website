@@ -34,38 +34,33 @@ export function Sidebar() {
   const filteredNav = navigation.filter((item) => hasRole(item.roles));
 
   return (
-    <div className="flex h-full w-64 flex-col border-r bg-card">
+    <div className="flex h-full w-64 flex-col bg-card">
       {/* Logo */}
-      <div className="flex h-16 items-center border-b px-6">
+      <div className="flex h-16 items-center px-6 border-b">
         <Link href="/dashboard" className="flex items-center hover:opacity-80 transition-opacity">
           <Shield className="mr-2 h-6 w-6 text-primary" />
           <span className="text-lg font-semibold">Skywin Admin</span>
         </Link>
       </div>
 
-      {/* User Info */}
-      <div className="border-b px-6 py-4">
-        <p className="text-sm font-medium">{user?.fullName}</p>
-        <p className="text-xs text-muted-foreground capitalize">{user?.role}</p>
-      </div>
-
       {/* Navigation */}
-      <nav className="flex-1 space-y-1 p-4">
+      <nav className="flex-1 space-y-4 mt-8 p-4 overflow-y-auto">
         {filteredNav.map((item) => {
           const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
           return (
             <Link
               key={item.name}
               href={item.href}
+              onClick={() => window.innerWidth < 768 && (window as any).closeMobileMenu?.()}
               className={cn(
-                'flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors',
+                'flex items-center rounded-md px-3 py-2 text-sm font-medium transition-all relative border',
                 isActive
-                  ? 'bg-primary text-primary-foreground'
-                  : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+                  ? 'bg-primary/10 text-primary border-primary scale-105 px-4 py-2.5 shadow-sm'
+                  : 'text-muted-foreground border-border hover:bg-accent hover:text-foreground hover:border-primary/50 hover:scale-102'
               )}
             >
-              <item.icon className="mr-3 h-4 w-4" />
-              {item.name}
+              <item.icon className="mr-3 h-4 w-4 flex-shrink-0" />
+              <span className="truncate">{item.name}</span>
             </Link>
           );
         })}
@@ -78,8 +73,8 @@ export function Sidebar() {
           className="w-full justify-start text-muted-foreground"
           onClick={logout}
         >
-          <LogOut className="mr-3 h-4 w-4" />
-          Logout
+          <LogOut className="mr-3 h-4 w-4 flex-shrink-0" />
+          <span className="truncate">Logout</span>
         </Button>
       </div>
     </div>

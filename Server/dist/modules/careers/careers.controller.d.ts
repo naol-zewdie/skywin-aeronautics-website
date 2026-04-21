@@ -1,3 +1,4 @@
+import type { Response } from 'express';
 import { CreateCareerOpeningDto } from './dto/create-career-opening.dto';
 import { CareerOpeningDto } from './dto/career-opening.dto';
 import { UpdateCareerOpeningDto } from './dto/update-career-opening.dto';
@@ -10,4 +11,6 @@ export declare class CareersController {
     createOpening(payload: CreateCareerOpeningDto): Promise<CareerOpeningDto>;
     updateOpening(id: string, payload: UpdateCareerOpeningDto): Promise<CareerOpeningDto>;
     removeOpening(id: string): Promise<void>;
+    exportCsv(res: Response, search?: string): Promise<void>;
+    exportPdf(res: Response, search?: string): Promise<void>;
 }

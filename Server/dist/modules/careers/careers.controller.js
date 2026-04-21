@@ -41,6 +41,20 @@ let CareersController = class CareersController {
     removeOpening(id) {
         return this.careersService.remove(id);
     }
+    async exportCsv(res, search) {
+        const openings = await this.careersService.findAll();
+        const csv = this.careersService.exportToCsv(openings);
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', 'attachment; filename=careers.csv');
+        res.send(csv);
+    }
+    async exportPdf(res, search) {
+        const openings = await this.careersService.findAll();
+        const pdfBuffer = await this.careersService.exportToPdf(openings);
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', 'attachment; filename=careers.pdf');
+        res.send(pdfBuffer);
+    }
 };
 exports.CareersController = CareersController;
 __decorate([
@@ -97,6 +111,26 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], CareersController.prototype, "removeOpening", null);
+__decorate([
+    (0, common_1.Get)('export/csv'),
+    (0, roles_guard_1.Roles)(roles_guard_1.Role.ADMIN, roles_guard_1.Role.OPERATOR),
+    (0, swagger_1.ApiOperation)({ summary: 'Export career openings to CSV' }),
+    __param(0, (0, common_1.Res)()),
+    __param(1, (0, common_1.Query)('search')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String]),
+    __metadata("design:returntype", Promise)
+], CareersController.prototype, "exportCsv", null);
+__decorate([
+    (0, common_1.Get)('export/pdf'),
+    (0, roles_guard_1.Roles)(roles_guard_1.Role.ADMIN, roles_guard_1.Role.OPERATOR),
+    (0, swagger_1.ApiOperation)({ summary: 'Export career openings to PDF' }),
+    __param(0, (0, common_1.Res)()),
+    __param(1, (0, common_1.Query)('search')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String]),
+    __metadata("design:returntype", Promise)
+], CareersController.prototype, "exportPdf", null);
 exports.CareersController = CareersController = __decorate([
     (0, swagger_1.ApiTags)('Careers'),
     (0, common_1.Controller)('careers'),
