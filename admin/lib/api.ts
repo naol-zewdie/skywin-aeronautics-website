@@ -253,6 +253,11 @@ export const productsApi = {
     const { data } = await api.get('/v1/products/export/pdf', { responseType: 'blob' });
     return data;
   },
+
+  toggleStatus: async (id: string): Promise<Product> => {
+    const { data } = await api.patch<Product>(`/v1/products/${id}/toggle-status`);
+    return data;
+  },
 };
 
 // Services API
@@ -290,6 +295,11 @@ export const servicesApi = {
     const { data } = await api.get('/v1/services/export/pdf', { responseType: 'blob' });
     return data;
   },
+
+  toggleStatus: async (id: string): Promise<Service> => {
+    const { data } = await api.patch<Service>(`/v1/services/${id}/toggle-status`);
+    return data;
+  },
 };
 
 // Careers API
@@ -325,6 +335,11 @@ export const careersApi = {
 
   exportPdf: async (): Promise<Blob> => {
     const { data } = await api.get('/v1/careers/export/pdf', { responseType: 'blob' });
+    return data;
+  },
+
+  toggleStatus: async (id: string): Promise<CareerOpening> => {
+    const { data } = await api.patch<CareerOpening>(`/v1/careers/${id}/toggle-status`);
     return data;
   },
 };
@@ -380,6 +395,11 @@ export const postsApi = {
 
   exportPdf: async (): Promise<Blob> => {
     const { data } = await api.get('/v1/posts/export/pdf', { responseType: 'blob' });
+    return data;
+  },
+
+  toggleStatus: async (id: string): Promise<Post> => {
+    const { data } = await api.patch<Post>(`/v1/posts/${id}/toggle-status`);
     return data;
   },
 };
