@@ -5,10 +5,7 @@ import { Product, ProductSchema } from './schemas/product.schema';
 import { ProductsService } from './products.service';
 
 @Module({
-  imports:
-    process.env.ENABLE_DB === 'true'
-      ? [MongooseModule.forFeature([{ name: Product.name, schema: ProductSchema }])]
-      : [],
+  imports: [MongooseModule.forFeature([{ name: Product.name, schema: ProductSchema }])],
   controllers: [ProductsController],
   providers: [ProductsService],
 })

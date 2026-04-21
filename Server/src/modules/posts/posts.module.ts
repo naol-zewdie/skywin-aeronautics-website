@@ -5,10 +5,7 @@ import { Post, PostSchema } from './schemas/post.schema';
 import { PostsService } from './posts.service';
 
 @Module({
-  imports:
-    process.env.ENABLE_DB === 'true'
-      ? [MongooseModule.forFeature([{ name: Post.name, schema: PostSchema }])]
-      : [],
+  imports: [MongooseModule.forFeature([{ name: Post.name, schema: PostSchema }])],
   controllers: [PostsController],
   providers: [PostsService],
 })

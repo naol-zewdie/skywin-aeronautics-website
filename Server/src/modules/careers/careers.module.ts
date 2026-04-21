@@ -5,10 +5,7 @@ import { CareerOpening, CareerOpeningSchema } from './schemas/career-opening.sch
 import { CareersService } from './careers.service';
 
 @Module({
-  imports:
-    process.env.ENABLE_DB === 'true'
-      ? [MongooseModule.forFeature([{ name: CareerOpening.name, schema: CareerOpeningSchema }])]
-      : [],
+  imports: [MongooseModule.forFeature([{ name: CareerOpening.name, schema: CareerOpeningSchema }])],
   controllers: [CareersController],
   providers: [CareersService],
 })
