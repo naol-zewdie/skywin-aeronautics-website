@@ -1,7 +1,6 @@
-import { Injectable, NotFoundException, Optional } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { randomUUID } from 'crypto';
 import { CreatePostDto } from './dto/create-post.dto';
 import { PostDto } from './dto/post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
@@ -11,48 +10,9 @@ import PDFDocument from 'pdfkit';
 
 @Injectable()
 export class PostsService {
-  private readonly fallbackPosts: PostDto[] = [
-    {
-      id: 'post_001',
-      title: 'Skywin Aeronautics Announces New Partnership',
-      content: 'We are excited to announce our partnership with leading aerospace manufacturers to bring cutting-edge technology to the industry. This collaboration will enable us to deliver enhanced products and services to our global customer base.',
-      type: ContentType.NEWS,
-      author: 'Admin Team',
-      excerpt: 'New partnership announcement with leading aerospace manufacturers',
-      status: true,
-      views: 150,
-      tags: ['partnership', 'news', 'aerospace'],
-    },
-    {
-      id: 'post_002',
-      title: 'Understanding Aerospace Composite Materials',
-      content: 'Composite materials have revolutionized the aerospace industry. In this blog post, we explore the benefits of using advanced composites in aircraft manufacturing, including weight reduction, fuel efficiency, and durability.',
-      type: ContentType.BLOG,
-      author: 'Engineering Team',
-      excerpt: 'An in-depth look at composite materials in aerospace',
-      status: true,
-      views: 89,
-      tags: ['composites', 'materials', 'engineering'],
-    },
-    {
-      id: 'post_003',
-      title: 'Annual Aerospace Innovation Summit 2026',
-      content: 'Join us for the Annual Aerospace Innovation Summit where industry leaders will discuss the future of aviation technology. Network with professionals and learn about the latest innovations.',
-      type: ContentType.EVENT,
-      author: 'Events Team',
-      excerpt: 'Annual summit bringing together aerospace innovators',
-      status: true,
-      views: 245,
-      eventDate: new Date('2026-06-15T09:00:00Z'),
-      eventLocation: 'Convention Center, Dubai',
-      tags: ['summit', 'networking', 'innovation'],
-    },
-  ];
-
   constructor(
-    @Optional()
     @InjectModel(Post.name)
-    private readonly postModel?: Model<Post>,
+    private readonly postModel: Model<Post>,
   ) {}
 
   async findAll(filters?: {
@@ -62,74 +22,34 @@ export class PostsService {
     status?: boolean;
     tags?: string[];
   }): Promise<PostDto[]> {
-    let posts = this.fallbackPosts;
+    const query: any = {};
 
-    if (this.postModel) {
-      const query: any = {};
-
-      if (filters?.type) {
-        query.type = filters.type;
-      }
-
-      if (filters?.search) {
-        query.$or = [
-          { title: { $regex: filters.search, $options: 'i' } },
-          { content: { $regex: filters.search, $options: 'i' } },
-          { excerpt: { $regex: filters.search, $options: 'i' } },
-        ];
-      }
-
-      if (filters?.author) {
-        query.author = { $regex: filters.author, $options: 'i' };
-      }
-
-      if (filters?.status !== undefined) {
-        query.status = filters.status;
-      }
-
-      if (filters?.tags && filters.tags.length > 0) {
-        query.tags = { $in: filters.tags };
-      }
-
-      const dbPosts = await this.postModel.find(query).exec();
-      posts = dbPosts.map((post) => this.mapToDto(post));
+    if (filters?.type) {
+      query.type = filters.type;
     }
 
-    // Apply filters to fallback data too
-    if (filters) {
-      if (filters.type) {
-        posts = posts.filter((p) => p.type === filters.type);
-      }
-
-      if (filters.search) {
-        const searchLower = filters.search.toLowerCase();
-        posts = posts.filter(
-          (p) =>
-            p.title.toLowerCase().includes(searchLower) ||
-            p.content.toLowerCase().includes(searchLower) ||
-            (p.excerpt && p.excerpt.toLowerCase().includes(searchLower)),
-        );
-      }
-
-      if (filters.author) {
-        const authorLower = filters.author.toLowerCase();
-        posts = posts.filter((p) =>
-          p.author.toLowerCase().includes(authorLower),
-        );
-      }
-
-      if (filters.status !== undefined) {
-        posts = posts.filter((p) => p.status === filters.status);
-      }
-
-      if (filters.tags && filters.tags.length > 0) {
-        posts = posts.filter((p) =>
-          p.tags?.some((tag) => filters.tags!.includes(tag)),
-        );
-      }
+    if (filters?.search) {
+      query.$or = [
+        { title: { $regex: filters.search, $options: 'i' } },
+        { content: { $regex: filters.search, $options: 'i' } },
+        { excerpt: { $regex: filters.search, $options: 'i' } },
+      ];
     }
 
-    return posts;
+    if (filters?.author) {
+      query.author = { $regex: filters.author, $options: 'i' };
+    }
+
+    if (filters?.status !== undefined) {
+      query.status = filters.status;
+    }
+
+    if (filters?.tags && filters.tags.length > 0) {
+      query.tags = { $in: filters.tags };
+    }
+
+    const posts = await this.postModel.find(query).exec();
+    return posts.map((post) => this.mapToDto(post));
   }
 
   async findByType(type: ContentType): Promise<PostDto[]> {
@@ -137,16 +57,6 @@ export class PostsService {
   }
 
   async findOne(id: string): Promise<PostDto> {
-    if (!this.postModel) {
-      const post = this.fallbackPosts.find((item) => item.id === id);
-      if (!post) {
-        throw new NotFoundException(`Post with id ${id} not found`);
-      }
-      // Increment views for fallback data (in-memory)
-      post.views = (post.views || 0) + 1;
-      return post;
-    }
-
     const post = await this.postModel.findById(id).exec();
     if (!post) {
       throw new NotFoundException(`Post with id ${id} not found`);
@@ -159,20 +69,13 @@ export class PostsService {
     return this.mapToDto(post);
   }
 
-  async create(payload: CreatePostDto): Promise<PostDto> {
-    if (!this.postModel) {
-      const created: PostDto = {
-        id: randomUUID(),
-        ...payload,
-        status: payload.status ?? true,
-        views: 0,
-      };
-      this.fallbackPosts.push(created);
-      return created;
-    }
+  async create(payload: CreatePostDto, userRole?: string): Promise<PostDto> {
+    // Set status based on user role: admin can set status, operator defaults to false
+    const status = userRole === 'admin' ? (payload.status ?? false) : false;
 
     const created = new this.postModel({
       ...payload,
+      status,
       audit: {
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -182,18 +85,10 @@ export class PostsService {
     return this.mapToDto(saved);
   }
 
-  async update(id: string, payload: UpdatePostDto): Promise<PostDto> {
-    if (!this.postModel) {
-      const index = this.fallbackPosts.findIndex((item) => item.id === id);
-      if (index === -1) {
-        throw new NotFoundException(`Post with id ${id} not found`);
-      }
-
-      this.fallbackPosts[index] = {
-        ...this.fallbackPosts[index],
-        ...payload,
-      };
-      return this.fallbackPosts[index];
+  async update(id: string, payload: UpdatePostDto, userRole?: string): Promise<PostDto> {
+    // Non-admin users cannot change status
+    if (userRole !== 'admin' && payload.status !== undefined) {
+      delete payload.status;
     }
 
     const updated = await this.postModel
@@ -213,19 +108,23 @@ export class PostsService {
   }
 
   async remove(id: string): Promise<void> {
-    if (!this.postModel) {
-      const index = this.fallbackPosts.findIndex((item) => item.id === id);
-      if (index === -1) {
-        throw new NotFoundException(`Post with id ${id} not found`);
-      }
-      this.fallbackPosts.splice(index, 1);
-      return;
-    }
-
     const result = await this.postModel.findByIdAndDelete(id).exec();
     if (!result) {
       throw new NotFoundException(`Post with id ${id} not found`);
     }
+  }
+
+  async toggleStatus(id: string): Promise<PostDto> {
+    const post = await this.postModel.findById(id).exec();
+    if (!post) {
+      throw new NotFoundException(`Post with id ${id} not found`);
+    }
+
+    post.status = !post.status;
+    post.audit.updatedAt = new Date();
+    const saved = await post.save();
+
+    return this.mapToDto(saved);
   }
 
   exportToCsv(posts: PostDto[]): string {

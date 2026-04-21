@@ -1,7 +1,6 @@
-import { Injectable, NotFoundException, Optional } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { randomUUID } from 'crypto';
 import { Parser } from '@json2csv/plainjs';
 import PDFDocument from 'pdfkit';
 import { CreateServiceDto } from './dto/create-service.dto';
@@ -11,32 +10,12 @@ import { Service } from './schemas/service.schema';
 
 @Injectable()
 export class ServicesService {
-  private readonly fallbackServices: ServiceDto[] = [
-    {
-      id: 's_001',
-      name: 'Precision CNC Machining',
-      description: 'High-accuracy machining for aerospace-grade components.',
-      status: true,
-    },
-    {
-      id: 's_002',
-      name: 'Composite Fabrication',
-      description: 'Lightweight, high-strength composite structure production.',
-      status: true,
-    },
-  ];
-
   constructor(
-    @Optional()
     @InjectModel(Service.name)
-    private readonly serviceModel?: Model<Service>,
+    private readonly serviceModel: Model<Service>,
   ) {}
 
   async findAll(): Promise<ServiceDto[]> {
-    if (!this.serviceModel) {
-      return this.fallbackServices;
-    }
-
     const services = await this.serviceModel.find().exec();
     return services.map(service => ({
       id: service._id.toString(),
@@ -47,14 +26,6 @@ export class ServicesService {
   }
 
   async findOne(id: string): Promise<ServiceDto> {
-    if (!this.serviceModel) {
-      const service = this.fallbackServices.find((item) => item.id === id);
-      if (!service) {
-        throw new NotFoundException(`Service with id ${id} not found`);
-      }
-      return service;
-    }
-
     const service = await this.serviceModel.findById(id).exec();
     if (!service) {
       throw new NotFoundException(`Service with id ${id} not found`);
@@ -67,15 +38,13 @@ export class ServicesService {
     };
   }
 
-  async create(payload: CreateServiceDto): Promise<ServiceDto> {
-    if (!this.serviceModel) {
-      const created: ServiceDto = { id: randomUUID(), status: true, ...payload };
-      this.fallbackServices.push(created);
-      return created;
-    }
+  async create(payload: CreateServiceDto, userRole?: string): Promise<ServiceDto> {
+    // Set status based on user role: admin can set status, operator defaults to false
+    const status = userRole === 'admin' ? (payload.status ?? false) : false;
 
     const created = new this.serviceModel({
       ...payload,
+      status,
       audit: {
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -90,18 +59,10 @@ export class ServicesService {
     };
   }
 
-  async update(id: string, payload: UpdateServiceDto): Promise<ServiceDto> {
-    if (!this.serviceModel) {
-      const index = this.fallbackServices.findIndex((item) => item.id === id);
-      if (index === -1) {
-        throw new NotFoundException(`Service with id ${id} not found`);
-      }
-
-      this.fallbackServices[index] = {
-        ...this.fallbackServices[index],
-        ...payload,
-      };
-      return this.fallbackServices[index];
+  async update(id: string, payload: UpdateServiceDto, userRole?: string): Promise<ServiceDto> {
+    // Non-admin users cannot change status
+    if (userRole !== 'admin' && payload.status !== undefined) {
+      delete payload.status;
     }
 
     const updated = await this.serviceModel.findByIdAndUpdate(
@@ -124,19 +85,28 @@ export class ServicesService {
   }
 
   async remove(id: string): Promise<void> {
-    if (!this.serviceModel) {
-      const index = this.fallbackServices.findIndex((item) => item.id === id);
-      if (index === -1) {
-        throw new NotFoundException(`Service with id ${id} not found`);
-      }
-      this.fallbackServices.splice(index, 1);
-      return;
-    }
-
     const result = await this.serviceModel.findByIdAndDelete(id).exec();
     if (!result) {
       throw new NotFoundException(`Service with id ${id} not found`);
     }
+  }
+
+  async toggleStatus(id: string): Promise<ServiceDto> {
+    const service = await this.serviceModel.findById(id).exec();
+    if (!service) {
+      throw new NotFoundException(`Service with id ${id} not found`);
+    }
+
+    service.status = !service.status;
+    service.audit.updatedAt = new Date();
+    const saved = await service.save();
+
+    return {
+      id: saved._id.toString(),
+      name: saved.name,
+      description: saved.description,
+      status: saved.status,
+    };
   }
 
   exportToCsv(services: ServiceDto[]): string {
@@ -173,7 +143,7 @@ export class ServicesService {
 
         doc.fontSize(16).font('Helvetica-Bold').text(`${index + 1}. ${service.name}`, { continued: false });
         doc.moveDown(0.5);
-        
+
         doc.fontSize(12).font('Helvetica').text(`Description: ${service.description}`);
         doc.moveDown(0.3);
         doc.fontSize(12).text(`Status: ${service.status ? 'Active' : 'Inactive'}`);

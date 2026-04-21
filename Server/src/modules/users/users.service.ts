@@ -1,7 +1,6 @@
-import { Injectable, NotFoundException, Optional } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { randomUUID } from 'crypto';
 import { Parser } from '@json2csv/plainjs';
 import PDFDocument from 'pdfkit';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -11,34 +10,12 @@ import { User } from './schemas/user.schema';
 
 @Injectable()
 export class UsersService {
-  private readonly fallbackUsers: UserDto[] = [
-    {
-      id: 'u_001',
-      fullName: 'Amelia Hart',
-      email: 'amelia@skywin.aero',
-      role: 'admin',
-      status: true,
-    },
-    {
-      id: 'u_002',
-      fullName: 'Rohan Mehta',
-      email: 'rohan@skywin.aero',
-      role: 'operator',
-      status: true,
-    },
-  ];
-
   constructor(
-    @Optional()
     @InjectModel(User.name)
-    private readonly userModel?: Model<User>,
+    private readonly userModel: Model<User>,
   ) {}
 
   async findAll(): Promise<UserDto[]> {
-    if (!this.userModel) {
-      return this.fallbackUsers;
-    }
-
     const users = await this.userModel.find().exec();
     return users.map(user => ({
       id: user._id.toString(),
@@ -50,14 +27,6 @@ export class UsersService {
   }
 
   async findOne(id: string): Promise<UserDto> {
-    if (!this.userModel) {
-      const user = this.fallbackUsers.find((item) => item.id === id);
-      if (!user) {
-        throw new NotFoundException(`User with id ${id} not found`);
-      }
-      return user;
-    }
-
     const user = await this.userModel.findById(id).exec();
     if (!user) {
       throw new NotFoundException(`User with id ${id} not found`);
@@ -72,12 +41,6 @@ export class UsersService {
   }
 
   async create(payload: CreateUserDto): Promise<UserDto> {
-    if (!this.userModel) {
-      const created: UserDto = { id: randomUUID(), status: true, ...payload };
-      this.fallbackUsers.push(created);
-      return created;
-    }
-
     const created = new this.userModel({
       ...payload,
       audit: {
@@ -101,16 +64,6 @@ export class UsersService {
     // Prevent admin from editing another admin
     if (targetUser.role === 'admin' && currentUserId !== id) {
       throw new Error('Cannot edit another admin account');
-    }
-
-    if (!this.userModel) {
-      const index = this.fallbackUsers.findIndex((item) => item.id === id);
-      if (index === -1) {
-        throw new NotFoundException(`User with id ${id} not found`);
-      }
-
-      this.fallbackUsers[index] = { ...this.fallbackUsers[index], ...payload };
-      return this.fallbackUsers[index];
     }
 
     const updated = await this.userModel.findByIdAndUpdate(
@@ -137,15 +90,6 @@ export class UsersService {
     // Prevent deleting the logged-in user
     if (id === currentUserId) {
       throw new Error('Cannot delete your own account');
-    }
-
-    if (!this.userModel) {
-      const index = this.fallbackUsers.findIndex((item) => item.id === id);
-      if (index === -1) {
-        throw new NotFoundException(`User with id ${id} not found`);
-      }
-      this.fallbackUsers.splice(index, 1);
-      return;
     }
 
     const result = await this.userModel.findByIdAndDelete(id).exec();
@@ -188,7 +132,7 @@ export class UsersService {
 
         doc.fontSize(16).font('Helvetica-Bold').text(`${index + 1}. ${user.fullName}`, { continued: false });
         doc.moveDown(0.5);
-        
+
         doc.fontSize(12).font('Helvetica').text(`Email: ${user.email}`);
         doc.moveDown(0.3);
         doc.fontSize(12).text(`Role: ${user.role}`);

@@ -1,7 +1,6 @@
-import { Injectable, NotFoundException, Optional } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { randomUUID } from 'crypto';
 import { Parser } from '@json2csv/plainjs';
 import PDFDocument from 'pdfkit';
 import { CreateCareerOpeningDto } from './dto/create-career-opening.dto';
@@ -11,36 +10,12 @@ import { CareerOpening } from './schemas/career-opening.schema';
 
 @Injectable()
 export class CareersService {
-  private readonly fallbackOpenings: CareerOpeningDto[] = [
-    {
-      id: 'c_001',
-      title: 'Manufacturing Engineer',
-      location: 'Bangalore, India',
-      employmentType: 'Full-time',
-      description: 'Responsible for aerospace component manufacturing and quality control',
-      status: true,
-    },
-    {
-      id: 'c_002',
-      title: 'Quality Assurance Specialist',
-      location: 'Pune, India',
-      employmentType: 'Full-time',
-      description: 'Ensure compliance with aerospace quality standards',
-      status: true,
-    },
-  ];
-
   constructor(
-    @Optional()
     @InjectModel(CareerOpening.name)
-    private readonly careerOpeningModel?: Model<CareerOpening>,
+    private readonly careerOpeningModel: Model<CareerOpening>,
   ) {}
 
   async findAll(): Promise<CareerOpeningDto[]> {
-    if (!this.careerOpeningModel) {
-      return this.fallbackOpenings;
-    }
-
     const openings = await this.careerOpeningModel.find().exec();
     return openings.map(opening => ({
       id: opening._id.toString(),
@@ -53,14 +28,6 @@ export class CareersService {
   }
 
   async findOne(id: string): Promise<CareerOpeningDto> {
-    if (!this.careerOpeningModel) {
-      const opening = this.fallbackOpenings.find((item) => item.id === id);
-      if (!opening) {
-        throw new NotFoundException(`Career opening with id ${id} not found`);
-      }
-      return opening;
-    }
-
     const opening = await this.careerOpeningModel.findById(id).exec();
     if (!opening) {
       throw new NotFoundException(`Career opening with id ${id} not found`);
@@ -75,15 +42,13 @@ export class CareersService {
     };
   }
 
-  async create(payload: CreateCareerOpeningDto): Promise<CareerOpeningDto> {
-    if (!this.careerOpeningModel) {
-      const created: CareerOpeningDto = { id: randomUUID(), status: true, ...payload };
-      this.fallbackOpenings.push(created);
-      return created;
-    }
+  async create(payload: CreateCareerOpeningDto, userRole?: string): Promise<CareerOpeningDto> {
+    // Set status based on user role: admin can set status, operator defaults to false
+    const status = userRole === 'admin' ? (payload.status ?? false) : false;
 
     const created = new this.careerOpeningModel({
       ...payload,
+      status,
       audit: {
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -103,18 +68,11 @@ export class CareersService {
   async update(
     id: string,
     payload: UpdateCareerOpeningDto,
+    userRole?: string,
   ): Promise<CareerOpeningDto> {
-    if (!this.careerOpeningModel) {
-      const index = this.fallbackOpenings.findIndex((item) => item.id === id);
-      if (index === -1) {
-        throw new NotFoundException(`Career opening with id ${id} not found`);
-      }
-
-      this.fallbackOpenings[index] = {
-        ...this.fallbackOpenings[index],
-        ...payload,
-      };
-      return this.fallbackOpenings[index];
+    // Non-admin users cannot change status
+    if (userRole !== 'admin' && payload.status !== undefined) {
+      delete payload.status;
     }
 
     const updated = await this.careerOpeningModel.findByIdAndUpdate(
@@ -139,19 +97,30 @@ export class CareersService {
   }
 
   async remove(id: string): Promise<void> {
-    if (!this.careerOpeningModel) {
-      const index = this.fallbackOpenings.findIndex((item) => item.id === id);
-      if (index === -1) {
-        throw new NotFoundException(`Career opening with id ${id} not found`);
-      }
-      this.fallbackOpenings.splice(index, 1);
-      return;
-    }
-
     const result = await this.careerOpeningModel.findByIdAndDelete(id).exec();
     if (!result) {
       throw new NotFoundException(`Career opening with id ${id} not found`);
     }
+  }
+
+  async toggleStatus(id: string): Promise<CareerOpeningDto> {
+    const opening = await this.careerOpeningModel.findById(id).exec();
+    if (!opening) {
+      throw new NotFoundException(`Career opening with id ${id} not found`);
+    }
+
+    opening.status = !opening.status;
+    opening.audit.updatedAt = new Date();
+    const saved = await opening.save();
+
+    return {
+      id: saved._id.toString(),
+      title: saved.title,
+      location: saved.location,
+      employmentType: saved.employmentType,
+      description: saved.description,
+      status: saved.status,
+    };
   }
 
   exportToCsv(openings: CareerOpeningDto[]): string {
@@ -188,7 +157,7 @@ export class CareersService {
 
         doc.fontSize(16).font('Helvetica-Bold').text(`${index + 1}. ${opening.title}`, { continued: false });
         doc.moveDown(0.5);
-        
+
         doc.fontSize(12).font('Helvetica').text(`Location: ${opening.location}`);
         doc.moveDown(0.3);
         doc.fontSize(12).text(`Employment Type: ${opening.employmentType}`);
