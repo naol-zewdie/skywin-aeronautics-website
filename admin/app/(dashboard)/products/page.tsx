@@ -29,11 +29,14 @@ export default function ProductsPage() {
   const { toast } = useToast();
   const { hasRole } = useAuth();
   const canManage = hasRole(['admin', 'operator']);
+  const isAdmin = hasRole(['admin']);
 
   const fetchProducts = async () => {
     try {
       const data = await productsApi.getAll();
-      setProducts(data);
+      // Filter to show only active items for non-admins
+      const filteredData = isAdmin ? data : data.filter(p => p.status);
+      setProducts(filteredData);
     } catch (error: any) {
       console.error('Error loading products:', error);
       let errorMessage = 'Failed to load products';
@@ -114,6 +117,32 @@ export default function ProductsPage() {
     }
   };
 
+  const handleToggleStatus = async (product: Product) => {
+    try {
+      await productsApi.toggleStatus(product.id);
+      toast({
+        title: 'Success',
+        description: `Product status toggled successfully`,
+      });
+      fetchProducts();
+    } catch (error: any) {
+      console.error('Error toggling product status:', error);
+      let errorMessage = 'Failed to toggle product status';
+      
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      toast({
+        title: 'Error',
+        description: errorMessage,
+        variant: 'destructive',
+      });
+    }
+  };
+
   const columns = [
     { key: 'name', header: 'Name' },
     { key: 'category', header: 'Category' },
@@ -173,8 +202,10 @@ export default function ProductsPage() {
         isLoading={isLoading}
         basePath="/products"
         onDelete={canManage ? setDeleteProduct : undefined}
+        onToggleStatus={isAdmin ? handleToggleStatus : undefined}
         canEdit={canManage}
         canDelete={canManage}
+        canToggle={isAdmin}
         idKey="id"
         statusKey="status"
         emptyMessage="No products found. Create your first product to get started."

@@ -10,19 +10,28 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { servicesApi } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
 
 export default function NewServicePage() {
   const router = useRouter();
   const { toast } = useToast();
+  const { hasRole } = useAuth();
+  const isAdmin = hasRole(['admin']);
   const [isSaving, setIsSaving] = useState(false);
-  const [form, setForm] = useState({ name: '', description: '', status: true });
+  const [form, setForm] = useState({ name: '', description: '', status: false });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
     try {
-      await servicesApi.create(form);
+      const { status, ...data } = form;
+      const serviceData: any = { ...data };
+      // Only include status if user is admin
+      if (isAdmin) {
+        serviceData.status = status;
+      }
+      await servicesApi.create(serviceData);
       toast({ title: 'Success', description: 'Service created successfully' });
       router.push('/services');
     } catch {
@@ -44,7 +53,9 @@ export default function NewServicePage() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2"><Label htmlFor="name">Name</Label><Input id="name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required /><p className="text-xs text-muted-foreground">2-100 characters</p></div>
             <div className="space-y-2"><Label htmlFor="description">Description</Label><textarea id="description" className="flex min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} required /><p className="text-xs text-muted-foreground">10-500 characters</p></div>
-            <div className="flex items-center space-x-2"><Switch id="status" checked={form.status} onCheckedChange={(checked) => setForm({ ...form, status: checked })} /><Label htmlFor="status">Active</Label></div>
+            {isAdmin && (
+              <div className="flex items-center space-x-2"><Switch id="status" checked={form.status} onCheckedChange={(checked) => setForm({ ...form, status: checked })} /><Label htmlFor="status">Active</Label></div>
+            )}
             <div className="flex gap-2 pt-4">
               <Button type="submit" disabled={isSaving}>{isSaving ? 'Creating...' : 'Create Service'}</Button>
               <Button type="button" variant="outline" asChild><Link href="/services">Cancel</Link></Button>

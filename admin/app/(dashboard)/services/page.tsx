@@ -18,6 +18,7 @@ import {
 import { servicesApi } from '@/lib/api';
 import type { Service } from '@/types';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 import { truncateText } from '@/lib/utils';
 
 export default function ServicesPage() {
@@ -26,11 +27,16 @@ export default function ServicesPage() {
   const [deleteService, setDeleteService] = useState<Service | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const { toast } = useToast();
+  const { hasRole } = useAuth();
+  const canManage = hasRole(['admin', 'operator']);
+  const isAdmin = hasRole(['admin']);
 
   const fetchServices = async () => {
     try {
       const data = await servicesApi.getAll();
-      setServices(data);
+      // Filter to show only active items for non-admins
+      const filteredData = isAdmin ? data : data.filter(s => s.status);
+      setServices(filteredData);
     } catch (error) {
       toast({
         title: 'Error',
@@ -93,6 +99,32 @@ export default function ServicesPage() {
     }
   };
 
+  const handleToggleStatus = async (service: Service) => {
+    try {
+      await servicesApi.toggleStatus(service.id);
+      toast({
+        title: 'Success',
+        description: `Service status toggled successfully`,
+      });
+      fetchServices();
+    } catch (error: any) {
+      console.error('Error toggling service status:', error);
+      let errorMessage = 'Failed to toggle service status';
+      
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      toast({
+        title: 'Error',
+        description: errorMessage,
+        variant: 'destructive',
+      });
+    }
+  };
+
   const columns = [
     { key: 'name', header: 'Name' },
     {
@@ -121,12 +153,14 @@ export default function ServicesPage() {
             <Download className="mr-2 h-4 w-4" />
             Export PDF
           </Button>
-          <Button asChild>
-            <Link href="/services/new">
-              <Plus className="mr-2 h-4 w-4" />
-              New Service
-            </Link>
-          </Button>
+          {canManage && (
+            <Button asChild>
+              <Link href="/services/new">
+                <Plus className="mr-2 h-4 w-4" />
+                New Service
+              </Link>
+            </Button>
+          )}
         </div>
       </div>
 
@@ -135,7 +169,11 @@ export default function ServicesPage() {
         columns={columns}
         isLoading={isLoading}
         basePath="/services"
-        onDelete={setDeleteService}
+        onDelete={canManage ? setDeleteService : undefined}
+        onToggleStatus={isAdmin ? handleToggleStatus : undefined}
+        canEdit={canManage}
+        canDelete={canManage}
+        canToggle={isAdmin}
         idKey="id"
         statusKey="status"
         emptyMessage="No services found. Create your first service to get started."

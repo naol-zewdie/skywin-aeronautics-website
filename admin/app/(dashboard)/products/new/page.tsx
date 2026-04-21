@@ -10,15 +10,18 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { productsApi, uploadApi } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
 
 export default function NewProductPage() {
   const router = useRouter();
   const { toast } = useToast();
+  const { hasRole } = useAuth();
+  const isAdmin = hasRole(['admin']);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [form, setForm] = useState({
-    name: '', category: '', description: '', price: 0, image: '', imageUrl: '', stock: 0, status: true,
+    name: '', category: '', description: '', price: 0, image: '', imageUrl: '', stock: 0, status: false,
   });
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [imageInputType, setImageInputType] = useState<'upload' | 'url'>('upload');
@@ -56,10 +59,14 @@ export default function NewProductPage() {
     e.preventDefault();
     setIsSaving(true);
     try {
-      const { imageUrl, image, ...data } = form;
+      const { imageUrl, image, status, ...data } = form;
       const productData: any = { ...data };
       if (image) {
         productData.image = image;
+      }
+      // Only include status if user is admin
+      if (isAdmin) {
+        productData.status = status;
       }
       await productsApi.create(productData);
       toast({ title: 'Success', description: 'Product created successfully' });
@@ -147,7 +154,9 @@ export default function NewProductPage() {
                 )}
               </div>
               <div className="space-y-2 md:col-span-2"><Label htmlFor="description">Description</Label><textarea id="description" className="flex min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} required /><p className="text-xs text-muted-foreground">10-1000 characters</p></div>
-              <div className="flex items-center space-x-2"><Switch id="status" checked={form.status} onCheckedChange={(checked) => setForm({ ...form, status: checked })} /><Label htmlFor="status">Active</Label></div>
+              {isAdmin && (
+                <div className="flex items-center space-x-2"><Switch id="status" checked={form.status} onCheckedChange={(checked) => setForm({ ...form, status: checked })} /><Label htmlFor="status">Active</Label></div>
+              )}
             </div>
             <div className="flex gap-2 pt-4">
               <Button type="submit" disabled={isSaving || isUploading}>{isSaving ? 'Creating...' : 'Create Product'}</Button>
