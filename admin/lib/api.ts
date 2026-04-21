@@ -206,6 +206,16 @@ export const usersApi = {
   delete: async (id: string): Promise<void> => {
     await api.delete(`/v1/users/${id}`);
   },
+
+  exportCsv: async (): Promise<Blob> => {
+    const { data } = await api.get('/v1/users/export/csv', { responseType: 'blob' });
+    return data;
+  },
+
+  exportPdf: async (): Promise<Blob> => {
+    const { data } = await api.get('/v1/users/export/pdf', { responseType: 'blob' });
+    return data;
+  },
 };
 
 // Products API
@@ -232,6 +242,16 @@ export const productsApi = {
 
   delete: async (id: string): Promise<void> => {
     await api.delete(`/v1/products/${id}`);
+  },
+
+  exportCsv: async (): Promise<Blob> => {
+    const { data } = await api.get('/v1/products/export/csv', { responseType: 'blob' });
+    return data;
+  },
+
+  exportPdf: async (): Promise<Blob> => {
+    const { data } = await api.get('/v1/products/export/pdf', { responseType: 'blob' });
+    return data;
   },
 };
 
@@ -260,6 +280,16 @@ export const servicesApi = {
   delete: async (id: string): Promise<void> => {
     await api.delete(`/v1/services/${id}`);
   },
+
+  exportCsv: async (): Promise<Blob> => {
+    const { data } = await api.get('/v1/services/export/csv', { responseType: 'blob' });
+    return data;
+  },
+
+  exportPdf: async (): Promise<Blob> => {
+    const { data } = await api.get('/v1/services/export/pdf', { responseType: 'blob' });
+    return data;
+  },
 };
 
 // Careers API
@@ -286,6 +316,16 @@ export const careersApi = {
 
   delete: async (id: string): Promise<void> => {
     await api.delete(`/v1/careers/${id}`);
+  },
+
+  exportCsv: async (): Promise<Blob> => {
+    const { data } = await api.get('/v1/careers/export/csv', { responseType: 'blob' });
+    return data;
+  },
+
+  exportPdf: async (): Promise<Blob> => {
+    const { data } = await api.get('/v1/careers/export/pdf', { responseType: 'blob' });
+    return data;
   },
 };
 
