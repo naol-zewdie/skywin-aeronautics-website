@@ -2,6 +2,8 @@ import { Injectable, NotFoundException, Optional } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { randomUUID } from 'crypto';
+import { Parser } from '@json2csv/plainjs';
+import PDFDocument from 'pdfkit';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserDto } from './dto/user.dto';
@@ -150,5 +152,56 @@ export class UsersService {
     if (!result) {
       throw new NotFoundException(`User with id ${id} not found`);
     }
+  }
+
+  exportToCsv(users: UserDto[]): string {
+    const fields = ['id', 'fullName', 'email', 'role', 'status'];
+    const opts = { fields };
+    const parser = new Parser(opts);
+    return parser.parse(users);
+  }
+
+  exportToPdf(users: UserDto[]): Promise<Buffer> {
+    const doc = new PDFDocument();
+    const chunks: Buffer[] = [];
+
+    return new Promise((resolve, reject) => {
+      doc.on('data', (chunk) => chunks.push(chunk));
+      doc.on('end', () => resolve(Buffer.concat(chunks)));
+      doc.on('error', reject);
+
+      // Title
+      doc.fontSize(24).text('Users List', { align: 'center' });
+      doc.moveDown();
+      doc.fontSize(12).text(`Generated: ${new Date().toLocaleString()}`, { align: 'center' });
+      doc.moveDown(2);
+
+      // Separator line
+      doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke();
+      doc.moveDown();
+
+      users.forEach((user, index) => {
+        // Check if we need a new page
+        if (doc.y > 700) {
+          doc.addPage();
+        }
+
+        doc.fontSize(16).font('Helvetica-Bold').text(`${index + 1}. ${user.fullName}`, { continued: false });
+        doc.moveDown(0.5);
+        
+        doc.fontSize(12).font('Helvetica').text(`Email: ${user.email}`);
+        doc.moveDown(0.3);
+        doc.fontSize(12).text(`Role: ${user.role}`);
+        doc.moveDown(0.3);
+        doc.fontSize(12).text(`Status: ${user.status ? 'Active' : 'Inactive'}`);
+        doc.moveDown(1);
+
+        // Separator line
+        doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke();
+        doc.moveDown(1);
+      });
+
+      doc.end();
+    });
   }
 }

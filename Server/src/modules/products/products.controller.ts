@@ -128,8 +128,8 @@ export class ProductsController {
 
   @Delete(':id')
   @HttpCode(204)
-  @Roles(Role.ADMIN)
-  @ApiOperation({ summary: 'Delete product (Admin only)' })
+  @Roles(Role.ADMIN, Role.OPERATOR)
+  @ApiOperation({ summary: 'Delete product' })
   @ApiParam({ name: 'id', type: 'string', description: 'Product ID' })
   @ApiNoContentResponse({ description: 'Product deleted' })
   removeProduct(@Param('id') id: string): Promise<void> {

@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, Optional } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, Optional } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { randomUUID } from 'crypto';
@@ -122,21 +122,6 @@ export class ProductsService {
     return products;
   }
 
-  exportToCsv(products: ProductDto[]): string {
-    const headers = ['ID', 'Name', 'Category', 'Description', 'Price', 'Stock', 'Status'];
-    const rows = products.map(p => [
-      p.id,
-      `"${p.name}"`,
-      `"${p.category}"`,
-      `"${p.description?.replace(/"/g, '""') || ''}"`,
-      p.price,
-      p.stock,
-      p.status ? 'Active' : 'Inactive',
-    ]);
-    
-    return [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
-  }
-
   async findOne(id: string): Promise<ProductDto> {
     if (!this.productModel) {
       const product = this.fallbackProducts.find((item) => item.id === id);
@@ -169,7 +154,7 @@ export class ProductsService {
       p => p.name.toLowerCase() === payload.name.toLowerCase()
     );
     if (isDuplicate) {
-      throw new Error('Product name already exists');
+      throw new ConflictException('Product name already exists');
     }
 
     if (!this.productModel) {

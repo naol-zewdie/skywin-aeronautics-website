@@ -7,8 +7,11 @@ import {
   Param,
   Patch,
   Post,
+  Res,
   UseGuards,
+  Query,
 } from '@nestjs/common';
+import type { Response } from 'express';
 import {
   ApiCreatedResponse,
   ApiNoContentResponse,
@@ -81,5 +84,35 @@ export class UsersController {
     const req = (this as any).req || {};
     const currentUserId = req.user?.sub;
     return this.usersService.remove(id, currentUserId);
+  }
+
+  @Get('export/csv')
+  @Roles(Role.ADMIN)
+  @ApiOperation({ summary: 'Export users to CSV' })
+  async exportCsv(
+    @Res() res: Response,
+    @Query('search') search?: string,
+  ): Promise<void> {
+    const users = await this.usersService.findAll();
+    const csv = this.usersService.exportToCsv(users);
+
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', 'attachment; filename=users.csv');
+    res.send(csv);
+  }
+
+  @Get('export/pdf')
+  @Roles(Role.ADMIN)
+  @ApiOperation({ summary: 'Export users to PDF' })
+  async exportPdf(
+    @Res() res: Response,
+    @Query('search') search?: string,
+  ): Promise<void> {
+    const users = await this.usersService.findAll();
+    const pdfBuffer = await this.usersService.exportToPdf(users);
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'attachment; filename=users.pdf');
+    res.send(pdfBuffer);
   }
 }

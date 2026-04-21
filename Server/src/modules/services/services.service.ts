@@ -2,6 +2,8 @@ import { Injectable, NotFoundException, Optional } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { randomUUID } from 'crypto';
+import { Parser } from '@json2csv/plainjs';
+import PDFDocument from 'pdfkit';
 import { CreateServiceDto } from './dto/create-service.dto';
 import { ServiceDto } from './dto/service.dto';
 import { UpdateServiceDto } from './dto/update-service.dto';
@@ -135,5 +137,54 @@ export class ServicesService {
     if (!result) {
       throw new NotFoundException(`Service with id ${id} not found`);
     }
+  }
+
+  exportToCsv(services: ServiceDto[]): string {
+    const fields = ['id', 'name', 'description', 'status'];
+    const opts = { fields };
+    const parser = new Parser(opts);
+    return parser.parse(services);
+  }
+
+  exportToPdf(services: ServiceDto[]): Promise<Buffer> {
+    const doc = new PDFDocument();
+    const chunks: Buffer[] = [];
+
+    return new Promise((resolve, reject) => {
+      doc.on('data', (chunk) => chunks.push(chunk));
+      doc.on('end', () => resolve(Buffer.concat(chunks)));
+      doc.on('error', reject);
+
+      // Title
+      doc.fontSize(24).text('Services Catalog', { align: 'center' });
+      doc.moveDown();
+      doc.fontSize(12).text(`Generated: ${new Date().toLocaleString()}`, { align: 'center' });
+      doc.moveDown(2);
+
+      // Separator line
+      doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke();
+      doc.moveDown();
+
+      services.forEach((service, index) => {
+        // Check if we need a new page
+        if (doc.y > 700) {
+          doc.addPage();
+        }
+
+        doc.fontSize(16).font('Helvetica-Bold').text(`${index + 1}. ${service.name}`, { continued: false });
+        doc.moveDown(0.5);
+        
+        doc.fontSize(12).font('Helvetica').text(`Description: ${service.description}`);
+        doc.moveDown(0.3);
+        doc.fontSize(12).text(`Status: ${service.status ? 'Active' : 'Inactive'}`);
+        doc.moveDown(1);
+
+        // Separator line
+        doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke();
+        doc.moveDown(1);
+      });
+
+      doc.end();
+    });
   }
 }

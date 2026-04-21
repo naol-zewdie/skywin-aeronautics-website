@@ -2,6 +2,8 @@ import { Injectable, NotFoundException, Optional } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { randomUUID } from 'crypto';
+import { Parser } from '@json2csv/plainjs';
+import PDFDocument from 'pdfkit';
 import { CreateCareerOpeningDto } from './dto/create-career-opening.dto';
 import { CareerOpeningDto } from './dto/career-opening.dto';
 import { UpdateCareerOpeningDto } from './dto/update-career-opening.dto';
@@ -150,5 +152,58 @@ export class CareersService {
     if (!result) {
       throw new NotFoundException(`Career opening with id ${id} not found`);
     }
+  }
+
+  exportToCsv(openings: CareerOpeningDto[]): string {
+    const fields = ['id', 'title', 'location', 'employmentType', 'description', 'status'];
+    const opts = { fields };
+    const parser = new Parser(opts);
+    return parser.parse(openings);
+  }
+
+  exportToPdf(openings: CareerOpeningDto[]): Promise<Buffer> {
+    const doc = new PDFDocument();
+    const chunks: Buffer[] = [];
+
+    return new Promise((resolve, reject) => {
+      doc.on('data', (chunk) => chunks.push(chunk));
+      doc.on('end', () => resolve(Buffer.concat(chunks)));
+      doc.on('error', reject);
+
+      // Title
+      doc.fontSize(24).text('Career Openings', { align: 'center' });
+      doc.moveDown();
+      doc.fontSize(12).text(`Generated: ${new Date().toLocaleString()}`, { align: 'center' });
+      doc.moveDown(2);
+
+      // Separator line
+      doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke();
+      doc.moveDown();
+
+      openings.forEach((opening, index) => {
+        // Check if we need a new page
+        if (doc.y > 700) {
+          doc.addPage();
+        }
+
+        doc.fontSize(16).font('Helvetica-Bold').text(`${index + 1}. ${opening.title}`, { continued: false });
+        doc.moveDown(0.5);
+        
+        doc.fontSize(12).font('Helvetica').text(`Location: ${opening.location}`);
+        doc.moveDown(0.3);
+        doc.fontSize(12).text(`Employment Type: ${opening.employmentType}`);
+        doc.moveDown(0.3);
+        doc.fontSize(12).text(`Description: ${opening.description}`);
+        doc.moveDown(0.3);
+        doc.fontSize(12).text(`Status: ${opening.status ? 'Active' : 'Inactive'}`);
+        doc.moveDown(1);
+
+        // Separator line
+        doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke();
+        doc.moveDown(1);
+      });
+
+      doc.end();
+    });
   }
 }

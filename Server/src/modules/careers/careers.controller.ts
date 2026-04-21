@@ -7,8 +7,11 @@ import {
   Param,
   Patch,
   Post,
+  Res,
   UseGuards,
+  Query,
 } from '@nestjs/common';
+import type { Response } from 'express';
 import {
   ApiCreatedResponse,
   ApiNoContentResponse,
@@ -79,5 +82,35 @@ export class CareersController {
   @ApiNoContentResponse({ description: 'Career opening deleted' })
   removeOpening(@Param('id') id: string): Promise<void> {
     return this.careersService.remove(id);
+  }
+
+  @Get('export/csv')
+  @Roles(Role.ADMIN, Role.OPERATOR)
+  @ApiOperation({ summary: 'Export career openings to CSV' })
+  async exportCsv(
+    @Res() res: Response,
+    @Query('search') search?: string,
+  ): Promise<void> {
+    const openings = await this.careersService.findAll();
+    const csv = this.careersService.exportToCsv(openings);
+
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', 'attachment; filename=careers.csv');
+    res.send(csv);
+  }
+
+  @Get('export/pdf')
+  @Roles(Role.ADMIN, Role.OPERATOR)
+  @ApiOperation({ summary: 'Export career openings to PDF' })
+  async exportPdf(
+    @Res() res: Response,
+    @Query('search') search?: string,
+  ): Promise<void> {
+    const openings = await this.careersService.findAll();
+    const pdfBuffer = await this.careersService.exportToPdf(openings);
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'attachment; filename=careers.pdf');
+    res.send(pdfBuffer);
   }
 }

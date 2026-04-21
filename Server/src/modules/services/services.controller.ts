@@ -7,8 +7,11 @@ import {
   Param,
   Patch,
   Post,
+  Res,
   UseGuards,
+  Query,
 } from '@nestjs/common';
+import type { Response } from 'express';
 import {
   ApiCreatedResponse,
   ApiNoContentResponse,
@@ -71,11 +74,41 @@ export class ServicesController {
 
   @Delete(':id')
   @HttpCode(204)
-  @Roles(Role.ADMIN)
-  @ApiOperation({ summary: 'Delete service (Admin only)' })
+  @Roles(Role.ADMIN, Role.OPERATOR)
+  @ApiOperation({ summary: 'Delete service' })
   @ApiParam({ name: 'id', type: 'string', description: 'Service ID' })
   @ApiNoContentResponse({ description: 'Service deleted' })
   removeService(@Param('id') id: string): Promise<void> {
     return this.servicesService.remove(id);
+  }
+
+  @Get('export/csv')
+  @Roles(Role.ADMIN, Role.OPERATOR)
+  @ApiOperation({ summary: 'Export services to CSV' })
+  async exportCsv(
+    @Res() res: Response,
+    @Query('search') search?: string,
+  ): Promise<void> {
+    const services = await this.servicesService.findAll();
+    const csv = this.servicesService.exportToCsv(services);
+
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', 'attachment; filename=services.csv');
+    res.send(csv);
+  }
+
+  @Get('export/pdf')
+  @Roles(Role.ADMIN, Role.OPERATOR)
+  @ApiOperation({ summary: 'Export services to PDF' })
+  async exportPdf(
+    @Res() res: Response,
+    @Query('search') search?: string,
+  ): Promise<void> {
+    const services = await this.servicesService.findAll();
+    const pdfBuffer = await this.servicesService.exportToPdf(services);
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'attachment; filename=services.pdf');
+    res.send(pdfBuffer);
   }
 }
