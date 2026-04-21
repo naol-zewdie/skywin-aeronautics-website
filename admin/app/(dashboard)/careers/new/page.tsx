@@ -44,8 +44,8 @@ export default function NewCareerPage() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2"><Label htmlFor="title">Title</Label><Input id="title" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required /></div>
-              <div className="space-y-2"><Label htmlFor="location">Location</Label><Input id="location" value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} required /></div>
+              <div className="space-y-2"><Label htmlFor="title">Title</Label><Input id="title" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required /><p className="text-xs text-muted-foreground">3-100 characters</p></div>
+              <div className="space-y-2"><Label htmlFor="location">Location</Label><Input id="location" value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} required /><p className="text-xs text-muted-foreground">2-100 characters</p></div>
               <div className="space-y-2">
                 <Label>Employment Type</Label>
                 <Select value={form.employmentType} onValueChange={(value: any) => setForm({ ...form, employmentType: value })}>
@@ -60,7 +60,7 @@ export default function NewCareerPage() {
               </div>
               <div className="flex items-center space-x-2 pt-6"><Switch id="status" checked={form.status} onCheckedChange={(checked) => setForm({ ...form, status: checked })} /><Label htmlFor="status">Active</Label></div>
             </div>
-            <div className="space-y-2"><Label htmlFor="description">Description</Label><textarea id="description" className="flex min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} required /></div>
+            <div className="space-y-2"><Label htmlFor="description">Description</Label><textarea id="description" className="flex min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} required /><p className="text-xs text-muted-foreground">20-2000 characters</p></div>
             <div className="flex gap-2 pt-4">
               <Button type="submit" disabled={isSaving}>{isSaving ? 'Creating...' : 'Create Opening'}</Button>
               <Button type="button" variant="outline" asChild><Link href="/careers">Cancel</Link></Button>

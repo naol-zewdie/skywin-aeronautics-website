@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Plus } from 'lucide-react';
+import { Plus, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { DataTable } from '@/components/ui/data-table';
 import {
@@ -81,6 +81,30 @@ export default function UsersPage() {
     }
   };
 
+  const handleExport = async (type: 'csv' | 'pdf') => {
+    try {
+      const blob = type === 'csv' ? await usersApi.exportCsv() : await usersApi.exportPdf();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `users.${type}`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      toast({
+        title: 'Success',
+        description: `Users exported as ${type.toUpperCase()}`,
+      });
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: `Failed to export as ${type.toUpperCase()}`,
+        variant: 'destructive',
+      });
+    }
+  };
+
   const columns = [
     { key: 'fullName', header: 'Name' },
     { key: 'email', header: 'Email' },
@@ -108,12 +132,22 @@ export default function UsersPage() {
             Manage system users and their permissions
           </p>
         </div>
-        <Button asChild>
-          <Link href="/users/new">
-            <Plus className="mr-2 h-4 w-4" />
-            Add User
-          </Link>
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => handleExport('csv')}>
+            <Download className="mr-2 h-4 w-4" />
+            Export CSV
+          </Button>
+          <Button variant="outline" onClick={() => handleExport('pdf')}>
+            <Download className="mr-2 h-4 w-4" />
+            Export PDF
+          </Button>
+          <Button asChild>
+            <Link href="/users/new">
+              <Plus className="mr-2 h-4 w-4" />
+              Add User
+            </Link>
+          </Button>
+        </div>
       </div>
 
       <DataTable

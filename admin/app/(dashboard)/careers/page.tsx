@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Plus } from 'lucide-react';
+import { Plus, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { DataTable } from '@/components/ui/data-table';
 import {
@@ -69,6 +69,30 @@ export default function CareersPage() {
     }
   };
 
+  const handleExport = async (type: 'csv' | 'pdf') => {
+    try {
+      const blob = type === 'csv' ? await careersApi.exportCsv() : await careersApi.exportPdf();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `careers.${type}`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      toast({
+        title: 'Success',
+        description: `Career openings exported as ${type.toUpperCase()}`,
+      });
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: `Failed to export as ${type.toUpperCase()}`,
+        variant: 'destructive',
+      });
+    }
+  };
+
   const columns = [
     { key: 'title', header: 'Title' },
     { key: 'location', header: 'Location' },
@@ -91,12 +115,22 @@ export default function CareersPage() {
             Manage job postings and applications
           </p>
         </div>
-        <Button asChild>
-          <Link href="/careers/new">
-            <Plus className="mr-2 h-4 w-4" />
-            New Opening
-          </Link>
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => handleExport('csv')}>
+            <Download className="mr-2 h-4 w-4" />
+            Export CSV
+          </Button>
+          <Button variant="outline" onClick={() => handleExport('pdf')}>
+            <Download className="mr-2 h-4 w-4" />
+            Export PDF
+          </Button>
+          <Button asChild>
+            <Link href="/careers/new">
+              <Plus className="mr-2 h-4 w-4" />
+              New Opening
+            </Link>
+          </Button>
+        </div>
       </div>
 
       <DataTable

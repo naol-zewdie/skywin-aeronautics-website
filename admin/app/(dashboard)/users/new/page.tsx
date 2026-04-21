@@ -56,9 +56,9 @@ export default function NewUserPage() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2"><Label htmlFor="fullName">Full Name</Label><Input id="fullName" value={form.fullName} onChange={(e) => setForm({ ...form, fullName: e.target.value })} required /></div>
-              <div className="space-y-2"><Label htmlFor="email">Email</Label><Input id="email" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required /></div>
-              <div className="space-y-2"><Label htmlFor="password">Password</Label><Input id="password" type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} required minLength={8} /></div>
+              <div className="space-y-2"><Label htmlFor="fullName">Full Name</Label><Input id="fullName" value={form.fullName} onChange={(e) => setForm({ ...form, fullName: e.target.value })} required /><p className="text-xs text-muted-foreground">2-100 characters, letters/spaces/hyphens/apostrophes only</p></div>
+              <div className="space-y-2"><Label htmlFor="email">Email</Label><Input id="email" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required /><p className="text-xs text-muted-foreground">Valid email address</p></div>
+              <div className="space-y-2"><Label htmlFor="password">Password</Label><Input id="password" type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} required minLength={8} /><p className="text-xs text-muted-foreground">8+ characters, uppercase, lowercase, number required</p></div>
               <div className="space-y-2">
                 <Label>Role</Label>
                 <Select value={form.role} onValueChange={(value: any) => setForm({ ...form, role: value })}>
