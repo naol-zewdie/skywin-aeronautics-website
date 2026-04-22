@@ -1,6 +1,10 @@
+'use client';
+
+import { useState, useEffect } from 'react';
 import Card from "../components/Card";
 import Container from "../components/Container";
 import Section from "../components/Section";
+import { getServices, FrontendService } from "../../lib/api";
 
 // Smooth scroll to top function
 const scrollToTop = () => {
@@ -11,45 +15,60 @@ const scrollToTop = () => {
   });
 };
 
-const services = [
-  {
-    title: "Aerial Mapping and Surveying",
-    description: "We provide accurate aerial mapping and surveying solutions using advanced drone technology. Our services support land assessment, construction planning, and geospatial data collection. We ensure high-resolution outputs that help clients make informed decisions efficiently.",
-    image: "/drone.jpg",
-  },
-  {
-    title: "Drone Piloting Training",
-    description: "Our drone piloting training equips individuals with practical flying skills and industry knowledge. Trainees learn safety procedures, flight control, and mission planning. The program is designed for both beginners and those looking to enhance their expertise.",
-    image: "/simulation.jpg",
-  },
-  {
-    title: "Technician Training",
-    description: "We offer technician training focused on drone maintenance, troubleshooting, and system management. Participants gain hands-on experience with real equipment and tools. This training prepares technicians to ensure reliable and safe drone operations.",
-    image: "/consulting.jpg",
-  },
-  {
-    title: "Drone Engineering Training",
-    description: "Our drone engineering training covers design, assembly, and system integration. Students learn the technical foundations behind drone technology and innovation. The course is ideal for those interested in building and improving drone systems.",
-    image: "/drone.jpg",
-  },
-  {
-    title: "Consultancy",
-    description: "We provide expert consultancy services tailored to your drone-related needs. Our team supports project planning, technology selection, and operational strategy. We help organizations adopt drone solutions effectively and responsibly.",
-    image: "/simulation.jpg",
-  },
-  {
-    title: "Agricultural and Infrastructure Inspection",
-    description: "Our drones enable efficient inspection of agricultural fields and infrastructure assets. We help identify issues such as crop health concerns, structural damage, or maintenance needs. This approach saves time while improving accuracy and safety.",
-    image: "/consulting.jpg",
-  },
-  {
-    title: "Customized Missions",
-    description: "We design and execute customized drone missions based on specific client requirements. Whether for research, monitoring, or specialized operations, we adapt our solutions accordingly. Our team ensures precision, flexibility, and reliable results in every project.",
-    image: "/drone.jpg",
-  },
-];
-
 export default function ServicesPage() {
+  const [services, setServices] = useState<FrontendService[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchServices = async () => {
+      try {
+        setLoading(true);
+        const data = await getServices();
+        setServices(data);
+        setError(null);
+      } catch (err) {
+        console.error('Failed to fetch services:', err);
+        setError('Failed to load services. Please try again later.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchServices();
+  }, []);
+
+  if (loading) {
+    return (
+      <Section className="py-20">
+        <Container>
+          <div className="flex justify-center items-center min-h-[400px]">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[color:var(--primary)]"></div>
+          </div>
+        </Container>
+      </Section>
+    );
+  }
+
+  if (error) {
+    return (
+      <Section className="py-20">
+        <Container>
+          <div className="text-center">
+            <h2 className="text-2xl font-semibold text-[color:var(--primary)] mb-4">Error</h2>
+            <p className="text-[color:var(--muted)] mb-8">{error}</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="px-6 py-3 bg-[color:var(--primary)] text-white rounded-lg hover:bg-[color:var(--accent)] transition-colors"
+            >
+              Try Again
+            </button>
+          </div>
+        </Container>
+      </Section>
+    );
+  }
+
   return (
     <main className="bg-[color:var(--background)] text-[color:var(--foreground)]">
       <Container>
@@ -67,8 +86,13 @@ export default function ServicesPage() {
 
         <Section>
           <div className="grid gap-6 md:grid-cols-2">
-            {services.map((service) => (
-              <Card key={service.title} title={service.title} description={service.description} image={service.image} />
+            {services.map((service, index) => (
+              <Card
+                key={index}
+                title={service.title}
+                description={service.description}
+                image={service.image}
+              />
             ))}
           </div>
         </Section>

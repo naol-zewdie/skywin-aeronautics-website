@@ -1,6 +1,10 @@
+'use client';
+
+import { useState, useEffect } from 'react';
 import Card from "../components/Card";
 import Container from "../components/Container";
 import Section from "../components/Section";
+import { getCareers, FrontendCareer } from "../../lib/api";
 
 // Smooth scroll to top function
 const scrollToTop = () => {
@@ -11,22 +15,60 @@ const scrollToTop = () => {
   });
 };
 
-const positions = [
-  {
-    title: "Aerospace Systems Engineer",
-    description: "Contribute to design, analysis, and verification for aerospace platforms.",
-  },
-  {
-    title: "Design & Simulation Specialist",
-    description: "Support modeling and simulation efforts for next-generation aerospace products.",
-  },
-  {
-    title: "Manufacturing Process Coordinator",
-    description: "Help deliver manufacturing readiness and quality assurance programs.",
-  },
-];
-
 export default function CareersPage() {
+  const [careers, setCareers] = useState<FrontendCareer[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchCareers = async () => {
+      try {
+        setLoading(true);
+        const data = await getCareers();
+        setCareers(data);
+        setError(null);
+      } catch (err) {
+        console.error('Failed to fetch careers:', err);
+        setError('Failed to load careers. Please try again later.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCareers();
+  }, []);
+
+  if (loading) {
+    return (
+      <Section className="py-20">
+        <Container>
+          <div className="flex justify-center items-center min-h-[400px]">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[color:var(--primary)]"></div>
+          </div>
+        </Container>
+      </Section>
+    );
+  }
+
+  if (error) {
+    return (
+      <Section className="py-20">
+        <Container>
+          <div className="text-center">
+            <h2 className="text-2xl font-semibold text-[color:var(--primary)] mb-4">Error</h2>
+            <p className="text-[color:var(--muted)] mb-8">{error}</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="px-6 py-3 bg-[color:var(--primary)] text-white rounded-lg hover:bg-[color:var(--accent)] transition-colors"
+            >
+              Try Again
+            </button>
+          </div>
+        </Container>
+      </Section>
+    );
+  }
+
   return (
     <main className="bg-[color:var(--background)] text-[color:var(--foreground)]">
       <Container>
@@ -44,8 +86,8 @@ export default function CareersPage() {
 
         <Section>
           <div className="grid gap-6 lg:grid-cols-3">
-            {positions.map((position) => (
-              <Card key={position.title} title={position.title} description={position.description} />
+            {careers.map((career) => (
+              <Card key={career.title} title={career.title} description={career.description} />
             ))}
           </div>
         </Section>
@@ -54,9 +96,9 @@ export default function CareersPage() {
           <div className="rounded-3xl border border-[color:var(--border)] bg-[color:var(--background)] p-10 shadow-sm">
             <h2 className="text-2xl font-semibold text-[color:var(--primary)]">Why join us?</h2>
             <ul className="mt-6 space-y-4 text-[color:var(--muted)]">
-              <li>● Meaningful aerospace work with clear accountability and strong planning.</li>
-              <li>● A supportive environment that values collaboration and continuous improvement.</li>
-              <li>● Opportunities to grow across engineering, program support, and technical leadership.</li>
+              <li>Meaningful aerospace work with clear accountability and strong planning.</li>
+              <li>A supportive environment that values collaboration and continuous improvement.</li>
+              <li>Opportunities to grow across engineering, program support, and technical leadership.</li>
             </ul>
           </div>
         </Section>
