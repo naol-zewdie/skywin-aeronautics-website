@@ -30,5 +30,9 @@
     ".next/dev/types/**/*.ts",
     "**/*.mts"
   ],
-  "exclude": ["node_modules"]
+  "exclude": [
+    "node_modules",
+    "skywin-aeronautics-website-Backend",
+    "skywin-aeronautics-website-Backend/**/*"
+  ]
 }

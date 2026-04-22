@@ -13,6 +13,11 @@ import {
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3001';
 const API_VERSION = process.env.NEXT_PUBLIC_API_VERSION || 'v1';
 
+const stripHtml = (html: string): string => {
+  if (!html) return '';
+  return html.replace(/<[^>]*>?/gm, '');
+};
+
 class ApiClient {
   private baseUrl: string;
   private defaultHeaders: Record<string, string>;
@@ -52,7 +57,7 @@ class ApiClient {
   async getServices(): Promise<FrontendService[]> {
     try {
       const services = await this.request<BackendService[]>('/public/services');
-      return services.map(this.mapBackendToFrontendService);
+      return services.filter(s => s.status !== false).map(s => this.mapBackendToFrontendService(s));
     } catch (error) {
       console.error('Failed to fetch services:', error);
       // Return fallback data if API fails
@@ -64,7 +69,7 @@ class ApiClient {
   async getProducts(): Promise<FrontendProduct[]> {
     try {
       const products = await this.request<BackendProduct[]>('/public/products');
-      return products.map(this.mapBackendToFrontendProduct);
+      return products.filter(p => p.status !== false).map(p => this.mapBackendToFrontendProduct(p));
     } catch (error) {
       console.error('Failed to fetch products:', error);
       // Return fallback data if API fails
@@ -76,7 +81,7 @@ class ApiClient {
   async getCareers(): Promise<FrontendCareer[]> {
     try {
       const careers = await this.request<BackendCareer[]>('/public/careers');
-      return careers.map(this.mapBackendToFrontendCareer);
+      return careers.filter(c => c.status !== false).map(c => this.mapBackendToFrontendCareer(c));
     } catch (error) {
       console.error('Failed to fetch careers:', error);
       // Return fallback data if API fails
@@ -100,7 +105,7 @@ class ApiClient {
       if (options?.tags) params.append('tags', options.tags.join(','));
 
       const posts = await this.request<BackendPost[]>(`/public/posts?${params.toString()}`);
-      return posts.map(this.mapBackendToFrontendPost);
+      return posts.filter(p => p.status !== false).map(p => this.mapBackendToFrontendPost(p));
     } catch (error) {
       console.error('Failed to fetch posts:', error);
       // Return fallback data if API fails
@@ -111,7 +116,7 @@ class ApiClient {
   async getPostsByType(type: ContentType): Promise<FrontendPost[]> {
     try {
       const posts = await this.request<BackendPost[]>(`/public/posts/by-type/${type}`);
-      return posts.map(this.mapBackendToFrontendPost);
+      return posts.filter(p => p.status !== false).map(p => this.mapBackendToFrontendPost(p));
     } catch (error) {
       console.error(`Failed to fetch ${type} posts:`, error);
       // Return fallback data if API fails
@@ -139,10 +144,11 @@ class ApiClient {
   }
 
   private mapBackendToFrontendProduct(backend: BackendProduct): FrontendProduct {
+    const plainText = stripHtml(backend.description || '');
     return {
       title: backend.name,
-      shortDescription: backend.description.substring(0, 150) + '...', // Create short description
-      description: backend.description,
+      shortDescription: plainText.substring(0, 150) + (plainText.length > 150 ? '...' : ''), // Create short description
+      description: backend.description || '',
       images: [backend.image || '/drone.jpg'], // Backend has single image, frontend expects array
     };
   }

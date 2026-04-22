@@ -2,8 +2,12 @@
 
 import { useState, useEffect } from "react";
 import { getProducts, FrontendProduct } from "../../lib/api";
+import Image from "next/image";
+import { useSearchParams } from "next/navigation";
 
 export default function ProductsGrid() {
+  const searchParams = useSearchParams();
+  const selectedProduct = searchParams.get('selected');
   const [products, setProducts] = useState<FrontendProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -52,12 +56,9 @@ export default function ProductsGrid() {
 
   // Handle URL parameter for selected product
   useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const selectedProduct = urlParams.get('selected');
-    
     if (selectedProduct && products.length > 0) {
       const productIndex = products.findIndex(p => 
-        p.title.toLowerCase() === decodeURIComponent(selectedProduct?.toLowerCase() || '')
+        p.title.toLowerCase() === decodeURIComponent(selectedProduct.toLowerCase())
       );
       
       if (productIndex !== -1) {
@@ -66,7 +67,7 @@ export default function ProductsGrid() {
         setSliderPosition(0);
       }
     }
-  }, [products]);
+  }, [products, selectedProduct]);
 
   const handleCardClick = (index: number) => {
     setSelectedCard(index);
@@ -132,11 +133,13 @@ export default function ProductsGrid() {
                     onClick={() => handleCardClick(index)}
                   >
                     {/* Image Section - Upper Half */}
-                    <div className="aspect-[4/3] overflow-hidden">
-                      <img
+                    <div className="relative aspect-[4/3] overflow-hidden">
+                      <Image
                         src={product.images[0]}
                         alt={product.title}
-                        className="h-full w-full object-cover border-0 transition-transform duration-500 hover:scale-110 group-hover:brightness-110"
+                        fill
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                        className="object-cover border-0 transition-transform duration-500 hover:scale-110 group-hover:brightness-110"
                       />
                     </div>
                     
@@ -157,11 +160,13 @@ export default function ProductsGrid() {
                     onClick={() => handleCardClick(index)}
                   >
                     {/* Image Section - Upper Half */}
-                    <div className="aspect-[4/3] overflow-hidden">
-                      <img
+                    <div className="relative aspect-[4/3] overflow-hidden">
+                      <Image
                         src={product.images[0]}
                         alt={product.title}
-                        className="h-full w-full object-cover border-0 transition-transform duration-500 hover:scale-110 group-hover:brightness-110"
+                        fill
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                        className="object-cover border-0 transition-transform duration-500 hover:scale-110 group-hover:brightness-110"
                       />
                     </div>
                     
@@ -222,14 +227,16 @@ export default function ProductsGrid() {
           <div className="overflow-hidden rounded-3xl bg-[color:var(--background)] shadow-lg">
             {/* Image Slider */}
             <div className="relative aspect-[4/3] overflow-hidden">
-              <div className="flex transition-transform duration-500 ease-in-out" 
+              <div className="flex h-full transition-transform duration-500 ease-in-out" 
                    style={{ transform: `translateX(-${sliderPosition * 33.33}%)` }}>
                 {products[selectedCard].images.map((image, index) => (
-                  <div key={index} className="w-full flex-shrink-0">
-                    <img
+                  <div key={index} className="relative w-full h-full flex-shrink-0">
+                    <Image
                       src={image}
                       alt={`${products[selectedCard].title} - Image ${index + 1}`}
-                      className="w-full h-full object-cover"
+                      fill
+                      sizes="(max-width: 768px) 100vw, 66vw"
+                      className="object-cover"
                     />
                   </div>
                 ))}

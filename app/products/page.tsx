@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Container from "../components/Container";
 import Section from "../components/Section";
 import ProductsGrid from "../components/ProductsGrid";
@@ -24,7 +25,13 @@ export default function ProductsPage() {
         </Section>
 
         <Section>
-          <ProductsGrid />
+          <Suspense fallback={
+            <div className="flex justify-center items-center min-h-[400px]">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[color:var(--primary)]"></div>
+            </div>
+          }>
+            <ProductsGrid />
+          </Suspense>
         </Section>
       </Container>
     </main>

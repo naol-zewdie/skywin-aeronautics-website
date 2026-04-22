@@ -16,21 +16,13 @@ const navLinks = [
   { href: "/contact", label: "Contact" },
 ];
 
-// Smooth scroll to top function
-const scrollToTop = () => {
-  window.scrollTo({
-    top: 0,
-    left: 0,
-    behavior: 'smooth'
-  });
-};
-
 export default function Navbar() {
   const [services, setServices] = useState<FrontendService[]>([]);
   const [products, setProducts] = useState<FrontendProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [isOpen, setIsOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const [servicesDropdown, setServicesDropdown] = useState(false);
   const [productsDropdown, setProductsDropdown] = useState(false);
   const [insightsDropdown, setInsightsDropdown] = useState(false);
@@ -44,6 +36,7 @@ export default function Navbar() {
 
     // Initial check
     checkDarkMode();
+    setMounted(true);
 
     // Listen for theme changes
     const observer = new MutationObserver(checkDarkMode);
@@ -84,14 +77,13 @@ export default function Navbar() {
         <div className="flex items-center justify-between">
           <Link 
             href="/" 
-            onClick={scrollToTop}
             className="flex items-center gap-4 transition-all duration-300"
-            aria-label="Scroll to top"
+            aria-label="Home"
           >
             <div className="relative">
               <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-purple-600/20 rounded-full blur-xl opacity-75 group-hover:opacity-100 transition-opacity duration-300"></div>
               <Image
-                src={isDarkMode ? "/skywin-logo-blue.png" : "/skywin_logo.png"}
+                src={mounted && isDarkMode ? "/skywin-logo-blue.png" : "/skywin_logo.png"}
                 alt="Skywin Aeronautics logo"
                 width={450 * 8}
                 height={100 * 8}

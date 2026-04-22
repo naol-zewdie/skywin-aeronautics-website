@@ -77,11 +77,13 @@ export default function ProductsSection() {
               onClick={() => handleCardClick(product)}
             >
               {/* Image Section - Upper Half */}
-              <div className="aspect-[4/3] overflow-hidden border-0">
-                <img
+              <div className="relative aspect-[4/3] overflow-hidden border-0">
+                <Image
                   src={product.image}
                   alt={product.title}
-                  className="h-full w-full object-cover border-0 transition-transform duration-500 hover:scale-110 group-hover:brightness-110"
+                  fill
+                  sizes="(max-width: 768px) 100vw, 33vw"
+                  className="object-cover border-0 transition-transform duration-500 hover:scale-110 group-hover:brightness-110"
                 />
               </div>
               
@@ -102,11 +104,13 @@ export default function ProductsSection() {
               onClick={() => handleCardClick(product)}
             >
               {/* Image Section - Upper Half */}
-              <div className="aspect-[4/3] overflow-hidden border-0">
-                <img
+              <div className="relative aspect-[4/3] overflow-hidden border-0">
+                <Image
                   src={product.image}
                   alt={product.title}
-                  className="h-full w-full object-cover border-0 transition-transform duration-500 hover:scale-110 group-hover:brightness-110"
+                  fill
+                  sizes="(max-width: 768px) 100vw, 33vw"
+                  className="object-cover border-0 transition-transform duration-500 hover:scale-110 group-hover:brightness-110"
                 />
               </div>
               

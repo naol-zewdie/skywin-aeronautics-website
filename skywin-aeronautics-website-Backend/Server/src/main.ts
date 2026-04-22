@@ -25,7 +25,7 @@ async function bootstrap() {
   }));
 
   // Enable CORS for admin dashboard with secure defaults
-  const corsOrigin = process.env.CORS_ORIGIN || 'http://localhost:3000,http://localhost:3003';
+  const corsOrigin = process.env.CORS_ORIGIN || 'http://localhost:3000,http://localhost:3003,http://127.0.0.1:3000,http://127.0.0.1:3003';
   app.enableCors({
     origin: corsOrigin.split(',').map(o => o.trim()),
     credentials: true,
