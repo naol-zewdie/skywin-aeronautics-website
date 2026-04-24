@@ -53,6 +53,16 @@ class ApiClient {
     }
   }
 
+  private getImageUrl(imagePath?: string): string {
+    if (!imagePath) return '/drone.jpg';
+    if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+      return imagePath;
+    }
+    const baseUrl = API_BASE_URL.endsWith('/') ? API_BASE_URL.slice(0, -1) : API_BASE_URL;
+    const path = imagePath.startsWith('/') ? imagePath : `/${imagePath}`;
+    return `${baseUrl}${path}`;
+  }
+
   // Services API
   async getServices(): Promise<FrontendService[]> {
     try {
@@ -149,7 +159,7 @@ class ApiClient {
       title: backend.name,
       shortDescription: plainText.substring(0, 150) + (plainText.length > 150 ? '...' : ''), // Create short description
       description: backend.description || '',
-      images: [backend.image || '/drone.jpg'], // Backend has single image, frontend expects array
+      images: [this.getImageUrl(backend.image)], // Backend has single image, frontend expects array
     };
   }
 
@@ -179,7 +189,7 @@ class ApiClient {
       type: backend.type,
       author: backend.author,
       excerpt: backend.excerpt,
-      coverImage: backend.coverImage || '/drone.jpg', // Fallback image
+      coverImage: this.getImageUrl(backend.coverImage), // Fallback image handled in getImageUrl
       tags: backend.tags || [],
       eventDate: backend.eventDate,
       eventLocation: backend.eventLocation,

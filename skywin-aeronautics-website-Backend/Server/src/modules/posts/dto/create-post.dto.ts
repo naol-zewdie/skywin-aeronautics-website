@@ -5,7 +5,6 @@ import {
   MaxLength,
   IsEnum,
   IsOptional,
-  IsUrl,
   IsBoolean,
   IsDate,
   IsArray,
@@ -40,9 +39,9 @@ export class CreatePostDto {
   @MaxLength(500, { message: 'Excerpt cannot exceed 500 characters' })
   excerpt?: string;
 
-  @ApiProperty({ example: 'https://example.com/image.jpg', description: 'Cover image URL', required: false })
+  @ApiProperty({ example: '/uploads/image.jpg', description: 'Cover image URL or path', required: false })
   @IsOptional()
-  @IsUrl({}, { message: 'Cover image must be a valid URL' })
+  @IsString({ message: 'Cover image must be a valid path or URL' })
   coverImage?: string;
 
   @ApiProperty({ example: ['tag1', 'tag2'], description: 'Tags for the post', required: false, type: [String] })

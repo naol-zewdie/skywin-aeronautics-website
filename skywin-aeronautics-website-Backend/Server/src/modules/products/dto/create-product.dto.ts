@@ -6,7 +6,6 @@ import {
   IsNumber,
   IsBoolean,
   IsOptional,
-  IsUrl,
   Min,
 } from 'class-validator';
 
@@ -34,9 +33,9 @@ export class CreateProductDto {
   @Min(0, { message: 'Price cannot be negative' })
   price: number;
 
-  @ApiProperty({ example: 'https://example.com/images/wing-spar.jpg', description: 'Product image URL', required: false })
+  @ApiProperty({ example: '/uploads/wing-spar.jpg', description: 'Product image URL or path', required: false })
   @IsOptional()
-  @IsUrl({}, { message: 'Image must be a valid URL' })
+  @IsString({ message: 'Image must be a valid path or URL' })
   @MaxLength(500, { message: 'Image URL cannot exceed 500 characters' })
   image?: string;
 

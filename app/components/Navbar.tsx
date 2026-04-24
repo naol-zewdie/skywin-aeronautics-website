@@ -123,9 +123,10 @@ export default function Navbar() {
                       </button>
                       
                       {servicesDropdown && (
-                        <div className="absolute top-full left-0 mt-2 w-64 rounded-xl border border-[color:var(--border)] bg-[color:var(--background)] shadow-lg overflow-hidden z-50">
-                          <div className="py-2">
-                            {services.map((service) => (
+                        <div className="absolute top-full left-0 pt-2 w-64 z-50">
+                          <div className="rounded-xl border border-[color:var(--border)] bg-[color:var(--background)] shadow-lg overflow-hidden">
+                            <div className="py-2">
+                              {services.map((service) => (
                               <Link
                                 key={service.title}
                                 href="/services"
@@ -138,6 +139,7 @@ export default function Navbar() {
                                 {service.title}
                               </Link>
                             ))}
+                          </div>
                           </div>
                         </div>
                       )}
@@ -164,9 +166,10 @@ export default function Navbar() {
                       </button>
                       
                       {productsDropdown && (
-                        <div className="absolute top-full left-0 mt-2 w-64 rounded-xl border border-[color:var(--border)] bg-[color:var(--background)] shadow-lg overflow-hidden z-50">
-                          <div className="py-2">
-                            {products.map((product) => (
+                        <div className="absolute top-full left-0 pt-2 w-64 z-50">
+                          <div className="rounded-xl border border-[color:var(--border)] bg-[color:var(--background)] shadow-lg overflow-hidden">
+                            <div className="py-2">
+                              {products.map((product) => (
                               <Link
                                 key={product.title}
                                 href="/products"
@@ -179,6 +182,7 @@ export default function Navbar() {
                                 {product.title}
                               </Link>
                             ))}
+                          </div>
                           </div>
                         </div>
                       )}
@@ -205,9 +209,10 @@ export default function Navbar() {
                       </button>
                       
                       {insightsDropdown && (
-                        <div className="absolute top-full left-0 mt-2 w-64 rounded-xl border border-[color:var(--border)] bg-[color:var(--background)] shadow-lg overflow-hidden z-50">
-                          <div className="py-2">
-                            <Link
+                        <div className="absolute top-full left-0 pt-2 w-64 z-50">
+                          <div className="rounded-xl border border-[color:var(--border)] bg-[color:var(--background)] shadow-lg overflow-hidden">
+                            <div className="py-2">
+                              <Link
                               href="/insights/news"
                               className="block px-4 py-3 text-sm text-[color:var(--muted)] hover:bg-[color:var(--background-alt)] hover:text-[color:var(--primary)] transition-colors duration-200"
                               onClick={() => {
@@ -237,6 +242,7 @@ export default function Navbar() {
                             >
                               Events
                             </Link>
+                            </div>
                           </div>
                         </div>
                       )}

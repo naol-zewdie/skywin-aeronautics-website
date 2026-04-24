@@ -22,6 +22,7 @@ async function bootstrap() {
       },
     },
     crossOriginEmbedderPolicy: false, // Disable for Swagger compatibility
+    crossOriginResourcePolicy: { policy: "cross-origin" }, // Allow cross-origin requests from frontend
   }));
 
   // Enable CORS for admin dashboard with secure defaults

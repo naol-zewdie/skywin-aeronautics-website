@@ -1,11 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
+import { contactRateLimiter } from '../../../lib/rate-limit';
 
 // Initialize Resend with API key
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function POST(request: NextRequest) {
   try {
+    // Basic IP-based rate limiting
+    const ip = request.headers.get('x-forwarded-for') || '127.0.0.1';
+    const rateLimit = contactRateLimiter.check(ip);
+    
+    if (!rateLimit.success) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please try again later.' },
+        { status: 429, headers: { 'Retry-After': String(Math.ceil((rateLimit.reset - Date.now()) / 1000)) } }
+      );
+    }
+
     // Parse form data
     const formData = await request.formData();
     const name = formData.get('name') as string;

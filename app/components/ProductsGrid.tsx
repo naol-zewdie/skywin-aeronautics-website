@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { getProducts, FrontendProduct } from "../../lib/api";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
+import DOMPurify from 'isomorphic-dompurify';
 
 export default function ProductsGrid() {
   const searchParams = useSearchParams();
@@ -279,7 +280,7 @@ export default function ProductsGrid() {
               </h2>
               <div 
                 className="text-lg leading-8 text-[color:var(--muted)]"
-                dangerouslySetInnerHTML={{ __html: products[selectedCard].description }}
+                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(products[selectedCard].description) }}
               />
             </div>
             

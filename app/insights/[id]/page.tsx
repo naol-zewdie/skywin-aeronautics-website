@@ -8,6 +8,7 @@ import Container from "../../components/Container";
 import Section from "../../components/Section";
 import { getPost, FrontendPost } from "../../../lib/api";
 import { ContentType } from "../../../lib/types";
+import DOMPurify from 'isomorphic-dompurify';
 
 export default function PostDetailPage() {
   const params = useParams();
@@ -234,7 +235,7 @@ export default function PostDetailPage() {
             <div className="prose prose-lg max-w-none">
               <div 
                 className="text-[color:var(--foreground)] leading-relaxed"
-                dangerouslySetInnerHTML={{ __html: post.content }}
+                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(post.content) }}
               />
             </div>
 
