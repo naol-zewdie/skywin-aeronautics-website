@@ -1,0 +1,143 @@
+Server & Domain Provisioning Request
+Project: Skywin Aeronautics
+Prepared by: Developer (Skywin project)
+Purpose: Provide a server and domain so I (the developer) can deploy the backend API, frontend site, and admin dashboard.
+
+Summary of services to host
+- Backend API (NestJS): binds to port 3000 (internal). Dockerfile and docker-compose.yml included in `Server/`.
+- MongoDB: database used by backend (data directory must be persistent).
+- Frontend (public website): Next.js app in `frontend/` (static + server-side rendering). Build with `next build` and run with `next start`.
+- Admin dashboard: Next.js app in `admin/` (production `next start -p 3002` per package.json).
+
+What I need from you (server operator / hosting provider)
+1. Server access
+   - OS: Ubuntu 22.04 LTS (preferred) or Debian 12.
+   - Root or a sudo-capa2ble user account with SSH key access for the developer (public key will be provided).
+   - If you prefer, provide a control-panel user (cPanel/Plesk) and explain how to add SSH keys.
+2. Domain and DNS
+   - Register or point domain to the server public IP via an A record for `example.com` and `www.example.com`.
+   - Provide DNS access or confirm you'll configure A records and necessary subdomains (e.g., `api.example.com`, `admin.example.com`).
+3. TLS/HTTPS
+   - Install and manage TLS via Let's Encrypt (Certbot) or provide wildcard certificate files.
+   - If you prefer to manage SSL at CDN/Load Balancer, confirm how certs are supplied.
+4. Recommended server resources (minimum)
+   - 2 vCPU, 4GB RAM, 50GB SSD (small production) OR 4 vCPU, 8GB RAM for medium traffic.
+   - Swap 2GB recommended if low-memory.
+   - Persistent storage for MongoDB data (separate volume preferred).
+5. Software to be installed (please confirm these are available)
+   - Docker Engine (>20.x) and Docker Compose plugin.
+   - Nginx (for reverse proxy) or ability to configure server-level reverse proxy.
+   - Certbot (for Let's Encrypt) or ability to install certs.
+   - Git (to pull repo) and Node.js (optional, only if running without Docker).
+6. Network & firewall
+   - Open ports: 80 (HTTP), 443 (HTTPS). Do not expose MongoDB to the public internet; it should only be accessible from localhost or Docker network.
+   - If you must open Mongo externally, restrict by IP and enable authentication.
+7. Managed database option (alternative)
+   - If you prefer not to host MongoDB, provide MongoDB Atlas connection string (read-write user) and credentials. I will configure `DATABASE_URL` accordingly.
+8. Environment variables (I will provide values that must be set on the server or in platform)
+   - `DATABASE_URL` — MongoDB connection string (example: `mongodb://localhost:27017/skywin` or Atlas URI)
+   - `JWT_SECRET` — strong secret (min 32 chars)
+   - `RESEND_API_KEY` — API key for emails (Resend service)
+   - `NEXT_PUBLIC_API_URL` — public URL for the API (e.g., `https://api.example.com`)
+   - `SEED_PASSWORD` — password used by the seed script (required in production)
+   - `NODE_ENV` — `production`
+
+Where to set env variables
+- Preferred: in an `.env.production` file inside `Server/` (owner-only permissions), or via your platform/host service environment settings (Render/Cloud Run). I can provide an `.env.example` to be copied.
+
+Deployment approach I will use
+Option A: Docker Compose on the server (preferred for simplicity)
+- I will build and run containers using `Server/docker-compose.yml`.
+- I will request you create a systemd service to run `docker compose -f /srv/skywin/Server/docker-compose.yml up -d` on boot (or I can create it).
+
+Option B: Managed container service
+- If you prefer Render/Fly/Cloud Run, provide registry or access and I'll push images.
+
+Reverse proxy and routing
+- I will configure Nginx as a reverse proxy:
+  - `api.example.com` -> backend container (3000)
+  - `example.com` -> frontend (either served by Vercel or a container)
+  - `admin.example.com` -> admin app (port 3002)
+- I will provide an Nginx config; please confirm you can enable it and reload Nginx.
+
+Security & hardening expectations
+- Enable UFW or equivalent firewall with only ports 80/443 open to public.
+- SSH: key-based auth only (disable password auth). Optionally restrict admin SSH to specific IPs.
+- Ensure Docker is updated and users added to `docker` group as needed.
+- Mongo: do not expose publicly; if exposed, require authentication and IP whitelisting.
+
+Backup & monitoring
+- Provide automated backups for MongoDB (daily snapshot) or allow me to configure backups to an S3-compatible storage.
+- Provide basic monitoring/alerts or allow me to configure a process monitor (Prometheus/Health checks).
+
+Deliverables I expect from you when provisioning is complete
+- Server public IP address.
+- SSH user + key access instructions (username and port if non-standard).
+- DNS control panel access OR confirmation you added A records for these names:
+  - `example.com` -> IP
+  - `www.example.com` -> IP
+  - `api.example.com` -> IP
+  - `admin.example.com` -> IP
+- TLS certs installed and active for the above names OR ability to run Certbot (I will request cert issuance).
+- If using managed MongoDB (Atlas), provide connection URI and credentials.
+
+Sample commands I (developer) will run after you provide SSH access
+
+```bash
+# on server
+sudo apt update && sudo apt install -y git docker docker-compose nginx
+sudo usermod -aG docker $USER # if needed
+# clone the repo
+cd /srv
+git clone <repo-url> skywin
+cd skywin/Server
+# create .env.production with vars you supplied or that we agreed on
+sudo chown root:root .env.production && sudo chmod 600 .env.production
+# run containers
+docker compose up -d --build
+```
+
+Nginx snippet (example)
+- I will provide full config, but here is a sample server block for `api.example.com` (to be placed in `/etc/nginx/sites-available/api.example.com`):
+
+```
+server {
+  listen 80;
+  server_name api.example.com;
+  location / {
+    proxy_pass http://127.0.0.1:3000;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+  }
+}
+```
+
+Let's Encrypt (Certbot) example
+- After Nginx is enabled and server_name points correctly:
+
+```bash
+sudo apt install certbot python3-certbot-nginx
+sudo certbot --nginx -d api.example.com -d example.com -d admin.example.com
+```
+
+Credentials & sensitive data handling
+- Please avoid sending secrets over email. Use a secure channel (password manager sharing, HashiCorp Vault, or encrypted file transfer). I will provide public SSH keys and expect secrets to be stored in server `.env` files with permissions 600.
+
+Timeline
+- Once server, SSH, DNS, and TLS are ready I can perform the deployment and test within 2–4 hours (depending on DB migration/seed needs).
+
+Contact details
+- Developer will provide SSH public key and repo access.
+- Please notify me via email/Slack after server and DNS are ready.
+
+Acceptance criteria
+- `https://example.com` loads the public site.
+- `https://api.example.com` responds to API health checks.
+- `https://admin.example.com` allows admin login (after seed).
+- MongoDB backups exist and restore tested once.
+
+If you agree to this plan, please provision the server and reply with the items listed under "Deliverables I expect from you when provisioning is complete".
+
+Thank you — looking forward to deploying.

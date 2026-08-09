@@ -1,0 +1,42 @@
+export const revalidate = 0;
+
+import { Suspense } from "react";
+import Container from "../components/Container";
+import Section from "../components/Section";
+import ProductsGrid from "../components/ProductsGrid";
+
+export const metadata = {
+  title: "Skywin Aeronautics | Products",
+  description: "View featured aerospace products and solutions from Skywin Aeronautics.",
+};
+
+export default function ProductsPage() {
+  return (
+    <main className="bg-[color:var(--background)] text-[color:var(--foreground)]">
+      <Container>
+        <Section className="pt-12" backgroundImage="/assets/futuristic-drone-technology-abstract-digital-600nw-2416483185.webp">
+          <div className="max-w-3xl mx-auto text-center space-y-6">
+            <p className="text-sm uppercase tracking-[0.3em] text-[color:var(--accent)]">Products</p>
+            <h1 className="text-4xl font-semibold tracking-tight text-[color:var(--primary)] sm:text-5xl">
+              Aerospace products that deliver excellence.
+            </h1>
+            <p className="max-w-2xl mx-auto text-lg leading-8 text-[color:var(--muted)]">
+              Our product lineup showcases cutting-edge aerospace solutions designed for reliability, performance, and innovation.
+            </p>
+          </div>
+        </Section>
+
+        <Section>
+          <Suspense fallback={
+            <div className="flex justify-center items-center min-h-[400px]">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[color:var(--primary)]"></div>
+            </div>
+          }>
+            <ProductsGrid />
+          </Suspense>
+        </Section>
+      </Container>
+    </main>
+  );
+}
+

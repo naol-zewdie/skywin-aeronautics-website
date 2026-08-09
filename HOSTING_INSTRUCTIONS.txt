@@ -1,0 +1,105 @@
+Skywin Aeronautics — Hosting & Deployment Guide
+
+Overview
+- Backend: NestJS (Server/) built to run on port 3000. Dockerfile and Server/docker-compose.yml present.
+- Database: MongoDB (used in compose as `mongo:6.0`, default DB `skywin`).
+- Frontend: Next.js (frontend/) — `next build` + `next start` (default port 3000).
+- Admin: Next.js (admin/) — dev on 3003, start on 3002 (see `package.json`).
+- Email sending: Resend API key required (`RESEND_API_KEY`).
+
+Required environment variables
+- `DATABASE_URL` (e.g. mongodb://mongo:27017/skywin or MongoDB Atlas URI)
+- `JWT_SECRET` (strong secret, >=32 chars)
+- `RESEND_API_KEY` (for contact form emails)
+- `NEXT_PUBLIC_API_URL` (public URL of API used by frontend/admin; e.g. https://api.example.com)
+- `SEED_PASSWORD` (for seeding admin account; REQUIRED in production)
+- `NODE_ENV` (production/development)
+
+Local (Docker Compose) — recommended for testing
+1. From `Server/` directory, run:
+
+```bash
+cd Server
+docker compose up --build
+```
+
+2. Services exposed by the compose file:
+- API: http://localhost:3000
+- Mongo: mongodb://localhost:27017
+
+3. To run seeds (inside server container or locally):
+
+```bash
+# Option A: run seed script inside container
+docker compose exec server npm run seed
+
+# Option B: locally (if deps installed)
+cd Server
+npm install
+npm run seed
+```
+
+Production (containerized) — options
+Option A: VPS using Docker Compose
+- Provision a VPS (Ubuntu 22.04+).
+- Install Docker and Docker Compose.
+- Copy repository to server, set `.env` with required vars, then run:
+
+```bash
+cd /path/to/Server
+docker compose up -d --build
+```
+
+- Use a reverse proxy (Nginx) to expose API and route SSL (Let's Encrypt).
+- Point `NEXT_PUBLIC_API_URL` to your API URL and deploy `frontend` and `admin` either separately or serve them via Vercel/Netlify.
+
+Option B: Managed container services (Render / Heroku / Fly / Railway / Cloud Run)
+- Build the `Server` Docker image and push to registry (Docker Hub / GitHub Container Registry).
+- Create a service with the image; set env vars: `DATABASE_URL`, `JWT_SECRET`, `RESEND_API_KEY`, `SEED_PASSWORD`, `NODE_ENV`.
+- For MongoDB use a managed DB (MongoDB Atlas) and set `DATABASE_URL` to its URI. For Render/Heroku, attach the environment variables in service settings.
+
+Quick Cloud Run / GCP approach
+- Push `Server` Docker image to Google Container Registry.
+- Deploy to Cloud Run; set env vars and allow unauthenticated if public.
+- Use MongoDB Atlas for DB with its connection string in `DATABASE_URL`.
+
+Frontend / Admin deployment
+- Option 1 (Recommended): Deploy `frontend/` and `admin/` to Vercel or Netlify (auto-build from repo). Set build env vars: `NEXT_PUBLIC_API_URL`.
+- Option 2: Containerize Next.js (use `next start` in production) and deploy as containers. Ensure `PORT` is set and reverse proxy / platform provides routing.
+
+Checklist before production
+- Ensure `JWT_SECRET` and `RESEND_API_KEY` are set and strong.
+- Use MongoDB Atlas or a managed Mongo; do not bind to 0.0.0.0 without auth in production.
+- Run `npm run build` for each Next.js app and test.
+- Add HTTPS via reverse proxy (Nginx) or platform-managed TLS.
+- Configure CORS and rate-limiting if exposing API publicly.
+
+Useful commands (local development)
+
+```bash
+# Backend (local dev)
+cd Server
+npm install
+npm run start:dev
+
+# Frontend
+cd frontend
+npm install
+npm run dev
+
+# Admin
+cd admin
+npm install
+npm run dev
+```
+
+Notes & gotchas
+- `Server/docker-compose.yml` maps `DATABASE_URL` to `mongodb://mongo:27017/skywin` — working in compose only.
+- The frontend contact route requires `RESEND_API_KEY` or it will throw an error.
+- `admin` expects `NEXT_PUBLIC_API_URL` to point at the API for uploading images and admin actions.
+
+If you want, I can:
+- Create a ready-to-use production `docker-compose.prod.yml` and Nginx reverse-proxy config.
+- Generate an `.env.production` example populated with placeholders.
+
+End of guide.
