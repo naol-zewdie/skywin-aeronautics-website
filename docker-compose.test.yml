@@ -1,0 +1,76 @@
+version: '3.8'
+
+services:
+  mongo:
+    image: mongo:6.0
+    container_name: skywin_test_mongo
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_test_data:/data/db
+    networks:
+      - skywin_test_net
+
+  server:
+    build:
+      context: ./Server
+      dockerfile: Dockerfile
+    container_name: skywin_test_server
+    restart: always
+    ports:
+      - "3001:3000" # Expose internally mapped 3000 to public 3001
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - DATABASE_URL=mongodb://mongo:27017/skywin
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}
+      - CORS_ORIGIN=http://${SERVER_IP},http://${SERVER_IP}:3003,http://localhost:3003
+      - RESEND_API_KEY=${RESEND_API_KEY}
+    depends_on:
+      - mongo
+    networks:
+      - skywin_test_net
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_API_URL=http://${SERVER_IP}:3001/v1
+    container_name: skywin_test_frontend
+    restart: always
+    ports:
+      - "80:3000" # Expose frontend on port 80
+    environment:
+      - NEXT_PUBLIC_API_URL=http://${SERVER_IP}:3001/v1
+    depends_on:
+      - server
+    networks:
+      - skywin_test_net
+
+  admin:
+    build:
+      context: ./admin
+      dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_API_URL=http://${SERVER_IP}:3001/v1
+    container_name: skywin_test_admin
+    restart: always
+    ports:
+      - "3003:3003" # Expose admin on port 3003
+    environment:
+      - NEXT_PUBLIC_API_URL=http://${SERVER_IP}:3001/v1
+      - PORT=3003
+    depends_on:
+      - server
+    networks:
+      - skywin_test_net
+
+networks:
+  skywin_test_net:
+    driver: bridge
+
+volumes:
+  mongo_test_data:

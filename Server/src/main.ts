@@ -6,6 +6,8 @@ import { NestExpressApplication } from "@nestjs/platform-express";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import cookieParser from "cookie-parser";
+import mongoSanitize from "express-mongo-sanitize";
+import hpp from "hpp";
 import { Request, Response, NextFunction } from "express";
 import { AppModule } from "./app.module";
 import {
@@ -202,6 +204,12 @@ async function bootstrap() {
   // Security: Limit request body size (10MB max)
   app.useBodyParser("json", { limit: "10mb" });
   app.useBodyParser("urlencoded", { limit: "10mb", extended: true });
+
+  // Security: Sanitize data-supplied user input to prevent MongoDB Operator Injection
+  app.use(mongoSanitize());
+
+  // Security: Protect against HTTP Parameter Pollution attacks
+  app.use(hpp());
 
   // Security: Global validation with strict settings
   app.useGlobalPipes(
