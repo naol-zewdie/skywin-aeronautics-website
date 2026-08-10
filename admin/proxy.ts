@@ -46,7 +46,7 @@ function applySecurityHeaders(response: NextResponse, csp: string): NextResponse
   return response;
 }
 
-export async function middleware(request: NextRequest) {
+export default async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   const isPublicPath = PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`));

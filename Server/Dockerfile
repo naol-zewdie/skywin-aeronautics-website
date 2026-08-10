@@ -1,14 +1,14 @@
-# Use pinned Node.js 18 Alpine image
-FROM node:18-alpine AS builder
+# Use pinned Node.js 20 Alpine image
+FROM node:20-alpine AS builder
 WORKDIR /app
 COPY package*.json ./
-RUN npm ci --only=production
+RUN npm install --omit=dev
 RUN cp -R node_modules /tmp/node_modules-prod
 RUN npm install
 COPY . .
 RUN npm run build
 
-FROM node:18-alpine
+FROM node:20-alpine
 WORKDIR /app
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 COPY --from=builder /tmp/node_modules-prod ./node_modules
