@@ -1,7 +1,7 @@
-import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { HydratedDocument } from 'mongoose';
-import { v4 as uuidv4 } from 'uuid';
-import { Audit } from '../../../common/schemas/audit.schema';
+import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
+import { HydratedDocument } from "mongoose";
+import { v4 as uuidv4 } from "uuid";
+import { Audit } from "../../../common/schemas/audit.schema";
 
 export type ProductDocument = HydratedDocument<Product>;
 
@@ -21,7 +21,7 @@ export class Product {
 
   @Prop({ required: true })
   price: number;
-  
+
   @Prop({ required: false })
   image?: string;
 

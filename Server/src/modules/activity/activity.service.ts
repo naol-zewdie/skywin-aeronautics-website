@@ -1,11 +1,11 @@
-import { Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import { Activity, ActivityDocument } from './schemas/activity.schema';
-import { User } from '../users/schemas/user.schema';
-import { Product } from '../products/schemas/product.schema';
-import { Service } from '../services/schemas/service.schema';
-import { CareerOpening } from '../careers/schemas/career-opening.schema';
+import { Injectable } from "@nestjs/common";
+import { InjectModel } from "@nestjs/mongoose";
+import { Model } from "mongoose";
+import { Activity, ActivityDocument } from "./schemas/activity.schema";
+import { User } from "../users/schemas/user.schema";
+import { Product } from "../products/schemas/product.schema";
+import { Service } from "../services/schemas/service.schema";
+import { CareerOpening } from "../careers/schemas/career-opening.schema";
 
 export interface DashboardStats {
   totalUsers: number;
@@ -70,10 +70,11 @@ export class ActivityService {
     if (filters?.startDate || filters?.endDate) {
       query.createdAt = {};
       if (filters.startDate) {
-        (query.createdAt as Record<string, unknown>)['$gte'] = filters.startDate;
+        (query.createdAt as Record<string, unknown>)["$gte"] =
+          filters.startDate;
       }
       if (filters.endDate) {
-        (query.createdAt as Record<string, unknown>)['$lte'] = filters.endDate;
+        (query.createdAt as Record<string, unknown>)["$lte"] = filters.endDate;
       }
     }
 
@@ -81,23 +82,24 @@ export class ActivityService {
       .find(query)
       .sort({ createdAt: -1 })
       .limit(filters?.limit ?? 50)
-      .select('-ipAddress')
+      .select("-ipAddress")
       .lean()
       .exec() as Promise<Activity[]>;
   }
 
   async getStats(): Promise<DashboardStats> {
-    const [totalUsers, totalProducts, totalServices, activeJobs, recentActivities] = await Promise.all([
+    const [
+      totalUsers,
+      totalProducts,
+      totalServices,
+      activeJobs,
+      recentActivities,
+    ] = await Promise.all([
       this.userModel.countDocuments().exec(),
       this.productModel.countDocuments().exec(),
       this.serviceModel.countDocuments().exec(),
       this.careerModel.countDocuments({ status: true }).exec(),
-      this.activityModel
-        .find()
-        .sort({ createdAt: -1 })
-        .limit(20)
-        .lean()
-        .exec(),
+      this.activityModel.find().sort({ createdAt: -1 }).limit(20).lean().exec(),
     ]);
 
     return {
@@ -105,21 +107,29 @@ export class ActivityService {
       totalProducts,
       totalServices,
       activeJobs,
-      recentActivity: recentActivities.map(a => ({
+      recentActivity: recentActivities.map((a) => ({
         id: a._id.toString(),
         action: a.action,
         user: a.userName,
-        timestamp: a.createdAt instanceof Date ? a.createdAt.toISOString() : new Date(a.createdAt).toISOString(),
+        timestamp:
+          a.createdAt instanceof Date
+            ? a.createdAt.toISOString()
+            : new Date(a.createdAt).toISOString(),
         entityType: a.entityType,
         entityId: a.entityId,
       })),
     };
   }
 
-  async logUserCreated(userName: string, userId: string, actorId: string, actorName: string): Promise<Activity> {
+  async logUserCreated(
+    userName: string,
+    userId: string,
+    actorId: string,
+    actorName: string,
+  ): Promise<Activity> {
     return this.log({
-      action: 'CREATE',
-      entityType: 'user',
+      action: "CREATE",
+      entityType: "user",
       entityId: userId,
       entityName: userName,
       userId: actorId,
@@ -128,10 +138,15 @@ export class ActivityService {
     });
   }
 
-  async logProductCreated(productName: string, productId: string, actorId: string, actorName: string): Promise<Activity> {
+  async logProductCreated(
+    productName: string,
+    productId: string,
+    actorId: string,
+    actorName: string,
+  ): Promise<Activity> {
     return this.log({
-      action: 'CREATE',
-      entityType: 'product',
+      action: "CREATE",
+      entityType: "product",
       entityId: productId,
       entityName: productName,
       userId: actorId,
@@ -140,24 +155,28 @@ export class ActivityService {
     });
   }
 
-  async logLogin(userId: string, userName: string, ipAddress?: string): Promise<Activity> {
+  async logLogin(
+    userId: string,
+    userName: string,
+    ipAddress?: string,
+  ): Promise<Activity> {
     return this.log({
-      action: 'LOGIN',
-      entityType: 'system',
+      action: "LOGIN",
+      entityType: "system",
       userId,
       userName,
       ipAddress,
-      details: { message: 'User logged in' },
+      details: { message: "User logged in" },
     });
   }
 
   async logLogout(userId: string, userName: string): Promise<Activity> {
     return this.log({
-      action: 'LOGOUT',
-      entityType: 'system',
+      action: "LOGOUT",
+      entityType: "system",
       userId,
       userName,
-      details: { message: 'User logged out' },
+      details: { message: "User logged out" },
     });
   }
 }

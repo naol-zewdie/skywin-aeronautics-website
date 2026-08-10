@@ -36,7 +36,7 @@ export default function SettingsPage() {
         title: 'Settings saved',
         description: 'Your preferences have been updated.',
       });
-    } catch (error) {
+    } catch {
       toast({
         title: 'Error',
         description: 'Failed to save settings.',
@@ -65,16 +65,17 @@ export default function SettingsPage() {
 
     try {
       if (!user?.id) throw new Error('User not found');
-      await usersApi.update(user.id, { password: passwordForm.newPassword } as any);
+      await usersApi.update(user.id, { password: passwordForm.newPassword } as unknown as Parameters<typeof usersApi.update>[1]);
       toast({ title: 'Success', description: 'Password changed successfully' });
       setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error changing password:', error);
       let errorMessage = 'Failed to change password';
-      if (error.response?.data?.message) {
-        errorMessage = error.response.data.message;
-      } else if (error.message) {
-        errorMessage = error.message;
+      const err = error as { response?: { data?: { message?: string } }, message?: string };
+      if (err.response?.data?.message) {
+        errorMessage = err.response.data.message;
+      } else if (err.message) {
+        errorMessage = err.message;
       }
       toast({ title: 'Error', description: errorMessage, variant: 'destructive' });
     } finally {

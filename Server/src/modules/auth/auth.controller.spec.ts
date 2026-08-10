@@ -1,13 +1,13 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { getModelToken } from '@nestjs/mongoose';
-import { AuthController } from './auth.controller';
-import { AuthService } from './auth.service';
-import { JwtService } from '@nestjs/jwt';
-import { Reflector } from '@nestjs/core';
-import { UnauthorizedException } from '@nestjs/common';
-import { RateLimitGuard } from '../../common/guards/rate-limit.guard';
+import { Test, TestingModule } from "@nestjs/testing";
+import { getModelToken } from "@nestjs/mongoose";
+import { AuthController } from "./auth.controller";
+import { AuthService } from "./auth.service";
+import { JwtService } from "@nestjs/jwt";
+import { Reflector } from "@nestjs/core";
+import { UnauthorizedException } from "@nestjs/common";
+import { RateLimitGuard } from "../../common/guards/rate-limit.guard";
 
-describe('AuthController', () => {
+describe("AuthController", () => {
   let controller: AuthController;
   let authService: AuthService;
 
@@ -18,7 +18,7 @@ describe('AuthController', () => {
   };
 
   const mockJwtService = {
-    sign: jest.fn().mockReturnValue('mock-token'),
+    sign: jest.fn().mockReturnValue("mock-token"),
   };
 
   const mockRateLimitGuard = {
@@ -31,7 +31,9 @@ describe('AuthController', () => {
   };
 
   const mockRateLimitModel = {
-    findOne: jest.fn().mockReturnValue({ exec: jest.fn().mockResolvedValue(null) }),
+    findOne: jest
+      .fn()
+      .mockReturnValue({ exec: jest.fn().mockResolvedValue(null) }),
     create: jest.fn(),
     deleteMany: jest.fn(),
   };
@@ -44,7 +46,7 @@ describe('AuthController', () => {
         { provide: JwtService, useValue: mockJwtService },
         { provide: RateLimitGuard, useValue: mockRateLimitGuard },
         { provide: Reflector, useValue: mockReflector },
-        { provide: getModelToken('RateLimit'), useValue: mockRateLimitModel },
+        { provide: getModelToken("RateLimit"), useValue: mockRateLimitModel },
       ],
     }).compile();
 
@@ -54,19 +56,19 @@ describe('AuthController', () => {
     jest.clearAllMocks();
   });
 
-  describe('POST /auth/login', () => {
-    it('should return token and user on successful login', async () => {
-      const loginDto = { email: 'admin@skywin.aero', password: 'admin123' };
+  describe("POST /auth/login", () => {
+    it("should return token and user on successful login", async () => {
+      const loginDto = { email: "admin@skywin.aero", password: "admin123" };
       const user = {
-        id: 'u_001',
-        fullName: 'Amelia Hart',
-        email: 'admin@skywin.aero',
-        role: 'admin',
+        id: "u_001",
+        fullName: "Amelia Hart",
+        email: "admin@skywin.aero",
+        role: "admin",
         status: true,
       };
       const loginResult = {
-        accessToken: 'mock-jwt-token',
-        refreshToken: 'mock-refresh-token',
+        accessToken: "mock-jwt-token",
+        refreshToken: "mock-refresh-token",
         expiresAt: Date.now() + 900000,
         user,
       };
@@ -74,54 +76,70 @@ describe('AuthController', () => {
       mockAuthService.validateUser.mockResolvedValue(user);
       mockAuthService.login.mockResolvedValue(loginResult);
 
-      const req = { ip: '127.0.0.1' } as any;
+      const req = { ip: "127.0.0.1" } as any;
       const res = { cookie: jest.fn(), clearCookie: jest.fn() } as any;
       const result = await controller.login(loginDto, req, res);
 
       const { refreshToken, ...expectedResponse } = loginResult;
       expect(result).toEqual(expectedResponse);
-      expect(mockAuthService.validateUser).toHaveBeenCalledWith(loginDto.email, loginDto.password);
+      expect(mockAuthService.validateUser).toHaveBeenCalledWith(
+        loginDto.email,
+        loginDto.password,
+      );
       expect(mockAuthService.login).toHaveBeenCalledWith(user);
       expect(mockRateLimitGuard.resetAttempts).toHaveBeenCalled();
     });
 
-    it('should throw UnauthorizedException on invalid credentials', async () => {
-      const loginDto = { email: 'invalid@example.com', password: 'wrongpassword' };
-      mockAuthService.validateUser.mockRejectedValue(new UnauthorizedException('Invalid credentials'));
+    it("should throw UnauthorizedException on invalid credentials", async () => {
+      const loginDto = {
+        email: "invalid@example.com",
+        password: "wrongpassword",
+      };
+      mockAuthService.validateUser.mockRejectedValue(
+        new UnauthorizedException("Invalid credentials"),
+      );
 
-      const req = { ip: '127.0.0.1' } as any;
+      const req = { ip: "127.0.0.1" } as any;
       const res = { cookie: jest.fn(), clearCookie: jest.fn() } as any;
-      await expect(controller.login(loginDto, req, res)).rejects.toThrow(UnauthorizedException);
+      await expect(controller.login(loginDto, req, res)).rejects.toThrow(
+        UnauthorizedException,
+      );
       expect(mockRateLimitGuard.recordFailedAttempt).toHaveBeenCalled();
     });
 
-    it('should throw error when email is missing', async () => {
-      const loginDto = { email: '', password: 'admin123' };
-      mockAuthService.validateUser.mockRejectedValue(new Error('Email is required'));
+    it("should throw error when email is missing", async () => {
+      const loginDto = { email: "", password: "admin123" };
+      mockAuthService.validateUser.mockRejectedValue(
+        new Error("Email is required"),
+      );
 
-      const req = { ip: '127.0.0.1' } as any;
+      const req = { ip: "127.0.0.1" } as any;
       const res = { cookie: jest.fn(), clearCookie: jest.fn() } as any;
       await expect(controller.login(loginDto, req, res)).rejects.toThrow();
     });
 
-    it('should throw error when password is too short', async () => {
-      const loginDto = { email: 'test@example.com', password: '123' };
-      mockAuthService.validateUser.mockRejectedValue(new Error('Password must be at least 6 characters'));
+    it("should throw error when password is too short", async () => {
+      const loginDto = { email: "test@example.com", password: "123" };
+      mockAuthService.validateUser.mockRejectedValue(
+        new Error("Password must be at least 6 characters"),
+      );
 
-      const req = { ip: '127.0.0.1' } as any;
+      const req = { ip: "127.0.0.1" } as any;
       const res = { cookie: jest.fn(), clearCookie: jest.fn() } as any;
       await expect(controller.login(loginDto, req, res)).rejects.toThrow();
     });
   });
 
-  describe('GET /auth/me', () => {
-    it('should return current user profile', async () => {
-      const mockRequest = { user: { userId: 'u_001', email: 'admin@skywin.aero', role: 'admin' } };
+  describe("GET /auth/me", () => {
+    it("should return current user profile", async () => {
+      const mockRequest = {
+        user: { userId: "u_001", email: "admin@skywin.aero", role: "admin" },
+      };
       const userProfile = {
-        id: 'u_001',
-        fullName: 'Amelia Hart',
-        email: 'admin@skywin.aero',
-        role: 'admin',
+        id: "u_001",
+        fullName: "Amelia Hart",
+        email: "admin@skywin.aero",
+        role: "admin",
         status: true,
       };
 
@@ -130,14 +148,24 @@ describe('AuthController', () => {
       const result = await controller.getMe(mockRequest);
 
       expect(result).toEqual(userProfile);
-      expect(mockAuthService.getMe).toHaveBeenCalledWith('u_001');
+      expect(mockAuthService.getMe).toHaveBeenCalledWith("u_001");
     });
 
-    it('should throw UnauthorizedException when user not found', async () => {
-      const mockRequest = { user: { userId: 'non-existent', email: 'test@test.com', role: 'viewer' } };
-      mockAuthService.getMe.mockRejectedValue(new UnauthorizedException('User not found'));
+    it("should throw UnauthorizedException when user not found", async () => {
+      const mockRequest = {
+        user: {
+          userId: "non-existent",
+          email: "test@test.com",
+          role: "viewer",
+        },
+      };
+      mockAuthService.getMe.mockRejectedValue(
+        new UnauthorizedException("User not found"),
+      );
 
-      await expect(controller.getMe(mockRequest)).rejects.toThrow(UnauthorizedException);
+      await expect(controller.getMe(mockRequest)).rejects.toThrow(
+        UnauthorizedException,
+      );
     });
   });
 });

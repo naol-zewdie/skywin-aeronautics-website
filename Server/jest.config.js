@@ -12,6 +12,6 @@ module.exports = {
   testEnvironment: 'node',
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/$1',
-    '^uuid$': require.resolve('uuid'),
+    '^uuid$': '<rootDir>/../test/uuid-mock.js',
   },
 };

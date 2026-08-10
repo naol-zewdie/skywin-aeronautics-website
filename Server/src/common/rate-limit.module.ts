@@ -1,7 +1,7 @@
-import { Global, Module } from '@nestjs/common';
-import { MongooseModule } from '@nestjs/mongoose';
-import { RateLimit, RateLimitSchema } from './schemas/rate-limit.schema';
-import { RateLimitGuard } from './guards/rate-limit.guard';
+import { Global, Module } from "@nestjs/common";
+import { MongooseModule } from "@nestjs/mongoose";
+import { RateLimit, RateLimitSchema } from "./schemas/rate-limit.schema";
+import { RateLimitGuard } from "./guards/rate-limit.guard";
 
 @Global()
 @Module({

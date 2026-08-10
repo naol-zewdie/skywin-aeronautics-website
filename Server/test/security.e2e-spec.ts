@@ -1,9 +1,13 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, ValidationPipe, VersioningType } from '@nestjs/common';
-import request from 'supertest';
-import { AppModule } from '../src/app.module';
+import { Test, TestingModule } from "@nestjs/testing";
+import {
+  INestApplication,
+  ValidationPipe,
+  VersioningType,
+} from "@nestjs/common";
+import request from "supertest";
+import { AppModule } from "../src/app.module";
 
-describe('Security (e2e)', () => {
+describe("Security (e2e)", () => {
   let app: INestApplication;
   let adminToken: string;
   let viewerToken: string;
@@ -15,16 +19,20 @@ describe('Security (e2e)', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
-    app.enableVersioning({ type: VersioningType.URI, defaultVersion: '1' });
-    app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true }));
+    app.enableVersioning({ type: VersioningType.URI, defaultVersion: "1" });
+    app.useGlobalPipes(
+      new ValidationPipe({ transform: true, whitelist: true }),
+    );
     await app.init();
 
     const adminLogin = await request(app.getHttpServer())
-      .post('/v1/auth/login')
-      .send({ email: 'admin@skywin.aero', password: 'admin123' });
+      .post("/v1/auth/login")
+      .send({ email: "admin@skywin.aero", password: "admin123" });
 
     if (adminLogin.status !== 200) {
-      console.warn('Security e2e skipped: admin login failed — seed the database first');
+      console.warn(
+        "Security e2e skipped: admin login failed — seed the database first",
+      );
       return;
     }
 
@@ -32,30 +40,30 @@ describe('Security (e2e)', () => {
 
     const viewerEmail = `viewer-security-${Date.now()}@test.com`;
     await request(app.getHttpServer())
-      .post('/v1/users')
-      .set('Authorization', `Bearer ${adminToken}`)
+      .post("/v1/users")
+      .set("Authorization", `Bearer ${adminToken}`)
       .send({
-        fullName: 'Security Viewer',
+        fullName: "Security Viewer",
         email: viewerEmail,
-        role: 'viewer',
-        password: 'ViewerPass123!',
+        role: "viewer",
+        password: "ViewerPass123!",
       });
 
     const viewerLogin = await request(app.getHttpServer())
-      .post('/v1/auth/login')
-      .send({ email: viewerEmail, password: 'ViewerPass123!' });
+      .post("/v1/auth/login")
+      .send({ email: viewerEmail, password: "ViewerPass123!" });
 
     viewerToken = viewerLogin.body.accessToken;
 
     const productRes = await request(app.getHttpServer())
-      .post('/v1/products')
-      .set('Authorization', `Bearer ${adminToken}`)
+      .post("/v1/products")
+      .set("Authorization", `Bearer ${adminToken}`)
       .send({
-        name: 'Security Test Product',
-        category: 'Test',
-        description: 'Product for security tests',
+        name: "Security Test Product",
+        category: "Test",
+        description: "Product for security tests",
         price: 1,
-        image: 'https://example.com/test.jpg',
+        image: "https://example.com/test.jpg",
         stock: 1,
         status: false,
       });
@@ -69,16 +77,16 @@ describe('Security (e2e)', () => {
     }
   });
 
-  it('rejects unauthenticated PATCH on products', async () => {
+  it("rejects unauthenticated PATCH on products", async () => {
     if (!productId) return;
 
     await request(app.getHttpServer())
       .patch(`/v1/products/${productId}`)
-      .send({ name: 'Hacked' })
+      .send({ name: "Hacked" })
       .expect(401);
   });
 
-  it('rejects unauthenticated DELETE on products', async () => {
+  it("rejects unauthenticated DELETE on products", async () => {
     if (!productId) return;
 
     await request(app.getHttpServer())
@@ -86,42 +94,42 @@ describe('Security (e2e)', () => {
       .expect(401);
   });
 
-  it('rejects viewer PATCH on products with 403', async () => {
+  it("rejects viewer PATCH on products with 403", async () => {
     if (!productId || !viewerToken) return;
 
     await request(app.getHttpServer())
       .patch(`/v1/products/${productId}`)
-      .set('Authorization', `Bearer ${viewerToken}`)
-      .send({ name: 'Viewer Hack' })
+      .set("Authorization", `Bearer ${viewerToken}`)
+      .send({ name: "Viewer Hack" })
       .expect(403);
   });
 
-  it('rejects viewer DELETE on products with 403', async () => {
+  it("rejects viewer DELETE on products with 403", async () => {
     if (!productId || !viewerToken) return;
 
     await request(app.getHttpServer())
       .delete(`/v1/products/${productId}`)
-      .set('Authorization', `Bearer ${viewerToken}`)
+      .set("Authorization", `Bearer ${viewerToken}`)
       .expect(403);
   });
 
-  it('rejects token reuse after logout', async () => {
+  it("rejects token reuse after logout", async () => {
     if (!adminToken) return;
 
     const loginRes = await request(app.getHttpServer())
-      .post('/v1/auth/login')
-      .send({ email: 'admin@skywin.aero', password: 'admin123' });
+      .post("/v1/auth/login")
+      .send({ email: "admin@skywin.aero", password: "admin123" });
 
     const token = loginRes.body.accessToken;
 
     await request(app.getHttpServer())
-      .post('/v1/auth/logout')
-      .set('Authorization', `Bearer ${token}`)
+      .post("/v1/auth/logout")
+      .set("Authorization", `Bearer ${token}`)
       .expect(204);
 
     await request(app.getHttpServer())
-      .get('/v1/auth/me')
-      .set('Authorization', `Bearer ${token}`)
+      .get("/v1/auth/me")
+      .set("Authorization", `Bearer ${token}`)
       .expect(401);
   });
 });

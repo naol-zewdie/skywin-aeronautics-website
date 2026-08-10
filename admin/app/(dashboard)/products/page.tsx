@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { Plus, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -31,7 +31,7 @@ export default function ProductsPage() {
   const canManage = hasRole(['admin', 'operator']);
   const isAdmin = hasRole(['admin']);
 
-  const fetchProducts = async () => {
+  const fetchProducts = useCallback(async () => {
     try {
       const data = await productsApi.getAll();
       // Filter to show only active items for non-admins, but operators can see their own products regardless of status
@@ -39,14 +39,15 @@ export default function ProductsPage() {
         ? data 
         : data.filter(p => p.status || p.audit?.createdBy === user?.id);
       setProducts(filteredData);
-    } catch (error: any) {
+    } catch (error) {
+      const err = error as { response?: { data?: { message?: string } }, message?: string };
       console.error('Error loading products:', error);
       let errorMessage = 'Failed to load products';
       
-      if (error.response?.data?.message) {
-        errorMessage = error.response.data.message;
-      } else if (error.message) {
-        errorMessage = error.message;
+      if (err.response?.data?.message) {
+        errorMessage = err.response.data.message;
+      } else if (err.message) {
+        errorMessage = err.message;
       }
       
       toast({
@@ -57,11 +58,12 @@ export default function ProductsPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [isAdmin, user?.id, toast]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchProducts();
-  }, []);
+  }, [fetchProducts]);
 
   const handleDelete = async () => {
     if (!deleteProduct) return;
@@ -74,14 +76,15 @@ export default function ProductsPage() {
         description: 'Product deleted successfully',
       });
       fetchProducts();
-    } catch (error: any) {
+    } catch (error) {
+      const err = error as { response?: { data?: { message?: string } }, message?: string };
       console.error('Error deleting product:', error);
       let errorMessage = 'Failed to delete product';
       
-      if (error.response?.data?.message) {
-        errorMessage = error.response.data.message;
-      } else if (error.message) {
-        errorMessage = error.message;
+      if (err.response?.data?.message) {
+        errorMessage = err.response.data.message;
+      } else if (err.message) {
+        errorMessage = err.message;
       }
       
       toast({
@@ -110,7 +113,7 @@ export default function ProductsPage() {
         title: 'Success',
         description: `Products exported as ${type.toUpperCase()}`,
       });
-    } catch (error) {
+    } catch {
       toast({
         title: 'Error',
         description: `Failed to export as ${type.toUpperCase()}`,
@@ -127,14 +130,15 @@ export default function ProductsPage() {
         description: `Product status toggled successfully`,
       });
       fetchProducts();
-    } catch (error: any) {
+    } catch (error) {
+      const err = error as { response?: { data?: { message?: string } }, message?: string };
       console.error('Error toggling product status:', error);
       let errorMessage = 'Failed to toggle product status';
       
-      if (error.response?.data?.message) {
-        errorMessage = error.response.data.message;
-      } else if (error.message) {
-        errorMessage = error.message;
+      if (err.response?.data?.message) {
+        errorMessage = err.response.data.message;
+      } else if (err.message) {
+        errorMessage = err.message;
       }
       
       toast({

@@ -25,7 +25,6 @@ export default function EditServicePage() {
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [form, setForm] = useState({ name: '', description: '', image: '', imageUrl: '', status: true });
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [imageInputType, setImageInputType] = useState<'upload' | 'url'>('upload');
   const { user, hasRole } = useAuth();
   const isAdmin = hasRole(['admin']);
@@ -34,7 +33,6 @@ export default function EditServicePage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    setSelectedFile(file);
     setIsUploading(true);
 
     try {
@@ -43,7 +41,6 @@ export default function EditServicePage() {
       toast({ title: 'Success', description: 'Image uploaded successfully' });
     } catch {
       toast({ title: 'Error', description: 'Failed to upload image', variant: 'destructive' });
-      setSelectedFile(null);
     } finally {
       setIsUploading(false);
     }
@@ -51,11 +48,9 @@ export default function EditServicePage() {
 
   const handleUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, imageUrl: e.target.value, image: e.target.value });
-    setSelectedFile(null);
   };
 
   const handleRemoveImage = () => {
-    setSelectedFile(null);
     setForm({ ...form, image: '', imageUrl: '' });
   };
 
@@ -80,14 +75,14 @@ export default function EditServicePage() {
       }
     };
     fetchService();
-  }, [params.id, router, toast]);
+  }, [params.id, router, toast, isAdmin, user?.id]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
     try {
-      const { imageUrl, ...data } = form;
-      const serviceData: any = { ...data, image: form.image || null };
+      const { imageUrl: _ignored, ...data } = form;
+      const serviceData = { ...data, image: form.image || null } as Partial<Service>;
       await servicesApi.update(params.id as string, serviceData);
       toast({ title: 'Success', description: 'Service updated successfully' });
       router.push('/services');
@@ -150,6 +145,7 @@ export default function EditServicePage() {
               {isUploading && <p className="text-sm text-muted-foreground">Uploading...</p>}
               {form.image && (
                 <div className="mt-2">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={form.image.startsWith('http') ? form.image : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}${form.image}`} alt="Preview" className="max-h-40 rounded-md border" />
                 </div>
               )}

@@ -49,7 +49,7 @@ export default function ContactForm() {
       } else {
         setStatus({ type: "error", message: data.error || "Something went wrong" });
       }
-    } catch (_error) {
+    } catch {
       setStatus({ 
         type: "error", 
         message: "Network error. Please try again." 

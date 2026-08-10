@@ -4,14 +4,15 @@ import {
   ExecutionContext,
   CallHandler,
   Logger,
-} from '@nestjs/common';
-import { Observable } from 'rxjs';
-import { tap } from 'rxjs/operators';
-import { Request } from 'express';
+} from "@nestjs/common";
+import { Observable } from "rxjs";
+import { tap } from "rxjs/operators";
+import { Request } from "express";
 
 // Sanitize user-controlled strings for safe logging (strip control characters)
 function sanitize(str: string): string {
-  return str.replace(/[\r\n\x00-\x1f\x7f]/g, '_');
+  // eslint-disable-next-line no-control-regex
+  return str.replace(/[\r\n\x00-\x1f\x7f]/g, "_");
 }
 
 @Injectable()
@@ -21,8 +22,9 @@ export class LoggingInterceptor implements NestInterceptor {
   intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
     const request = context.switchToHttp().getRequest<Request>();
     const { method, url } = request;
-    const userAgent = sanitize(request.get('user-agent') || 'unknown');
-    const userId = (request as { user?: { userId?: string } }).user?.userId || 'anonymous';
+    const userAgent = sanitize(request.get("user-agent") || "unknown");
+    const userId =
+      (request as { user?: { userId?: string } }).user?.userId || "anonymous";
     const now = Date.now();
 
     return next.handle().pipe(
@@ -41,7 +43,7 @@ export class LoggingInterceptor implements NestInterceptor {
           const statusCode = error.status || 500;
 
           this.logger.error(
-            `${method} ${sanitize(url)} ${statusCode} - ${responseTime}ms - User: ${userId} - Error: ${sanitize(error.message || 'unknown')}`,
+            `${method} ${sanitize(url)} ${statusCode} - ${responseTime}ms - User: ${userId} - Error: ${sanitize(error.message || "unknown")}`,
           );
         },
       }),

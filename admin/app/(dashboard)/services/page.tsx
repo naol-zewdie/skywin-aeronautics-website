@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { Plus, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -31,7 +31,7 @@ export default function ServicesPage() {
   const canManage = hasRole(['admin', 'operator']);
   const isAdmin = hasRole(['admin']);
 
-  const fetchServices = async () => {
+  const fetchServices = useCallback(async () => {
     try {
       const data = await servicesApi.getAll();
       // Filter to show only active items for non-admins, but operators can see their own services regardless of status
@@ -39,7 +39,7 @@ export default function ServicesPage() {
         ? data 
         : data.filter(s => s.status || s.audit?.createdBy === user?.id);
       setServices(filteredData);
-    } catch (error) {
+    } catch {
       toast({
         title: 'Error',
         description: 'Failed to load services',
@@ -48,11 +48,12 @@ export default function ServicesPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [isAdmin, user?.id, toast]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchServices();
-  }, []);
+  }, [fetchServices]);
 
   const handleDelete = async () => {
     if (!deleteService) return;
@@ -65,7 +66,7 @@ export default function ServicesPage() {
         description: 'Service deleted successfully',
       });
       fetchServices();
-    } catch (error) {
+    } catch {
       toast({
         title: 'Error',
         description: 'Failed to delete service',
@@ -92,7 +93,7 @@ export default function ServicesPage() {
         title: 'Success',
         description: `Services exported as ${type.toUpperCase()}`,
       });
-    } catch (error) {
+    } catch {
       toast({
         title: 'Error',
         description: `Failed to export as ${type.toUpperCase()}`,
@@ -109,14 +110,15 @@ export default function ServicesPage() {
         description: `Service status toggled successfully`,
       });
       fetchServices();
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error toggling service status:', error);
       let errorMessage = 'Failed to toggle service status';
       
-      if (error.response?.data?.message) {
-        errorMessage = error.response.data.message;
-      } else if (error.message) {
-        errorMessage = error.message;
+      const err = error as { response?: { data?: { message?: string } }, message?: string };
+      if (err.response?.data?.message) {
+        errorMessage = err.response.data.message;
+      } else if (err.message) {
+        errorMessage = err.message;
       }
       
       toast({

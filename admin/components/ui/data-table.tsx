@@ -11,10 +11,9 @@ import {
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
-import { Edit, Trash2, MoreHorizontal, ChevronLeft, ChevronRight, Power } from 'lucide-react';
+import { Edit, Trash2, Power } from 'lucide-react';
 import Link from 'next/link';
 import * as React from 'react';
-import { cn } from '@/lib/utils';
 
 interface Column<T> {
   key: keyof T | string;

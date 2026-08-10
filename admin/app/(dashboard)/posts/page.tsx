@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
-import { Plus, Search, Download, FileText, Trash2, Edit, Eye } from 'lucide-react';
+import { Plus, Search, Download, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -26,29 +26,31 @@ export default function PostsPage() {
   const canManage = hasRole(['admin', 'operator']);
   const isAdmin = hasRole(['admin']);
 
-  const fetchPosts = async () => {
+  const fetchPosts = useCallback(async () => {
     try {
       const data = await postsApi.getAll();
       // Filter to show only active items for non-admins
       const filteredData = isAdmin ? data : data.filter(p => p.status);
       setPosts(filteredData);
-    } catch (error: any) {
+    } catch (error) {
+      const err = error as { response?: { data?: { message?: string } }, message?: string };
       console.error('Error loading posts:', error);
       let errorMessage = 'Failed to load posts';
-      if (error.response?.data?.message) {
-        errorMessage = error.response.data.message;
-      } else if (error.message) {
-        errorMessage = error.message;
+      if (err.response?.data?.message) {
+        errorMessage = err.response.data.message;
+      } else if (err.message) {
+        errorMessage = err.message;
       }
       toast({ title: 'Error', description: errorMessage, variant: 'destructive' });
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [isAdmin, toast]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchPosts();
-  }, []);
+  }, [fetchPosts]);
 
   const handleDelete = async () => {
     if (!deletePost) return;
@@ -58,13 +60,14 @@ export default function PostsPage() {
       await postsApi.delete(deletePost.id);
       toast({ title: 'Success', description: 'Post deleted successfully' });
       fetchPosts();
-    } catch (error: any) {
+    } catch (error) {
+      const err = error as { response?: { data?: { message?: string } }, message?: string };
       console.error('Error deleting post:', error);
       let errorMessage = 'Failed to delete post';
-      if (error.response?.data?.message) {
-        errorMessage = error.response.data.message;
-      } else if (error.message) {
-        errorMessage = error.message;
+      if (err.response?.data?.message) {
+        errorMessage = err.response.data.message;
+      } else if (err.message) {
+        errorMessage = err.message;
       }
       toast({ title: 'Error', description: errorMessage, variant: 'destructive' });
     } finally {
@@ -84,7 +87,7 @@ export default function PostsPage() {
       link.click();
       link.remove();
       toast({ title: 'Success', description: 'Posts exported to CSV' });
-    } catch (error: any) {
+    } catch {
       toast({ title: 'Error', description: 'Failed to export posts', variant: 'destructive' });
     }
   };
@@ -100,7 +103,7 @@ export default function PostsPage() {
       link.click();
       link.remove();
       toast({ title: 'Success', description: 'Posts exported to PDF' });
-    } catch (error: any) {
+    } catch {
       toast({ title: 'Error', description: 'Failed to export posts', variant: 'destructive' });
     }
   };
@@ -110,14 +113,15 @@ export default function PostsPage() {
       await postsApi.toggleStatus(post.id);
       toast({ title: 'Success', description: 'Post status toggled successfully' });
       fetchPosts();
-    } catch (error: any) {
+    } catch (error) {
+      const err = error as { response?: { data?: { message?: string } }, message?: string };
       console.error('Error toggling post status:', error);
       let errorMessage = 'Failed to toggle post status';
       
-      if (error.response?.data?.message) {
-        errorMessage = error.response.data.message;
-      } else if (error.message) {
-        errorMessage = error.message;
+      if (err.response?.data?.message) {
+        errorMessage = err.response.data.message;
+      } else if (err.message) {
+        errorMessage = err.message;
       }
       
       toast({ title: 'Error', description: errorMessage, variant: 'destructive' });

@@ -17,7 +17,6 @@ interface RefreshTokenResponse {
   expiresAt: number;
 }
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 // In-memory access token — sent as Bearer header for reliable proxy forwarding
 let inMemoryToken: string | null = null;
@@ -96,6 +95,7 @@ api.interceptors.response.use(
         // Refresh itself failed — the session is truly dead.
         setAccessToken(null);
         if (window.location.pathname !== '/login') {
+          // eslint-disable-next-line @next/next/no-location-assign-relative-destination
           window.location.href = '/login';
         }
         return Promise.reject(error);
@@ -115,6 +115,7 @@ api.interceptors.response.use(
       } catch (refreshError) {
         setAccessToken(null);
         if (window.location.pathname !== '/login') {
+          // eslint-disable-next-line @next/next/no-location-assign-relative-destination
           window.location.href = '/login';
         }
         return Promise.reject(refreshError);

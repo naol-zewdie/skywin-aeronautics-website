@@ -29,7 +29,7 @@ const navigation = [
 
 export function Sidebar() {
   const pathname = usePathname();
-  const { user, logout, hasRole } = useAuth();
+  const { logout, hasRole } = useAuth();
 
   const filteredNav = navigation.filter((item) => hasRole(item.roles));
 
@@ -51,7 +51,7 @@ export function Sidebar() {
             <Link
               key={item.name}
               href={item.href}
-              onClick={() => window.innerWidth < 768 && (window as any).closeMobileMenu?.()}
+              onClick={() => window.innerWidth < 768 && (window as Window & { closeMobileMenu?: () => void }).closeMobileMenu?.()}
               className={cn(
                 'flex items-center rounded-md px-3 py-2 text-sm font-medium transition-all relative border',
                 isActive

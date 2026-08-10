@@ -1,5 +1,5 @@
-import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { HydratedDocument } from 'mongoose';
+import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
+import { HydratedDocument } from "mongoose";
 
 export type TokenBlacklistDocument = HydratedDocument<TokenBlacklist>;
 
@@ -12,7 +12,8 @@ export class TokenBlacklist {
   expiresAt: Date;
 }
 
-export const TokenBlacklistSchema = SchemaFactory.createForClass(TokenBlacklist);
+export const TokenBlacklistSchema =
+  SchemaFactory.createForClass(TokenBlacklist);
 
 TokenBlacklistSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 TokenBlacklistSchema.index({ token: 1 });

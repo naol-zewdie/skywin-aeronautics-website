@@ -1,11 +1,11 @@
-import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
+import { Document } from "mongoose";
 
 export type NotificationDocument = Notification & Document;
 
-@Schema({ collection: 'notifications', timestamps: true })
+@Schema({ collection: "notifications", timestamps: true })
 export class Notification {
-  @Prop({ required: true, enum: ['info', 'success', 'warning', 'error'] })
+  @Prop({ required: true, enum: ["info", "success", "warning", "error"] })
   type: string;
 
   @Prop({ required: true })

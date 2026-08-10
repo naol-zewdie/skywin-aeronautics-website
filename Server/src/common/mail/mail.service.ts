@@ -1,6 +1,6 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import * as nodemailer from 'nodemailer';
+import { Injectable, Logger } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import * as nodemailer from "nodemailer";
 
 export interface MailOptions {
   to: string;
@@ -14,10 +14,10 @@ export class MailService {
   private transporter: nodemailer.Transporter;
 
   constructor(private configService: ConfigService) {
-    const host = this.configService.get<string>('SMTP_HOST');
-    const port = this.configService.get<number>('SMTP_PORT', 587);
-    const user = this.configService.get<string>('SMTP_USER');
-    const pass = this.configService.get<string>('SMTP_PASS');
+    const host = this.configService.get<string>("SMTP_HOST");
+    const port = this.configService.get<number>("SMTP_PORT", 587);
+    const user = this.configService.get<string>("SMTP_USER");
+    const pass = this.configService.get<string>("SMTP_PASS");
 
     if (host && user && pass) {
       this.transporter = nodemailer.createTransport({
@@ -28,12 +28,17 @@ export class MailService {
       });
       this.logger.log(`Mail transporter configured: ${host}:${port}`);
     } else {
-      this.logger.warn('SMTP not configured — emails will be logged to console only');
+      this.logger.warn(
+        "SMTP not configured — emails will be logged to console only",
+      );
     }
   }
 
   async sendMail(options: MailOptions): Promise<void> {
-    const from = this.configService.get<string>('SMTP_FROM', 'noreply@skywin.aero');
+    const from = this.configService.get<string>(
+      "SMTP_FROM",
+      "noreply@skywin.aero",
+    );
 
     if (this.transporter) {
       try {

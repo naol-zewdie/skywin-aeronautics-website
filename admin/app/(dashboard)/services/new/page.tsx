@@ -22,14 +22,12 @@ export default function NewServicePage() {
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [form, setForm] = useState({ name: '', description: '', image: '', imageUrl: '', status: false });
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [imageInputType, setImageInputType] = useState<'upload' | 'url'>('upload');
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    setSelectedFile(file);
     setIsUploading(true);
 
     try {
@@ -38,7 +36,6 @@ export default function NewServicePage() {
       toast({ title: 'Success', description: 'Image uploaded successfully' });
     } catch {
       toast({ title: 'Error', description: 'Failed to upload image', variant: 'destructive' });
-      setSelectedFile(null);
     } finally {
       setIsUploading(false);
     }
@@ -46,11 +43,9 @@ export default function NewServicePage() {
 
   const handleUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, imageUrl: e.target.value, image: e.target.value });
-    setSelectedFile(null);
   };
 
   const handleRemoveImage = () => {
-    setSelectedFile(null);
     setForm({ ...form, image: '', imageUrl: '' });
   };
 
@@ -58,8 +53,8 @@ export default function NewServicePage() {
     e.preventDefault();
     setIsSaving(true);
     try {
-      const { imageUrl, image, status, ...data } = form;
-      const serviceData: any = { ...data };
+      const { imageUrl: _ignored, image, status, ...data } = form;
+      const serviceData = { ...data } as any;
       if (image) {
         serviceData.image = image;
       }
@@ -126,6 +121,7 @@ export default function NewServicePage() {
               {isUploading && <p className="text-sm text-muted-foreground">Uploading...</p>}
               {form.image && (
                 <div className="mt-2">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={form.image.startsWith('http') ? form.image : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}${form.image}`} alt="Preview" className="max-h-40 rounded-md border" />
                 </div>
               )}

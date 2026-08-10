@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -26,15 +26,9 @@ function ResetPasswordForm() {
 
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [error, setError] = useState('');
+  const [error, setError] = useState(!token || !email ? 'Invalid reset link. Please request a new password reset.' : '');
   const [success, setSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-
-  useEffect(() => {
-    if (!token || !email) {
-      setError('Invalid reset link. Please request a new password reset.');
-    }
-  }, [token, email]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

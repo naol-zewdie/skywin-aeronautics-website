@@ -68,7 +68,7 @@ export default function DashboardPage() {
         <div>
           <h1 className="text-2xl md:text-3xl font-bold">Dashboard</h1>
           <p className="text-muted-foreground">
-            Welcome back! Here's an overview of your system.
+            Welcome back! Here&apos;s an overview of your system.
           </p>
         </div>
         <div className="flex items-center gap-4 w-full sm:w-auto">

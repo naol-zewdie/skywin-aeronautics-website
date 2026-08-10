@@ -1,22 +1,22 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { getModelToken } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import { UsersService } from './users.service';
-import { User } from './schemas/user.schema';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
-import { NotFoundException } from '@nestjs/common';
+import { Test, TestingModule } from "@nestjs/testing";
+import { getModelToken } from "@nestjs/mongoose";
+import { Model } from "mongoose";
+import { UsersService } from "./users.service";
+import { User } from "./schemas/user.schema";
+import { CreateUserDto } from "./dto/create-user.dto";
+import { UpdateUserDto } from "./dto/update-user.dto";
+import { NotFoundException } from "@nestjs/common";
 
-describe('UsersService', () => {
+describe("UsersService", () => {
   let service: UsersService;
   let model: Model<User>;
 
   const mockUser = {
-    _id: '507f1f77bcf86cd799439011',
-    fullName: 'Test User',
-    email: 'test@skywin.aero',
-    role: 'admin',
-    password: 'hashedPassword',
+    _id: "507f1f77bcf86cd799439011",
+    fullName: "Test User",
+    email: "test@skywin.aero",
+    role: "admin",
+    password: "hashedPassword",
     status: true,
     save: jest.fn().mockResolvedValue(true),
   };
@@ -49,13 +49,19 @@ describe('UsersService', () => {
 
   const mockUserModel: any = jest.fn().mockImplementation((payload) => ({
     ...payload,
-    _id: 'new-generated-id',
-    save: jest.fn().mockResolvedValue({ _id: 'new-generated-id', ...payload }),
+    _id: "new-generated-id",
+    save: jest.fn().mockResolvedValue({ _id: "new-generated-id", ...payload }),
   }));
   mockUserModel.find = jest.fn().mockImplementation(() => mockChain([]));
-  mockUserModel.findById = jest.fn().mockImplementation(() => mockSelectExec(null));
-  mockUserModel.findByIdAndUpdate = jest.fn().mockImplementation(() => mockExec(null));
-  mockUserModel.findByIdAndDelete = jest.fn().mockImplementation(() => mockExec(null));
+  mockUserModel.findById = jest
+    .fn()
+    .mockImplementation(() => mockSelectExec(null));
+  mockUserModel.findByIdAndUpdate = jest
+    .fn()
+    .mockImplementation(() => mockExec(null));
+  mockUserModel.findByIdAndDelete = jest
+    .fn()
+    .mockImplementation(() => mockExec(null));
   mockUserModel.findOne = jest.fn().mockImplementation(() => mockExec(null));
   mockUserModel.create = jest.fn();
 
@@ -78,8 +84,8 @@ describe('UsersService', () => {
     jest.clearAllMocks();
   });
 
-  describe('findAll', () => {
-    it('should return an array of users', async () => {
+  describe("findAll", () => {
+    it("should return an array of users", async () => {
       mockUserModel.find.mockReturnValue({
         select: jest.fn().mockReturnValue({
           exec: jest.fn().mockResolvedValue([mockUser]),
@@ -90,17 +96,17 @@ describe('UsersService', () => {
 
       expect(result).toEqual([
         {
-          id: '507f1f77bcf86cd799439011',
-          fullName: 'Test User',
-          email: 'test@skywin.aero',
-          role: 'admin',
+          id: "507f1f77bcf86cd799439011",
+          fullName: "Test User",
+          email: "test@skywin.aero",
+          role: "admin",
           status: true,
         },
       ]);
       expect(mockUserModel.find).toHaveBeenCalled();
     });
 
-    it('should return empty array when no users exist', async () => {
+    it("should return empty array when no users exist", async () => {
       mockUserModel.find.mockReturnValue({
         select: jest.fn().mockReturnValue({
           exec: jest.fn().mockResolvedValue([]),
@@ -112,61 +118,63 @@ describe('UsersService', () => {
     });
   });
 
-  describe('findOne', () => {
-    it('should return a single user', async () => {
+  describe("findOne", () => {
+    it("should return a single user", async () => {
       mockUserModel.findById.mockReturnValue({
         select: jest.fn().mockReturnValue({
           exec: jest.fn().mockResolvedValue(mockUser),
         }),
       });
 
-      const result = await service.findOne('507f1f77bcf86cd799439011');
+      const result = await service.findOne("507f1f77bcf86cd799439011");
 
       expect(result).toEqual({
-        id: '507f1f77bcf86cd799439011',
-        fullName: 'Test User',
-        email: 'test@skywin.aero',
-        role: 'admin',
+        id: "507f1f77bcf86cd799439011",
+        fullName: "Test User",
+        email: "test@skywin.aero",
+        role: "admin",
         status: true,
       });
-      expect(mockUserModel.findById).toHaveBeenCalledWith('507f1f77bcf86cd799439011');
+      expect(mockUserModel.findById).toHaveBeenCalledWith(
+        "507f1f77bcf86cd799439011",
+      );
     });
 
-    it('should throw NotFoundException when user not found', async () => {
+    it("should throw NotFoundException when user not found", async () => {
       mockUserModel.findById.mockReturnValue({
         select: jest.fn().mockReturnValue({
           exec: jest.fn().mockResolvedValue(null),
         }),
       });
 
-      await expect(service.findOne('507f1f77bcf86cd799439011')).rejects.toThrow(
+      await expect(service.findOne("507f1f77bcf86cd799439011")).rejects.toThrow(
         NotFoundException,
       );
     });
   });
 
-  describe('create', () => {
-    it('should create a new user with audit trail', async () => {
+  describe("create", () => {
+    it("should create a new user with audit trail", async () => {
       const createUserDto: CreateUserDto = {
-        fullName: 'New User',
-        email: 'new@skywin.aero',
-        role: 'operator',
-        password: 'SecurePass123!',
+        fullName: "New User",
+        email: "new@skywin.aero",
+        role: "operator",
+        password: "SecurePass123!",
         status: true,
       };
 
       const result = await service.create(createUserDto);
 
-      expect(result).toHaveProperty('id');
-      expect(result).toHaveProperty('fullName', 'New User');
-      expect(result).toHaveProperty('status', true);
+      expect(result).toHaveProperty("id");
+      expect(result).toHaveProperty("fullName", "New User");
+      expect(result).toHaveProperty("status", true);
     });
   });
 
-  describe('update', () => {
-    it('should update user with audit trail', async () => {
+  describe("update", () => {
+    it("should update user with audit trail", async () => {
       const updateUserDto: UpdateUserDto = {
-        fullName: 'Updated Name',
+        fullName: "Updated Name",
       };
 
       mockUserModel.findById.mockReturnValue({
@@ -178,16 +186,20 @@ describe('UsersService', () => {
       mockUserModel.findByIdAndUpdate.mockReturnValue({
         exec: jest.fn().mockResolvedValue({
           ...mockUser,
-          fullName: 'Updated Name',
+          fullName: "Updated Name",
         }),
       });
 
-      const result = await service.update('507f1f77bcf86cd799439011', updateUserDto, '507f1f77bcf86cd799439011');
+      const result = await service.update(
+        "507f1f77bcf86cd799439011",
+        updateUserDto,
+        "507f1f77bcf86cd799439011",
+      );
 
-      expect(result).toHaveProperty('fullName', 'Updated Name');
+      expect(result).toHaveProperty("fullName", "Updated Name");
     });
 
-    it('should throw NotFoundException when updating non-existent user', async () => {
+    it("should throw NotFoundException when updating non-existent user", async () => {
       mockUserModel.findById.mockReturnValue({
         select: jest.fn().mockReturnValue({
           exec: jest.fn().mockResolvedValue(null),
@@ -195,54 +207,65 @@ describe('UsersService', () => {
       });
 
       await expect(
-        service.update('507f1f77bcf86cd799439011', { fullName: 'Test' }, '507f1f77bcf86cd799439011'),
+        service.update(
+          "507f1f77bcf86cd799439011",
+          { fullName: "Test" },
+          "507f1f77bcf86cd799439011",
+        ),
       ).rejects.toThrow(NotFoundException);
     });
   });
 
-  describe('remove', () => {
-    it('should remove a user', async () => {
+  describe("remove", () => {
+    it("should remove a user", async () => {
       mockUserModel.findByIdAndDelete.mockReturnValue({
         exec: jest.fn().mockResolvedValue(mockUser),
       });
 
-      await service.remove('507f1f77bcf86cd799439011', 'some-other-user-id');
+      await service.remove("507f1f77bcf86cd799439011", "some-other-user-id");
 
-      expect(mockUserModel.findByIdAndDelete).toHaveBeenCalledWith('507f1f77bcf86cd799439011');
+      expect(mockUserModel.findByIdAndDelete).toHaveBeenCalledWith(
+        "507f1f77bcf86cd799439011",
+      );
     });
 
-    it('should throw NotFoundException when removing non-existent user', async () => {
+    it("should throw NotFoundException when removing non-existent user", async () => {
       mockUserModel.findByIdAndDelete.mockReturnValue({
         exec: jest.fn().mockResolvedValue(null),
       });
 
-      await expect(service.remove('507f1f77bcf86cd799439011', 'some-other-user-id')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(
+        service.remove("507f1f77bcf86cd799439011", "some-other-user-id"),
+      ).rejects.toThrow(NotFoundException);
     });
   });
 
-  describe('input validation', () => {
-    it('should validate fullName length', async () => {
-      const shortName = 'A';
+  describe("input validation", () => {
+    it("should validate fullName length", async () => {
+      const shortName = "A";
       expect(shortName.length).toBeLessThan(2);
     });
 
-    it('should validate role values', async () => {
-      const validRoles = ['admin', 'operator', 'viewer'];
-      expect(validRoles).toContain('admin');
-      expect(validRoles).toContain('operator');
-      expect(validRoles).not.toContain('invalid-role');
+    it("should validate role values", async () => {
+      const validRoles = ["admin", "operator", "viewer"];
+      expect(validRoles).toContain("admin");
+      expect(validRoles).toContain("operator");
+      expect(validRoles).not.toContain("invalid-role");
     });
 
-    it('should validate email uniqueness', async () => {
+    it("should validate email uniqueness", async () => {
       mockUserModel.find.mockReturnValue({
         select: jest.fn().mockReturnValue({
-          exec: jest.fn().mockResolvedValue([{ email: 'existing@skywin.aero' }]),
+          exec: jest
+            .fn()
+            .mockResolvedValue([{ email: "existing@skywin.aero" }]),
         }),
       });
 
-      const existingUsers = await mockUserModel.find({ email: 'existing@skywin.aero' }).select().exec();
+      const existingUsers = await mockUserModel
+        .find({ email: "existing@skywin.aero" })
+        .select()
+        .exec();
       expect(existingUsers).toHaveLength(1);
     });
   });

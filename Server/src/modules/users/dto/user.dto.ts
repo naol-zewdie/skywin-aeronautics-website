@@ -1,16 +1,16 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty } from "@nestjs/swagger";
 
 export class UserDto {
-  @ApiProperty({ example: 'u_001' })
+  @ApiProperty({ example: "u_001" })
   id: string;
 
-  @ApiProperty({ example: 'Amelia Hart' })
+  @ApiProperty({ example: "Amelia Hart" })
   fullName: string;
 
-  @ApiProperty({ example: 'amelia@skywin.aero' })
+  @ApiProperty({ example: "amelia@skywin.aero" })
   email: string;
 
-  @ApiProperty({ example: 'admin' })
+  @ApiProperty({ example: "admin" })
   role: string;
 
   @ApiProperty({ example: true })

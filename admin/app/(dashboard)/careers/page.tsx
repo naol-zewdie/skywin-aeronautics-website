@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { Plus, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -31,7 +31,7 @@ export default function CareersPage() {
   const canManage = hasRole(['admin', 'operator']);
   const isAdmin = hasRole(['admin']);
 
-  const fetchCareers = async () => {
+  const fetchCareers = useCallback(async () => {
     try {
       const data = await careersApi.getAll();
       // Filter to show only active items for non-admins
@@ -46,11 +46,12 @@ export default function CareersPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [isAdmin, user?.id, toast]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchCareers();
-  }, []);
+  }, [fetchCareers]);
 
   const handleDelete = async () => {
     if (!deleteCareer) return;
@@ -107,14 +108,15 @@ export default function CareersPage() {
         description: `Career status toggled successfully`,
       });
       fetchCareers();
-    } catch (error: any) {
+    } catch (error) {
+      const err = error as { response?: { data?: { message?: string } }, message?: string };
       console.error('Error toggling career status:', error);
       let errorMessage = 'Failed to toggle career status';
       
-      if (error.response?.data?.message) {
-        errorMessage = error.response.data.message;
-      } else if (error.message) {
-        errorMessage = error.message;
+      if (err.response?.data?.message) {
+        errorMessage = err.response.data.message;
+      } else if (err.message) {
+        errorMessage = err.message;
       }
       
       toast({

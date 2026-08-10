@@ -1,9 +1,9 @@
-import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
+import { Document } from "mongoose";
 
 export type RateLimitDocument = RateLimit & Document;
 
-@Schema({ collection: 'ratelimits', timestamps: false })
+@Schema({ collection: "ratelimits", timestamps: false })
 export class RateLimit {
   @Prop({ required: true, index: true })
   key: string;

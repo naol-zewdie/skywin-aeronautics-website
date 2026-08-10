@@ -1,12 +1,12 @@
-import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { HydratedDocument } from 'mongoose';
-import { v4 as uuidv4 } from 'uuid';
-import { Audit } from '../../../common/schemas/audit.schema';
+import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
+import { HydratedDocument } from "mongoose";
+import { v4 as uuidv4 } from "uuid";
+import { Audit } from "../../../common/schemas/audit.schema";
 
 export enum ContentType {
-  NEWS = 'news',
-  BLOG = 'blog',
-  EVENT = 'event',
+  NEWS = "news",
+  BLOG = "blog",
+  EVENT = "event",
 }
 
 export type PostDocument = HydratedDocument<Post>;

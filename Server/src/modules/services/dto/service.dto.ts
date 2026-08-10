@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty } from "@nestjs/swagger";
 
 export class AuditInfo {
   @ApiProperty({ required: false })
@@ -15,18 +15,18 @@ export class AuditInfo {
 }
 
 export class ServiceDto {
-  @ApiProperty({ example: 's_001' })
+  @ApiProperty({ example: "s_001" })
   id: string;
 
-  @ApiProperty({ example: 'Precision CNC Machining' })
+  @ApiProperty({ example: "Precision CNC Machining" })
   name: string;
 
   @ApiProperty({
-    example: 'High-accuracy machining for aerospace-grade components.',
+    example: "High-accuracy machining for aerospace-grade components.",
   })
   description: string;
 
-  @ApiProperty({ example: 'https://example.com/image.jpg', required: false })
+  @ApiProperty({ example: "https://example.com/image.jpg", required: false })
   image?: string;
 
   @ApiProperty({ example: true })

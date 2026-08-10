@@ -1,12 +1,15 @@
-import { Module } from '@nestjs/common';
-import { MongooseModule } from '@nestjs/mongoose';
-import { ActivityService } from './activity.service';
-import { ActivityController } from './activity.controller';
-import { Activity, ActivitySchema } from './schemas/activity.schema';
-import { User, UserSchema } from '../users/schemas/user.schema';
-import { Product, ProductSchema } from '../products/schemas/product.schema';
-import { Service, ServiceSchema } from '../services/schemas/service.schema';
-import { CareerOpening, CareerOpeningSchema } from '../careers/schemas/career-opening.schema';
+import { Module } from "@nestjs/common";
+import { MongooseModule } from "@nestjs/mongoose";
+import { ActivityService } from "./activity.service";
+import { ActivityController } from "./activity.controller";
+import { Activity, ActivitySchema } from "./schemas/activity.schema";
+import { User, UserSchema } from "../users/schemas/user.schema";
+import { Product, ProductSchema } from "../products/schemas/product.schema";
+import { Service, ServiceSchema } from "../services/schemas/service.schema";
+import {
+  CareerOpening,
+  CareerOpeningSchema,
+} from "../careers/schemas/career-opening.schema";
 
 @Module({
   imports: [

@@ -48,9 +48,10 @@ export default function EditUserPage() {
       await usersApi.update(params.id as string, form);
       toast({ title: 'Success', description: 'User updated successfully' });
       router.push('/users');
-    } catch (error: any) {
-      const status = error.response?.status;
-      const serverMessage = error.response?.data?.message;
+    } catch (error) {
+      const err = error as { response?: { status?: number; data?: { message?: string } }; message?: string };
+      const status = err.response?.status;
+      const serverMessage = err.response?.data?.message;
 
       if (status === 403) {
         toast({
@@ -58,10 +59,11 @@ export default function EditUserPage() {
           description: serverMessage || 'You do not have permission to perform this action.',
         });
       } else {
+        const err = error as { message?: string };
         console.error('Error updating user:', error);
         toast({
           title: 'Error',
-          description: serverMessage || error.message || 'Failed to update user',
+          description: serverMessage || err.message || 'Failed to update user',
           variant: 'destructive',
         });
       }
@@ -97,7 +99,7 @@ export default function EditUserPage() {
               {!isTargetAdmin && (
                 <div className="space-y-2">
                   <Label>Role</Label>
-                  <Select value={form.role} onValueChange={(value: any) => setForm({ ...form, role: value })}>
+                  <Select value={form.role} onValueChange={(value: 'admin' | 'operator' | 'viewer') => setForm({ ...form, role: value })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="operator">Operator</SelectItem>

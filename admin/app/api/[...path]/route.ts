@@ -33,7 +33,7 @@ async function proxy(request: NextRequest, params: { path: string[] }) {
 
   // Set trusted client IP for rate limiting
   // NextRequest.ip contains the IP of the client, avoiding spoofable x-forwarded-for headers
-  const clientIp = (request as any).ip || '127.0.0.1';
+  const clientIp = (request as unknown as { ip?: string }).ip || '127.0.0.1';
   headers.set('x-forwarded-for', clientIp);
 
   const cookieHeader = request.headers.get('cookie');

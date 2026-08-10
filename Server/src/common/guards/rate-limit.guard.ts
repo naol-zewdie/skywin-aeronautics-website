@@ -4,11 +4,11 @@ import {
   ExecutionContext,
   HttpException,
   HttpStatus,
-} from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import { Request } from 'express';
-import { RateLimit, RateLimitDocument } from '../schemas/rate-limit.schema';
+} from "@nestjs/common";
+import { InjectModel } from "@nestjs/mongoose";
+import { Model } from "mongoose";
+import { Request } from "express";
+import { RateLimit, RateLimitDocument } from "../schemas/rate-limit.schema";
 
 @Injectable()
 export class RateLimitGuard implements CanActivate {
@@ -29,7 +29,9 @@ export class RateLimitGuard implements CanActivate {
     const entry = await this.rateLimitModel.findOne({ key }).exec();
 
     if (entry?.lockedUntil && new Date() < entry.lockedUntil) {
-      const minutesRemaining = Math.ceil((entry.lockedUntil.getTime() - Date.now()) / 60000);
+      const minutesRemaining = Math.ceil(
+        (entry.lockedUntil.getTime() - Date.now()) / 60000,
+      );
       throw new HttpException(
         `Too many login attempts. Please try again in ${minutesRemaining} minutes.`,
         HttpStatus.TOO_MANY_REQUESTS,
@@ -44,24 +46,36 @@ export class RateLimitGuard implements CanActivate {
     const key = `login:${ip}`;
     const now = new Date();
 
-    const entry = await this.rateLimitModel.findOneAndUpdate(
-      { key },
-      {
-        $inc: { attempts: 1 },
-        $setOnInsert: {
-          key,
-          firstAttempt: now,
-          expiresAt: new Date(now.getTime() + RateLimitGuard.WINDOW_MS + RateLimitGuard.LOCKOUT_MS),
+    const entry = await this.rateLimitModel
+      .findOneAndUpdate(
+        { key },
+        {
+          $inc: { attempts: 1 },
+          $setOnInsert: {
+            key,
+            firstAttempt: now,
+            expiresAt: new Date(
+              now.getTime() +
+                RateLimitGuard.WINDOW_MS +
+                RateLimitGuard.LOCKOUT_MS,
+            ),
+          },
         },
-      },
-      { upsert: true, new: true },
-    ).exec();
+        { upsert: true, new: true },
+      )
+      .exec();
 
     if (entry.attempts >= RateLimitGuard.MAX_ATTEMPTS) {
-      await this.rateLimitModel.updateOne(
-        { key },
-        { $set: { lockedUntil: new Date(now.getTime() + RateLimitGuard.LOCKOUT_MS) } },
-      ).exec();
+      await this.rateLimitModel
+        .updateOne(
+          { key },
+          {
+            $set: {
+              lockedUntil: new Date(now.getTime() + RateLimitGuard.LOCKOUT_MS),
+            },
+          },
+        )
+        .exec();
     }
   }
 
@@ -72,9 +86,9 @@ export class RateLimitGuard implements CanActivate {
   }
 
   private static getClientIp(request: Request): string {
-    if (process.env.TRUST_PROXY === 'true') {
-      return request.ip || request.socket?.remoteAddress || 'unknown';
+    if (process.env.TRUST_PROXY === "true") {
+      return request.ip || request.socket?.remoteAddress || "unknown";
     }
-    return request.socket?.remoteAddress || request.ip || 'unknown';
+    return request.socket?.remoteAddress || request.ip || "unknown";
   }
 }

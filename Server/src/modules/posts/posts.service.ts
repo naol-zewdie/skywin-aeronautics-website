@@ -1,13 +1,18 @@
-import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
-import { validate as uuidValidate } from 'uuid';
-import { CreatePostDto } from './dto/create-post.dto';
-import { PostDto } from './dto/post.dto';
-import { UpdatePostDto } from './dto/update-post.dto';
-import { Post, ContentType } from './schemas/post.schema';
-import { Parser } from '@json2csv/plainjs';
-import PDFDocument from 'pdfkit';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  ForbiddenException,
+} from "@nestjs/common";
+import { InjectModel } from "@nestjs/mongoose";
+import { Model, Types } from "mongoose";
+import { validate as uuidValidate } from "uuid";
+import { CreatePostDto } from "./dto/create-post.dto";
+import { PostDto } from "./dto/post.dto";
+import { UpdatePostDto } from "./dto/update-post.dto";
+import { Post, ContentType } from "./schemas/post.schema";
+import { Parser } from "@json2csv/plainjs";
+import PDFDocument from "pdfkit";
 
 @Injectable()
 export class PostsService {
@@ -16,15 +21,19 @@ export class PostsService {
     private readonly postModel: Model<Post>,
   ) {}
 
-  async findAll(filters?: {
-    type?: ContentType;
-    search?: string;
-    author?: string;
-    status?: boolean;
-    tags?: string[];
-    limit?: number;
-    offset?: number;
-  }, userRole?: string, userId?: string): Promise<PostDto[]> {
+  async findAll(
+    filters?: {
+      type?: ContentType;
+      search?: string;
+      author?: string;
+      status?: boolean;
+      tags?: string[];
+      limit?: number;
+      offset?: number;
+    },
+    userRole?: string,
+    userId?: string,
+  ): Promise<PostDto[]> {
     const query: any = {};
 
     if (filters?.type) {
@@ -32,16 +41,19 @@ export class PostsService {
     }
 
     if (filters?.search) {
-      const escaped = filters.search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const escaped = filters.search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
       query.$or = [
-        { title: { $regex: escaped, $options: 'i' } },
-        { content: { $regex: escaped, $options: 'i' } },
-        { excerpt: { $regex: escaped, $options: 'i' } },
+        { title: { $regex: escaped, $options: "i" } },
+        { content: { $regex: escaped, $options: "i" } },
+        { excerpt: { $regex: escaped, $options: "i" } },
       ];
     }
 
     if (filters?.author) {
-      query.author = { $regex: filters.author.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), $options: 'i' };
+      query.author = {
+        $regex: filters.author.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
+        $options: "i",
+      };
     }
 
     if (filters?.status !== undefined) {
@@ -52,10 +64,11 @@ export class PostsService {
       query.tags = { $in: filters.tags };
     }
 
-    if (userRole && userRole !== 'admin') {
-      const roleCondition = userRole === 'operator'
-        ? { $or: [{ status: true }, { 'audit.createdBy': userId }] }
-        : { status: true };
+    if (userRole && userRole !== "admin") {
+      const roleCondition =
+        userRole === "operator"
+          ? { $or: [{ status: true }, { "audit.createdBy": userId }] }
+          : { status: true };
 
       if (query.$or && roleCondition.$or) {
         query.$and = [{ $or: query.$or }, roleCondition];
@@ -67,24 +80,40 @@ export class PostsService {
 
     const limit = filters?.limit ?? 20;
     const offset = filters?.offset ?? 0;
-    const posts = await this.postModel.find(query).skip(offset).limit(limit).exec();
+    const posts = await this.postModel
+      .find(query)
+      .skip(offset)
+      .limit(limit)
+      .exec();
     return posts.map((post) => this.mapToDto(post));
   }
 
-  async findByType(type: ContentType, userRole?: string, userId?: string): Promise<PostDto[]> {
+  async findByType(
+    type: ContentType,
+    userRole?: string,
+    userId?: string,
+  ): Promise<PostDto[]> {
     return this.findAll({ type }, userRole, userId);
   }
 
-  async findOne(id: string, userRole?: string, userId?: string): Promise<PostDto> {
+  async findOne(
+    id: string,
+    userRole?: string,
+    userId?: string,
+  ): Promise<PostDto> {
     this.validateId(id);
     const query: Record<string, unknown> = { _id: id };
     const post = await this.postModel.findOne(query).exec();
     if (!post) {
-      throw new NotFoundException('Post not found');
+      throw new NotFoundException("Post not found");
     }
 
-    if (userRole !== undefined && userRole !== 'admin' && post.audit?.createdBy !== userId) {
-      throw new ForbiddenException('You can only view your own resources');
+    if (
+      userRole !== undefined &&
+      userRole !== "admin" &&
+      post.audit?.createdBy !== userId
+    ) {
+      throw new ForbiddenException("You can only view your own resources");
     }
 
     // Increment views
@@ -94,9 +123,16 @@ export class PostsService {
     return this.mapToDto(post);
   }
 
-  async create(payload: CreatePostDto, userRole: string, userId: string): Promise<PostDto> {
+  async create(
+    payload: CreatePostDto,
+    userRole: string,
+    userId: string,
+  ): Promise<PostDto> {
     // Set status based on user role: admin can set status, operator defaults to true
-    const status = userRole === 'admin' ? (payload.status ?? false) : (payload.status ?? true);
+    const status =
+      userRole === "admin"
+        ? (payload.status ?? false)
+        : (payload.status ?? true);
 
     const created = new this.postModel({
       ...payload,
@@ -111,29 +147,30 @@ export class PostsService {
     return this.mapToDto(saved);
   }
 
-  async update(id: string, payload: UpdatePostDto, userRole: string, userId: string): Promise<PostDto> {
+  async update(
+    id: string,
+    payload: UpdatePostDto,
+    userRole: string,
+    userId: string,
+  ): Promise<PostDto> {
     this.validateId(id);
-    
+
     const existing = await this.postModel.findById(id).exec();
     if (!existing) {
-      throw new NotFoundException('Post not found');
+      throw new NotFoundException("Post not found");
     }
 
-    if (userRole !== 'admin' && existing.audit?.createdBy !== userId) {
-      throw new ForbiddenException('You can only modify your own resources');
+    if (userRole !== "admin" && existing.audit?.createdBy !== userId) {
+      throw new ForbiddenException("You can only modify your own resources");
     }
 
-    const updateData: any = { ...payload, 'audit.updatedAt': new Date() };
+    const updateData: any = { ...payload, "audit.updatedAt": new Date() };
 
     const updated = await this.postModel
-      .findByIdAndUpdate(
-        id,
-        { $set: updateData },
-        { new: true },
-      )
+      .findByIdAndUpdate(id, { $set: updateData }, { new: true })
       .exec();
     if (!updated) {
-      throw new NotFoundException('Post not found');
+      throw new NotFoundException("Post not found");
     }
     return this.mapToDto(updated);
   }
@@ -142,28 +179,32 @@ export class PostsService {
     this.validateId(id);
     const post = await this.postModel.findById(id).exec();
     if (!post) {
-      throw new NotFoundException('Post not found');
+      throw new NotFoundException("Post not found");
     }
 
-    if (userRole !== 'admin' && post.audit?.createdBy !== userId) {
-      throw new ForbiddenException('You can only delete your own resources');
+    if (userRole !== "admin" && post.audit?.createdBy !== userId) {
+      throw new ForbiddenException("You can only delete your own resources");
     }
 
     const result = await this.postModel.findByIdAndDelete(id).exec();
     if (!result) {
-      throw new NotFoundException('Post not found');
+      throw new NotFoundException("Post not found");
     }
   }
 
-  async toggleStatus(id: string, userRole: string, userId: string): Promise<PostDto> {
+  async toggleStatus(
+    id: string,
+    userRole: string,
+    userId: string,
+  ): Promise<PostDto> {
     this.validateId(id);
     const post = await this.postModel.findById(id).exec();
     if (!post) {
-      throw new NotFoundException('Post not found');
+      throw new NotFoundException("Post not found");
     }
 
-    if (userRole !== 'admin' && post.audit?.createdBy !== userId) {
-      throw new ForbiddenException('You can only modify your own resources');
+    if (userRole !== "admin" && post.audit?.createdBy !== userId) {
+      throw new ForbiddenException("You can only modify your own resources");
     }
 
     post.status = !post.status;
@@ -175,26 +216,28 @@ export class PostsService {
 
   exportToCsv(posts: PostDto[]): string {
     const fields = [
-      'id',
-      'title',
-      'type',
-      'author',
-      'excerpt',
-      'status',
-      'views',
-      'eventDate',
-      'eventLocation',
-      'tags',
+      "id",
+      "title",
+      "type",
+      "author",
+      "excerpt",
+      "status",
+      "views",
+      "eventDate",
+      "eventLocation",
+      "tags",
     ];
     const opts = {
       fields,
-      transforms: [(field: { label: string }, value: unknown) => {
-        const str = String(value ?? '');
-        if (/^[=+\-@\t\r]/.test(str)) {
-          return { [field.label]: "'" + str };
-        }
-        return { [field.label]: str };
-      }],
+      transforms: [
+        (field: { label: string }, value: unknown) => {
+          const str = String(value ?? "");
+          if (/^[=+\-@\t\r]/.test(str)) {
+            return { [field.label]: "'" + str };
+          }
+          return { [field.label]: str };
+        },
+      ],
     };
     const parser = new Parser(opts as any);
     return parser.parse(posts);
@@ -205,15 +248,15 @@ export class PostsService {
     const chunks: Buffer[] = [];
 
     return new Promise((resolve, reject) => {
-      doc.on('data', (chunk) => chunks.push(chunk));
-      doc.on('end', () => resolve(Buffer.concat(chunks)));
-      doc.on('error', reject);
+      doc.on("data", (chunk) => chunks.push(chunk));
+      doc.on("end", () => resolve(Buffer.concat(chunks)));
+      doc.on("error", reject);
 
       // Title
-      doc.fontSize(24).text('Content Report', { align: 'center' });
+      doc.fontSize(24).text("Content Report", { align: "center" });
       doc.moveDown();
       doc.fontSize(12).text(`Generated: ${new Date().toLocaleString()}`, {
-        align: 'center',
+        align: "center",
       });
       doc.moveDown(2);
 
@@ -235,7 +278,7 @@ export class PostsService {
         doc.fontSize(10);
         doc.text(`Type: ${post.type.toUpperCase()}`, { continued: true });
         doc.text(`    Author: ${post.author}`, { continued: true });
-        doc.text(`    Status: ${post.status ? 'Active' : 'Inactive'}`);
+        doc.text(`    Status: ${post.status ? "Active" : "Inactive"}`);
         doc.text(`Views: ${post.views || 0}`);
 
         if (post.eventDate) {
@@ -247,21 +290,21 @@ export class PostsService {
           doc.text(`Location: ${post.eventLocation}`);
         }
         if (post.tags && post.tags.length > 0) {
-          doc.text(`Tags: ${post.tags.join(', ')}`);
+          doc.text(`Tags: ${post.tags.join(", ")}`);
         }
         doc.moveDown(0.5);
 
         // Content preview (first 300 characters)
         const contentPreview = post.content.substring(0, 300);
-        doc.text(contentPreview + (post.content.length > 300 ? '...' : ''), {
-          align: 'justify',
+        doc.text(contentPreview + (post.content.length > 300 ? "..." : ""), {
+          align: "justify",
         });
         doc.moveDown();
 
         // Excerpt if available
         if (post.excerpt) {
-          doc.fontSize(9).fillColor('gray').text(`Excerpt: ${post.excerpt}`);
-          doc.fillColor('black');
+          doc.fontSize(9).fillColor("gray").text(`Excerpt: ${post.excerpt}`);
+          doc.fillColor("black");
           doc.moveDown();
         }
 
@@ -278,7 +321,7 @@ export class PostsService {
 
   private validateId(id: string): void {
     if (!uuidValidate(id) && !Types.ObjectId.isValid(id)) {
-      throw new BadRequestException('Invalid ID format');
+      throw new BadRequestException("Invalid ID format");
     }
   }
 
@@ -296,12 +339,14 @@ export class PostsService {
       eventLocation: post.eventLocation,
       status: post.status,
       views: post.views,
-      audit: post.audit ? {
-        createdBy: post.audit.createdBy,
-        createdAt: post.audit.createdAt?.toISOString(),
-        updatedBy: post.audit.updatedBy,
-        updatedAt: post.audit.updatedAt?.toISOString(),
-      } : undefined,
+      audit: post.audit
+        ? {
+            createdBy: post.audit.createdBy,
+            createdAt: post.audit.createdAt?.toISOString(),
+            updatedBy: post.audit.updatedBy,
+            updatedAt: post.audit.updatedAt?.toISOString(),
+          }
+        : undefined,
     };
   }
 }

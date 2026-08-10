@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { Plus, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -30,11 +30,11 @@ export default function UsersPage() {
   const { toast } = useToast();
   const { user: currentUser } = useAuth();
 
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
       const data = await usersApi.getAll();
       setUsers(data);
-    } catch (error) {
+    } catch {
       toast({
         title: 'Error',
         description: 'Failed to load users',
@@ -43,11 +43,12 @@ export default function UsersPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [toast]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchUsers();
-  }, []);
+  }, [fetchUsers]);
 
   const handleDelete = async () => {
     if (!deleteUser) return;
@@ -70,7 +71,7 @@ export default function UsersPage() {
         description: 'User deleted successfully',
       });
       fetchUsers();
-    } catch (error) {
+    } catch {
       toast({
         title: 'Error',
         description: 'Failed to delete user',
@@ -97,7 +98,7 @@ export default function UsersPage() {
         title: 'Success',
         description: `Users exported as ${type.toUpperCase()}`,
       });
-    } catch (error) {
+    } catch {
       toast({
         title: 'Error',
         description: `Failed to export as ${type.toUpperCase()}`,

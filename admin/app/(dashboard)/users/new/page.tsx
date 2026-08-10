@@ -27,17 +27,18 @@ export default function NewUserPage() {
       await usersApi.create(form);
       toast({ title: 'Success', description: 'User created successfully' });
       router.push('/users');
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error creating user:', error);
       let errorMessage = 'Failed to create user';
       
-      if (error.response?.data?.message) {
-        errorMessage = error.response.data.message;
-      } else if (error.response?.data?.details?.validationErrors) {
-        const errors = error.response.data.details.validationErrors.map((e: any) => e.message || e);
+      const err = error as { response?: { data?: { message?: string, details?: { validationErrors?: Array<{ message?: string } | string> } } }, message?: string };
+      if (err.response?.data?.message) {
+        errorMessage = err.response.data.message;
+      } else if (err.response?.data?.details?.validationErrors) {
+        const errors = err.response.data.details.validationErrors.map(e => typeof e === 'object' && e !== null && 'message' in e ? e.message : String(e));
         errorMessage = errors.join(', ');
-      } else if (error.message) {
-        errorMessage = error.message;
+      } else if (err.message) {
+        errorMessage = err.message;
       }
       
       toast({ title: 'Error', description: errorMessage, variant: 'destructive' });
@@ -63,7 +64,7 @@ export default function NewUserPage() {
               <div className="space-y-2"><Label htmlFor="password">Password</Label><Input id="password" type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} required minLength={8} /><p className="text-xs text-muted-foreground">8+ characters, uppercase, lowercase, number required</p></div>
               <div className="space-y-2">
                 <Label>Role</Label>
-                <Select value={form.role} onValueChange={(value: any) => setForm({ ...form, role: value })}>
+                <Select value={form.role} onValueChange={(value: 'admin' | 'operator' | 'viewer') => setForm({ ...form, role: value })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="operator">Operator</SelectItem>
