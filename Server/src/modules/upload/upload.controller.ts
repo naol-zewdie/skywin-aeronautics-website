@@ -80,6 +80,12 @@ interface MulterFile {
   buffer: Buffer;
 }
 
+/**
+ * Handles file upload requests.
+ * Only ADMIN and OPERATOR roles may upload files.
+ * Files are stored in the local `uploads/` directory with randomised names
+ * derived from their validated MIME type (never the user-supplied filename).
+ */
 @ApiTags("upload")
 @Controller("upload")
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -89,11 +95,23 @@ export class UploadController {
   @Roles(Role.ADMIN, Role.OPERATOR)
   @ApiOperation({ summary: "Upload an image file" })
   @ApiConsumes("multipart/form-data")
+  /**
+   * Accepts a single image upload (JPEG, PNG, GIF, or WebP).
+   *
+   * Security:
+   * - File size is capped at 5 MB (well within the 10 MB body-parser limit).
+   * - MIME type is checked via both the `Content-Type` header and magic-byte
+   *   inspection of the raw buffer — preventing MIME confusion attacks.
+   * - The saved filename is a cryptographically random hex string; the
+   *   original filename is discarded entirely.
+   */
   @UseInterceptors(
     FileInterceptor("file", {
       storage,
       limits: {
-        fileSize: 13 * 1024 * 1024,
+        // S2 fix: 5 MB cap — stays under the 10 MB body-parser limit in main.ts.
+        // The previous 13 MB limit silently rejected valid uploads at the parser.
+        fileSize: 5 * 1024 * 1024,
       },
       fileFilter: (req, file, callback) => {
         if (!file.mimetype.match(/\/(jpg|jpeg|png|gif|webp)$/)) {

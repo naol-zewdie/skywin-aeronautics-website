@@ -30,6 +30,15 @@ import { RolesGuard, Roles, Role } from "../../common/guards/roles.guard";
 
 const MAX_EXPORT_RECORDS = 10000;
 
+/** Typed request shape after JWT validation has populated req.user. */
+interface AuthenticatedRequest {
+  user: {
+    userId: string;
+    email: string;
+    role: string;
+  };
+}
+
 @ApiTags("Services")
 @Controller("services")
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -41,7 +50,7 @@ export class ServicesController {
   @Roles(Role.ADMIN, Role.OPERATOR, Role.VIEWER)
   @ApiOperation({ summary: "List all services" })
   @ApiOkResponse({ type: ServiceDto, isArray: true })
-  getServices(@Req() req): Promise<ServiceDto[]> {
+  getServices(@Req() req: AuthenticatedRequest): Promise<ServiceDto[]> {
     return this.servicesService.findAll(
       undefined,
       req.user?.role,
@@ -54,7 +63,7 @@ export class ServicesController {
   @ApiOperation({ summary: "Get service by id" })
   @ApiParam({ name: "id", type: "string", description: "Service ID" })
   @ApiOkResponse({ type: ServiceDto })
-  getService(@Param("id") id: string, @Req() req): Promise<ServiceDto> {
+  getService(@Param("id") id: string, @Req() req: AuthenticatedRequest): Promise<ServiceDto> {
     return this.servicesService.findOne(id, req.user?.role, req.user?.userId);
   }
 
@@ -64,7 +73,7 @@ export class ServicesController {
   @ApiCreatedResponse({ type: ServiceDto })
   createService(
     @Body() payload: CreateServiceDto,
-    @Req() req,
+    @Req() req: AuthenticatedRequest,
   ): Promise<ServiceDto> {
     return this.servicesService.create(
       payload,
@@ -80,7 +89,7 @@ export class ServicesController {
   @ApiOkResponse({ type: ServiceDto })
   toggleServiceStatus(
     @Param("id") id: string,
-    @Req() req,
+    @Req() req: AuthenticatedRequest,
   ): Promise<ServiceDto> {
     return this.servicesService.toggleStatus(
       id,
@@ -97,7 +106,7 @@ export class ServicesController {
   updateService(
     @Param("id") id: string,
     @Body() payload: UpdateServiceDto,
-    @Req() req,
+    @Req() req: AuthenticatedRequest,
   ): Promise<ServiceDto> {
     return this.servicesService.update(
       id,
@@ -113,7 +122,7 @@ export class ServicesController {
   @ApiOperation({ summary: "Delete service" })
   @ApiParam({ name: "id", type: "string", description: "Service ID" })
   @ApiNoContentResponse({ description: "Service deleted" })
-  removeService(@Param("id") id: string, @Req() req): Promise<void> {
+  removeService(@Param("id") id: string, @Req() req: AuthenticatedRequest): Promise<void> {
     return this.servicesService.remove(id, req.user?.role, req.user?.userId);
   }
 
@@ -122,7 +131,7 @@ export class ServicesController {
   @ApiOperation({ summary: "Export services to CSV" })
   async exportCsv(
     @Res({ passthrough: true }) res: Response,
-    @Req() req,
+    @Req() req: AuthenticatedRequest,
   ): Promise<string> {
     const services = await this.servicesService.findAll({
       limit: MAX_EXPORT_RECORDS,
@@ -142,7 +151,7 @@ export class ServicesController {
   @ApiOperation({ summary: "Export services to PDF" })
   async exportPdf(
     @Res({ passthrough: true }) res: Response,
-    @Req() req,
+    @Req() req: AuthenticatedRequest,
   ): Promise<Buffer> {
     const services = await this.servicesService.findAll({
       limit: MAX_EXPORT_RECORDS,

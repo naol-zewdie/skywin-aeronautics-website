@@ -108,7 +108,7 @@ describe("CareersService", () => {
 
   describe("findOne", () => {
     it("should return a single career opening", async () => {
-      mockCareerOpeningModel.findById.mockReturnValue(
+      mockCareerOpeningModel.findOne.mockReturnValue(
         mockExec(mockCareerOpening),
       );
 
@@ -119,7 +119,7 @@ describe("CareersService", () => {
     });
 
     it("should throw NotFoundException when career opening not found", async () => {
-      mockCareerOpeningModel.findById.mockReturnValue(mockExec(null));
+      mockCareerOpeningModel.findOne.mockReturnValue(mockExec(null));
 
       await expect(service.findOne("507f1f77bcf86cd799439011")).rejects.toThrow(
         NotFoundException,

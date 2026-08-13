@@ -22,6 +22,11 @@ export class ProductsService {
     private readonly productModel: Model<Product>,
   ) {}
 
+  /**
+   * Returns a paginated list of products, filtered by the provided criteria.
+   * Role-based visibility is enforced: viewers only see active products,
+   * operators also see their own inactive ones, admins see all.
+   */
   async findAll(
     filters?: {
       search?: string;
@@ -103,6 +108,14 @@ export class ProductsService {
     }));
   }
 
+  /**
+   * Returns a single product by ID.
+   * Non-admin users may only view active products or those they created.
+   *
+   * @throws BadRequestException if the ID format is invalid.
+   * @throws NotFoundException if no product is found.
+   * @throws ForbiddenException if the user cannot view this product.
+   */
   async findOne(
     id: string,
     userRole?: string,
@@ -142,6 +155,13 @@ export class ProductsService {
     };
   }
 
+  /**
+   * Creates a new product.
+   * Checks for duplicate product names (case-insensitive).
+   * Admins may set any initial status; operators default to active.
+   *
+   * @throws ConflictException if a product with the same name already exists.
+   */
   async create(
     payload: CreateProductDto,
     userRole: string,
@@ -194,6 +214,14 @@ export class ProductsService {
     };
   }
 
+  /**
+   * Updates an existing product.
+   * Non-admin users may only update products they created.
+   *
+   * @throws BadRequestException if the ID format is invalid.
+   * @throws NotFoundException if the product does not exist.
+   * @throws ForbiddenException if the user does not own the product.
+   */
   async update(
     id: string,
     payload: UpdateProductDto,
@@ -211,7 +239,10 @@ export class ProductsService {
       throw new ForbiddenException("You can only modify your own resources");
     }
 
-    const updateData: any = { ...payload, "audit.updatedAt": new Date() };
+    const updateData: Record<string, unknown> = {
+      ...payload,
+      "audit.updatedAt": new Date(),
+    };
 
     const updated = await this.productModel
       .findByIdAndUpdate(id, { $set: updateData }, { new: true })
@@ -239,6 +270,10 @@ export class ProductsService {
     };
   }
 
+  /**
+   * Permanently deletes a product.
+   * Non-admin users may only delete products they created.
+   */
   async remove(id: string, userRole: string, userId: string): Promise<void> {
     this.validateId(id);
     const product = await this.productModel.findById(id).exec();
@@ -256,6 +291,10 @@ export class ProductsService {
     }
   }
 
+  /**
+   * Toggles the active/inactive status of a product.
+   * Non-admin users may only toggle their own products.
+   */
   async toggleStatus(
     id: string,
     userRole: string,
@@ -272,7 +311,10 @@ export class ProductsService {
     }
 
     product.status = !product.status;
-    if (!product.audit) product.audit = {} as any;
+    // Q4 fix: initialise audit with proper field shapes instead of {} as any.
+    if (!product.audit) {
+      product.audit = { createdBy: userId, createdAt: new Date(), updatedBy: userId, updatedAt: new Date() } as typeof product.audit;
+    }
     product.audit.updatedAt = new Date();
     await product.save();
     return {
@@ -295,12 +337,21 @@ export class ProductsService {
     };
   }
 
+  /**
+   * Validates that an ID is a 24-char hex MongoDB ObjectId or a valid UUID.
+   * @throws BadRequestException if the format is not recognised.
+   */
   private validateId(id: string): void {
-    if (!uuidValidate(id) && !Types.ObjectId.isValid(id)) {
+    const isMongoId = /^[a-f\d]{24}$/i.test(id);
+    if (!isMongoId && !uuidValidate(id)) {
       throw new BadRequestException("Invalid ID format");
     }
   }
 
+  /**
+   * Exports a list of products to CSV format.
+   * Sanitises values to prevent formula injection when opened in spreadsheet apps.
+   */
   exportToCsv(products: ProductDto[]): string {
     const fields = [
       "id",
@@ -311,20 +362,16 @@ export class ProductsService {
       "stock",
       "status",
     ];
-    const opts = {
-      fields,
-      transforms: [
-        (field: { label: string }, value: unknown) => {
-          const str = String(value ?? "");
-          if (/^[=+\-@\t\r]/.test(str)) {
-            return { [field.label]: "'" + str };
-          }
-          return { [field.label]: str };
-        },
-      ],
-    };
-    const parser = new Parser(opts as any);
-    return parser.parse(products);
+    const sanitized = products.map((p) => {
+      const record: Record<string, string> = {};
+      for (const field of fields) {
+        const str = String((p as unknown as Record<string, unknown>)[field] ?? "");
+        record[field] = /^[=+\-@\t\r]/.test(str) ? "'" + str : str;
+      }
+      return record;
+    });
+    const parser = new Parser({ fields });
+    return parser.parse(sanitized);
   }
 
   exportToPdf(products: ProductDto[]): Promise<Buffer> {

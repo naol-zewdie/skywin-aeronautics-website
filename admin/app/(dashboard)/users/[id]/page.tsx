@@ -49,6 +49,7 @@ export default function EditUserPage() {
       toast({ title: 'Success', description: 'User updated successfully' });
       router.push('/users');
     } catch (error) {
+      // B2 fix: removed the shadowed inner `err` re-declaration.
       const err = error as { response?: { status?: number; data?: { message?: string } }; message?: string };
       const status = err.response?.status;
       const serverMessage = err.response?.data?.message;
@@ -59,7 +60,6 @@ export default function EditUserPage() {
           description: serverMessage || 'You do not have permission to perform this action.',
         });
       } else {
-        const err = error as { message?: string };
         console.error('Error updating user:', error);
         toast({
           title: 'Error',

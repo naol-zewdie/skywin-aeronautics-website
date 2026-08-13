@@ -1,7 +1,6 @@
 import {
   Controller,
   Get,
-  NotFoundException,
   Param,
   Query,
 } from "@nestjs/common";
@@ -19,14 +18,25 @@ import { CareersService } from "../careers/careers.service";
 import { PostsService } from "../posts/posts.service";
 import { ContentType } from "../posts/schemas/post.schema";
 
-function sanitizePublic(record: any) {
-  if (!record) return record;
-  const copy = { ...record };
+/**
+ * Strips server-internal fields from a resource before returning it to
+ * unauthenticated public callers. Removes audit trails and token metadata
+ * that must never be exposed in public-facing API responses.
+ */
+function sanitizePublic(record: unknown) {
+  if (!record || typeof record !== "object") return record;
+  const copy = { ...(record as Record<string, unknown>) };
   delete copy.audit;
   delete copy.tokenVersion;
   return copy;
 }
 
+/**
+ * Exposes read-only, unauthenticated endpoints for the public-facing website.
+ * All endpoints in this controller are decorated with @Public() and return
+ * only active (status=true) resources with audit fields stripped.
+ * No mutations are allowed — this controller only contains GET routes.
+ */
 @ApiTags("Public")
 @Public()
 @Controller("public")
@@ -143,11 +153,22 @@ export class PublicController {
   @ApiOperation({ summary: "Get active post by id (public)" })
   @ApiParam({ name: "id", type: "string" })
   @ApiOkResponse({ description: "Active post details" })
+  /**
+   * Returns a single active post by ID for unauthenticated public access.
+   *
+   * Security (IDOR Gap B): Passes userRole='viewer' into postsService.findOne
+   * so the status=true filter is applied at the MongoDB query level — not as
+   * an application-layer check after the data has been fetched. This prevents:
+   *   1. View-counter inflation on inactive/draft posts.
+   *   2. Timing-oracle leakage of whether an inactive post ID exists.
+   *   3. Any future accidental exposure if post-fetch logic changes.
+   *
+   * A dummy constant userId ('__public__') is passed; it will never match any
+   * real createdBy value, which ensures only status=true posts are returned.
+   */
   async getActivePost(@Param("id") id: string) {
-    const post = await this.postsService.findOne(id);
-    if (!post.status) {
-      throw new NotFoundException("Post not found");
-    }
-    return sanitizePublic(post);
+    // 'viewer' role + non-existent userId → only status=true posts returned.
+    const post = await this.postsService.findOne(id, "viewer", "__public__");
+    return sanitizePublic(post as unknown as Record<string, unknown>);
   }
 }

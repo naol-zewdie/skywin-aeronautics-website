@@ -23,6 +23,10 @@ export class UsersService {
     private readonly userModel: Model<User>,
   ) {}
 
+  /**
+   * Returns all users, excluding sensitive fields (password hash, reset tokens).
+   * Accessible by admins only.
+   */
   async findAll(): Promise<UserDto[]> {
     const users = await this.userModel
       .find()
@@ -37,6 +41,12 @@ export class UsersService {
     }));
   }
 
+  /**
+   * Returns a single user by their ID, excluding sensitive fields.
+   *
+   * @throws BadRequestException if the ID format is invalid.
+   * @throws NotFoundException if no user exists with the given ID.
+   */
   async findOne(id: string): Promise<UserDto> {
     this.validateId(id);
     const user = await this.userModel
@@ -55,6 +65,15 @@ export class UsersService {
     };
   }
 
+  /**
+   * Creates a new user account with a bcrypt-hashed password.
+   * Only `operator` and `viewer` roles may be created; admin creation is blocked.
+   *
+   * @param payload      - Validated create-user DTO.
+   * @param currentUserId - ID of the admin performing the action (for audit trail).
+   * @throws ForbiddenException if trying to create an admin account.
+   * @throws BadRequestException if the email is already registered.
+   */
   async create(
     payload: CreateUserDto,
     currentUserId?: string,
@@ -95,6 +114,17 @@ export class UsersService {
     }
   }
 
+  /**
+   * Updates an existing user's profile fields.
+   * Enforces role-escalation protection and invalidates all sessions when
+   * the user's role or status changes.
+   *
+   * @param id            - Target user ID.
+   * @param payload       - Validated update-user DTO (partial).
+   * @param currentUserId - ID of the admin performing the action.
+   * @throws BadRequestException if the ID format is invalid.
+   * @throws ForbiddenException on privilege-escalation or self-demotion attempts.
+   */
   async update(
     id: string,
     payload: UpdateUserDto,
@@ -177,6 +207,13 @@ export class UsersService {
     }
   }
 
+  /**
+   * Allows a user to change their own password after verifying the current one.
+   * Increments tokenVersion on success to invalidate all existing sessions.
+   *
+   * @throws ForbiddenException if the user tries to change another user's password.
+   * @throws BadRequestException if the current password is incorrect.
+   */
   async changePassword(
     id: string,
     currentUserId: string,
@@ -206,6 +243,13 @@ export class UsersService {
     await user.save();
   }
 
+  /**
+   * Permanently deletes a user account.
+   * An admin cannot delete their own account.
+   *
+   * @throws ForbiddenException if the admin tries to delete themselves.
+   * @throws NotFoundException if no user exists with the given ID.
+   */
   async remove(id: string, currentUserId: string): Promise<void> {
     this.validateId(id);
     if (id === currentUserId) {
@@ -218,31 +262,50 @@ export class UsersService {
     }
   }
 
+  /**
+   * Validates that an ID string is a proper MongoDB ObjectId (24 hex chars)
+   * or a valid UUID v4.
+   *
+   * Security (S3): `Types.ObjectId.isValid()` returns true for any 12-byte
+   * string, which is overly permissive. We require the canonical 24-character
+   * hex representation to prevent ambiguous matches.
+   *
+   * @throws BadRequestException if the ID does not match either format.
+   */
   private validateId(id: string): void {
-    if (!uuidValidate(id) && !Types.ObjectId.isValid(id)) {
+    const isMongoId = /^[a-f\d]{24}$/i.test(id);
+    if (!isMongoId && !uuidValidate(id)) {
       throw new BadRequestException("Invalid ID format");
     }
   }
 
+  /**
+   * Exports a list of users to CSV format.
+   *
+   * Security (B6): Values starting with formula-injection characters
+   * (=, +, -, @, TAB, CR) are prefixed with a single quote to prevent
+   * spreadsheet formula injection when the CSV is opened in Excel or Sheets.
+   */
   exportToCsv(users: UserDto[]): string {
     const fields = ["id", "fullName", "email", "role", "status"];
-    const opts = {
-      fields,
-      // C2 FIX: Prevent CSV formula injection by prefixing dangerous characters
-      transforms: [
-        (field: { label: string }, value: unknown) => {
-          const str = String(value ?? "");
-          if (/^[=+\-@\t\r]/.test(str)) {
-            return { [field.label]: "'" + str };
-          }
-          return { [field.label]: str };
-        },
-      ],
-    };
-    const parser = new Parser(opts as any);
-    return parser.parse(users);
+    // Sanitize each user record before passing to the parser.
+    const sanitized = users.map((u) => {
+      const record: Record<string, string> = {};
+      for (const field of fields) {
+        const str = String((u as unknown as Record<string, unknown>)[field] ?? "");
+        record[field] = /^[=+\-@\t\r]/.test(str) ? "'" + str : str;
+      }
+      return record;
+    });
+    const parser = new Parser({ fields });
+    return parser.parse(sanitized);
   }
 
+  /**
+   * Exports a list of users to a PDF buffer.
+   * Generates one entry per user with a separator between entries.
+   * Automatically paginates when content would overflow the page.
+   */
   exportToPdf(users: UserDto[]): Promise<Buffer> {
     const doc = new PDFDocument();
     const chunks: Buffer[] = [];

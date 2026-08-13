@@ -30,6 +30,15 @@ import { RolesGuard, Roles, Role } from "../../common/guards/roles.guard";
 
 const MAX_EXPORT_RECORDS = 10000;
 
+/** Typed request shape after JWT validation has populated req.user. */
+interface AuthenticatedRequest {
+  user: {
+    userId: string;
+    email: string;
+    role: string;
+  };
+}
+
 @ApiTags("Careers")
 @Controller("careers")
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -41,7 +50,7 @@ export class CareersController {
   @Roles(Role.ADMIN, Role.OPERATOR, Role.VIEWER)
   @ApiOperation({ summary: "List open career positions" })
   @ApiOkResponse({ type: CareerOpeningDto, isArray: true })
-  getOpenings(@Req() req): Promise<CareerOpeningDto[]> {
+  getOpenings(@Req() req: AuthenticatedRequest): Promise<CareerOpeningDto[]> {
     return this.careersService.findAll(
       undefined,
       req.user?.role,
@@ -54,7 +63,7 @@ export class CareersController {
   @ApiOperation({ summary: "Get career opening by id" })
   @ApiParam({ name: "id", type: "string", description: "Career Opening ID" })
   @ApiOkResponse({ type: CareerOpeningDto })
-  getOpening(@Param("id") id: string, @Req() req): Promise<CareerOpeningDto> {
+  getOpening(@Param("id") id: string, @Req() req: AuthenticatedRequest): Promise<CareerOpeningDto> {
     return this.careersService.findOne(id, req.user?.role, req.user?.userId);
   }
 
@@ -64,7 +73,7 @@ export class CareersController {
   @ApiCreatedResponse({ type: CareerOpeningDto })
   createOpening(
     @Body() payload: CreateCareerOpeningDto,
-    @Req() req,
+    @Req() req: AuthenticatedRequest,
   ): Promise<CareerOpeningDto> {
     return this.careersService.create(
       payload,
@@ -80,7 +89,7 @@ export class CareersController {
   @ApiOkResponse({ type: CareerOpeningDto })
   toggleOpeningStatus(
     @Param("id") id: string,
-    @Req() req,
+    @Req() req: AuthenticatedRequest,
   ): Promise<CareerOpeningDto> {
     return this.careersService.toggleStatus(
       id,
@@ -97,7 +106,7 @@ export class CareersController {
   updateOpening(
     @Param("id") id: string,
     @Body() payload: UpdateCareerOpeningDto,
-    @Req() req,
+    @Req() req: AuthenticatedRequest,
   ): Promise<CareerOpeningDto> {
     return this.careersService.update(
       id,
@@ -113,7 +122,7 @@ export class CareersController {
   @ApiOperation({ summary: "Delete career opening" })
   @ApiParam({ name: "id", type: "string", description: "Career Opening ID" })
   @ApiNoContentResponse({ description: "Career opening deleted" })
-  removeOpening(@Param("id") id: string, @Req() req): Promise<void> {
+  removeOpening(@Param("id") id: string, @Req() req: AuthenticatedRequest): Promise<void> {
     return this.careersService.remove(id, req.user?.role, req.user?.userId);
   }
 
@@ -122,7 +131,7 @@ export class CareersController {
   @ApiOperation({ summary: "Export career openings to CSV" })
   async exportCsv(
     @Res({ passthrough: true }) res: Response,
-    @Req() req,
+    @Req() req: AuthenticatedRequest,
   ): Promise<string> {
     const openings = await this.careersService.findAll({
       limit: MAX_EXPORT_RECORDS,
@@ -142,7 +151,7 @@ export class CareersController {
   @ApiOperation({ summary: "Export career openings to PDF" })
   async exportPdf(
     @Res({ passthrough: true }) res: Response,
-    @Req() req,
+    @Req() req: AuthenticatedRequest,
   ): Promise<Buffer> {
     const openings = await this.careersService.findAll({
       limit: MAX_EXPORT_RECORDS,

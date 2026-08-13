@@ -33,6 +33,15 @@ import { RolesGuard, Roles, Role } from "../../common/guards/roles.guard";
 
 const MAX_EXPORT_RECORDS = 10000;
 
+/** Typed request shape after JWT validation has populated req.user. */
+interface AuthenticatedRequest {
+  user: {
+    userId: string;
+    email: string;
+    role: string;
+  };
+}
+
 @ApiTags("Posts")
 @Controller("posts")
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -75,7 +84,7 @@ export class PostsController {
   })
   @ApiOkResponse({ type: PostDto, isArray: true })
   getPosts(
-    @Req() req,
+    @Req() req: AuthenticatedRequest,
     @Query("type") type?: ContentType,
     @Query("search") search?: string,
     @Query("author") author?: string,
@@ -103,7 +112,7 @@ export class PostsController {
   @ApiOkResponse({ type: PostDto, isArray: true })
   getPostsByType(
     @Param("type") type: ContentType,
-    @Req() req,
+    @Req() req: AuthenticatedRequest,
   ): Promise<PostDto[]> {
     return this.postsService.findByType(type, req.user?.role, req.user?.userId);
   }
@@ -116,7 +125,7 @@ export class PostsController {
   @ApiQuery({ name: "author", required: false })
   async exportCsv(
     @Res({ passthrough: true }) res: Response,
-    @Req() req,
+    @Req() req: AuthenticatedRequest,
     @Query("type") type?: ContentType,
     @Query("search") search?: string,
     @Query("author") author?: string,
@@ -140,7 +149,7 @@ export class PostsController {
   @ApiQuery({ name: "author", required: false })
   async exportPdf(
     @Res({ passthrough: true }) res: Response,
-    @Req() req,
+    @Req() req: AuthenticatedRequest,
     @Query("type") type?: ContentType,
     @Query("search") search?: string,
     @Query("author") author?: string,
@@ -161,7 +170,7 @@ export class PostsController {
   @ApiOperation({ summary: "Get post by id" })
   @ApiParam({ name: "id", type: "string", description: "Post ID" })
   @ApiOkResponse({ type: PostDto })
-  getPost(@Param("id") id: string, @Req() req): Promise<PostDto> {
+  getPost(@Param("id") id: string, @Req() req: AuthenticatedRequest): Promise<PostDto> {
     return this.postsService.findOne(id, req.user?.role, req.user?.userId);
   }
 
@@ -169,7 +178,7 @@ export class PostsController {
   @Roles(Role.ADMIN, Role.OPERATOR)
   @ApiOperation({ summary: "Create new post" })
   @ApiCreatedResponse({ type: PostDto })
-  createPost(@Body() payload: CreatePostDto, @Req() req): Promise<PostDto> {
+  createPost(@Body() payload: CreatePostDto, @Req() req: AuthenticatedRequest): Promise<PostDto> {
     return this.postsService.create(payload, req.user?.role, req.user?.userId);
   }
 
@@ -178,7 +187,7 @@ export class PostsController {
   @ApiOperation({ summary: "Toggle post status" })
   @ApiParam({ name: "id", type: "string", description: "Post ID" })
   @ApiOkResponse({ type: PostDto })
-  togglePostStatus(@Param("id") id: string, @Req() req): Promise<PostDto> {
+  togglePostStatus(@Param("id") id: string, @Req() req: AuthenticatedRequest): Promise<PostDto> {
     return this.postsService.toggleStatus(id, req.user?.role, req.user?.userId);
   }
 
@@ -190,7 +199,7 @@ export class PostsController {
   updatePost(
     @Param("id") id: string,
     @Body() payload: UpdatePostDto,
-    @Req() req,
+    @Req() req: AuthenticatedRequest,
   ): Promise<PostDto> {
     return this.postsService.update(
       id,
@@ -206,7 +215,7 @@ export class PostsController {
   @ApiOperation({ summary: "Delete post" })
   @ApiParam({ name: "id", type: "string", description: "Post ID" })
   @ApiNoContentResponse({ description: "Post deleted" })
-  removePost(@Param("id") id: string, @Req() req): Promise<void> {
+  removePost(@Param("id") id: string, @Req() req: AuthenticatedRequest): Promise<void> {
     return this.postsService.remove(id, req.user?.role, req.user?.userId);
   }
 }

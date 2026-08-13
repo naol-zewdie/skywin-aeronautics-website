@@ -21,6 +21,11 @@ export class ServicesService {
     private readonly serviceModel: Model<Service>,
   ) {}
 
+  /**
+   * Returns a paginated list of services.
+   * Viewers only see active services. Operators also see their own inactive ones.
+   * Admins see everything.
+   */
   async findAll(
     filters?: { status?: boolean; limit?: number; offset?: number },
     userRole?: string,
@@ -69,6 +74,14 @@ export class ServicesService {
     }));
   }
 
+  /**
+   * Returns a single service by ID.
+   * Non-admin users may only view active services or ones they created.
+   *
+   * @throws BadRequestException if the ID format is invalid.
+   * @throws NotFoundException if no service is found.
+   * @throws ForbiddenException if the user cannot view this service.
+   */
   async findOne(
     id: string,
     userRole?: string,
@@ -105,6 +118,14 @@ export class ServicesService {
     };
   }
 
+  /**
+   * Creates a new service.
+   * Admins may set the initial status; operators default to active.
+   *
+   * @param payload  - Validated create-service DTO.
+   * @param userRole - The creator's role.
+   * @param userId   - The creator's user ID (stored in audit trail).
+   */
   async create(
     payload: CreateServiceDto,
     userRole: string,
@@ -143,6 +164,14 @@ export class ServicesService {
     };
   }
 
+  /**
+   * Updates an existing service.
+   * Non-admin users may only update services they created.
+   *
+   * @throws BadRequestException if the ID format is invalid.
+   * @throws NotFoundException if the service does not exist.
+   * @throws ForbiddenException if the user does not own the service.
+   */
   async update(
     id: string,
     payload: UpdateServiceDto,
@@ -160,7 +189,10 @@ export class ServicesService {
       throw new ForbiddenException("You can only modify your own resources");
     }
 
-    const updateData: any = { ...payload, "audit.updatedAt": new Date() };
+    const updateData: Record<string, unknown> = {
+      ...payload,
+      "audit.updatedAt": new Date(),
+    };
 
     const updated = await this.serviceModel
       .findByIdAndUpdate(id, { $set: updateData }, { new: true })
@@ -185,6 +217,10 @@ export class ServicesService {
     };
   }
 
+  /**
+   * Permanently deletes a service.
+   * Non-admin users may only delete services they created.
+   */
   async remove(id: string, userRole: string, userId: string): Promise<void> {
     this.validateId(id);
     const service = await this.serviceModel.findById(id).exec();
@@ -202,6 +238,10 @@ export class ServicesService {
     }
   }
 
+  /**
+   * Toggles the active/inactive status of a service.
+   * Non-admin users may only toggle their own services.
+   */
   async toggleStatus(
     id: string,
     userRole: string,
@@ -218,7 +258,10 @@ export class ServicesService {
     }
 
     service.status = !service.status;
-    if (!service.audit) service.audit = {} as any;
+    // Q4 fix: initialise audit with proper field shapes instead of {} as any.
+    if (!service.audit) {
+      service.audit = { createdBy: userId, createdAt: new Date(), updatedBy: userId, updatedAt: new Date() } as typeof service.audit;
+    }
     service.audit.updatedAt = new Date();
     await service.save();
     return {
@@ -238,28 +281,33 @@ export class ServicesService {
     };
   }
 
+  /**
+   * Validates that an ID is a 24-char hex MongoDB ObjectId or a valid UUID.
+   * @throws BadRequestException if the format is not recognised.
+   */
   private validateId(id: string): void {
-    if (!uuidValidate(id) && !Types.ObjectId.isValid(id)) {
+    const isMongoId = /^[a-f\d]{24}$/i.test(id);
+    if (!isMongoId && !uuidValidate(id)) {
       throw new BadRequestException("Invalid ID format");
     }
   }
 
+  /**
+   * Exports a list of services to CSV format.
+   * Sanitises values to prevent formula injection when opened in spreadsheet apps.
+   */
   exportToCsv(services: ServiceDto[]): string {
     const fields = ["id", "name", "description", "image", "status"];
-    const opts = {
-      fields,
-      transforms: [
-        (field: { label: string }, value: unknown) => {
-          const str = String(value ?? "");
-          if (/^[=+\-@\t\r]/.test(str)) {
-            return { [field.label]: "'" + str };
-          }
-          return { [field.label]: str };
-        },
-      ],
-    };
-    const parser = new Parser(opts as any);
-    return parser.parse(services);
+    const sanitized = services.map((s) => {
+      const record: Record<string, string> = {};
+      for (const field of fields) {
+        const str = String((s as unknown as Record<string, unknown>)[field] ?? "");
+        record[field] = /^[=+\-@\t\r]/.test(str) ? "'" + str : str;
+      }
+      return record;
+    });
+    const parser = new Parser({ fields });
+    return parser.parse(sanitized);
   }
 
   exportToPdf(services: ServiceDto[]): Promise<Buffer> {

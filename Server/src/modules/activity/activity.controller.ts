@@ -10,6 +10,15 @@ import { Activity } from "./schemas/activity.schema";
 import { JwtAuthGuard } from "../auth/jwt-auth.guard";
 import { RolesGuard, Roles, Role } from "../../common/guards/roles.guard";
 
+/** Typed request shape after JWT validation has populated req.user. */
+interface AuthenticatedRequest {
+  user: {
+    userId: string;
+    email: string;
+    role: string;
+  };
+}
+
 @ApiTags("activity")
 @Controller("activity")
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -47,7 +56,7 @@ export class ActivityController {
     type: Number,
   })
   async findAll(
-    @Req() req,
+    @Req() req: AuthenticatedRequest,
     @Query("entityType") entityType?: string,
     @Query("userId") userId?: string,
     @Query("startDate") startDate?: string,

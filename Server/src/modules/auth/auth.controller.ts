@@ -9,6 +9,7 @@ import {
   HttpCode,
   HttpStatus,
   UnauthorizedException,
+  NotFoundException,
   Res,
 } from "@nestjs/common";
 import {
@@ -103,6 +104,11 @@ export class AuthController {
   @Get("csrf-token")
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: "Get a CSRF token (sets csrf-token cookie)" })
+  /**
+   * Issues a CSRF token via an HttpOnly-false cookie so the browser
+   * JavaScript layer can read it and echo it back in the X-CSRF-Token header
+   * on all mutating requests.
+   */
   getCsrfToken(@Res({ passthrough: true }) res: ExpressResponse): {
     token: string;
   } {
@@ -123,6 +129,12 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @UseGuards(RateLimitGuard)
   @ApiOperation({ summary: "Login with email and password" })
+  /**
+   * Authenticates a user with email + password credentials.
+   * On success, sets httpOnly cookies for the access and refresh tokens,
+   * rotates the CSRF token, and returns the access token plus user info.
+   * On failure, records the failed attempt for IP-based rate limiting.
+   */
   @ApiOkResponse({
     schema: {
       type: "object",
@@ -189,6 +201,11 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @UseGuards(RateLimitGuard)
   @ApiOperation({ summary: "Refresh access token using refresh token" })
+  /**
+   * Issues a new access + refresh token pair by verifying the provided refresh
+   * token. The old refresh token is immediately blacklisted (rotation).
+   * Token may be supplied via body or the refreshToken httpOnly cookie.
+   */
   @ApiOkResponse({
     schema: {
       type: "object",
@@ -231,18 +248,29 @@ export class AuthController {
       properties: {
         message: {
           type: "string",
+          // Security: uniform message prevents email enumeration
           example:
             "If that email is registered, a password reset link has been sent.",
         },
       },
     },
   })
+  /**
+   * Initiates a password reset flow for the given email address.
+   *
+   * Security: Always returns the same response message regardless of whether
+   * the email address is registered, preventing email-enumeration attacks.
+   */
   async forgotPassword(
     @Body() forgotDto: ForgotPasswordDto,
-    @Req() req: ExpressRequest,
+    @Req() _req: ExpressRequest,
   ): Promise<{ message: string }> {
     await this.authService.forgotPassword(forgotDto.email);
-    return { message: "A password reset link has been sent to your email." };
+    // Security (S1): Return a uniform message — never disclose whether the email exists.
+    return {
+      message:
+        "If that email is registered, a password reset link has been sent.",
+    };
   }
 
   @Public()
@@ -250,6 +278,11 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @UseGuards(RateLimitGuard)
   @ApiOperation({ summary: "Reset password using a reset token" })
+  /**
+   * Validates a one-time reset token and sets the user's new password.
+   * The token is consumed on use and the user's session version is incremented
+   * to invalidate all existing tokens.
+   */
   @ApiOkResponse({
     schema: {
       type: "object",
@@ -277,6 +310,11 @@ export class AuthController {
   @Post("logout")
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: "Logout current user" })
+  /**
+   * Invalidates the current session by blacklisting the access and refresh
+   * tokens, incrementing the user's tokenVersion, and clearing auth cookies.
+   * Proceeds silently even if the token is already expired or invalid.
+   */
   async logout(
     @Request()
     req: {
@@ -320,12 +358,18 @@ export class AuthController {
       },
     },
   })
+  /**
+   * Returns the profile of the currently authenticated user.
+   * The user identity is derived from the validated JWT payload — no
+   * user-supplied ID is trusted.
+   */
   async getMe(
     @Request() req: { user: { userId: string } },
   ): Promise<UserResponse> {
     const user = await this.authService.getMe(req.user.userId);
     if (!user) {
-      throw new Error("User not found");
+      // Bug B1 fix: throw a proper 404 instead of a generic Error (500).
+      throw new NotFoundException("User not found");
     }
     return user;
   }

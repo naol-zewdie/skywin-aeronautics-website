@@ -21,12 +21,18 @@ export class CareersService {
     private readonly careerOpeningModel: Model<CareerOpening>,
   ) {}
 
+  /**
+   * Returns a paginated list of career openings.
+   * Role-based visibility is applied: viewers only see active openings,
+   * operators also see their own inactive ones, admins see everything.
+   */
+
   async findAll(
     filters?: { status?: boolean; limit?: number; offset?: number },
     userRole?: string,
     userId?: string,
   ): Promise<CareerOpeningDto[]> {
-    const query: any = {};
+    const query: Record<string, unknown> = {};
     if (filters?.status !== undefined) {
       query.status = filters.status;
     }
@@ -70,23 +76,42 @@ export class CareersService {
     }));
   }
 
+  /**
+   * Returns a single career opening by ID.
+   *
+   * Security (IDOR): Applies role-based visibility at the MongoDB query level.
+   * Viewers may only retrieve active (status=true) openings. Operators may also
+   * retrieve drafts they created. Admins see all openings.
+   * Using a query-level filter prevents timing-based enumeration attacks that
+   * would arise from fetching first and then checking ownership.
+   *
+   * @throws BadRequestException if the ID format is invalid.
+   * @throws NotFoundException if no matching opening exists (or is not visible).
+   */
   async findOne(
     id: string,
     userRole?: string,
     userId?: string,
   ): Promise<CareerOpeningDto> {
     this.validateId(id);
-    const opening = await this.careerOpeningModel.findById(id).exec();
-    if (!opening) {
-      throw new NotFoundException("Career opening not found");
+
+    const query: Record<string, unknown> = { _id: id };
+
+    // Security (IDOR): Enforce visibility at query level so non-admin users
+    // cannot retrieve restricted resources by guessing their IDs.
+    if (userRole !== undefined && userRole !== "admin") {
+      if (userRole === "operator") {
+        // Operators can see their own drafts or any active opening.
+        query["$or"] = [{ status: true }, { "audit.createdBy": userId }];
+      } else {
+        // Viewers can only see active openings.
+        query.status = true;
+      }
     }
 
-    if (
-      userRole !== undefined &&
-      userRole !== "admin" &&
-      opening.audit?.createdBy !== userId
-    ) {
-      throw new ForbiddenException("You can only view your own resources");
+    const opening = await this.careerOpeningModel.findOne(query as any).exec();
+    if (!opening) {
+      throw new NotFoundException("Career opening not found");
     }
 
     return {
@@ -96,9 +121,25 @@ export class CareersService {
       employmentType: opening.employmentType,
       description: opening.description,
       status: opening.status,
+      audit: opening.audit
+        ? {
+            createdBy: opening.audit.createdBy,
+            createdAt: opening.audit.createdAt?.toISOString(),
+            updatedBy: opening.audit.updatedBy,
+            updatedAt: opening.audit.updatedAt?.toISOString(),
+          }
+        : undefined,
     };
   }
 
+  /**
+   * Creates a new career opening.
+   * Admins may set any initial status; operators default to active.
+   *
+   * @param payload  - Validated create DTO.
+   * @param userRole - The creator's role.
+   * @param userId   - The creator's ID (stored in audit trail).
+   */
   async create(
     payload: CreateCareerOpeningDto,
     userRole: string,
@@ -130,6 +171,13 @@ export class CareersService {
     };
   }
 
+  /**
+   * Updates an existing career opening.
+   * Non-admin users may only update openings they created.
+   *
+   * @throws NotFoundException  if the opening does not exist.
+   * @throws ForbiddenException if the user does not own the opening.
+   */
   async update(
     id: string,
     payload: UpdateCareerOpeningDto,
@@ -147,7 +195,10 @@ export class CareersService {
       throw new ForbiddenException("You can only modify your own resources");
     }
 
-    const updateData: any = { ...payload, "audit.updatedAt": new Date() };
+    const updateData: Record<string, unknown> = {
+      ...payload,
+      "audit.updatedAt": new Date(),
+    };
 
     const updated = await this.careerOpeningModel
       .findByIdAndUpdate(id, { $set: updateData }, { new: true })
@@ -165,6 +216,13 @@ export class CareersService {
     };
   }
 
+  /**
+   * Permanently deletes a career opening.
+   * Non-admin users may only delete openings they created.
+   *
+   * @throws NotFoundException  if the opening does not exist.
+   * @throws ForbiddenException if the user does not own the opening.
+   */
   async remove(id: string, userRole: string, userId: string): Promise<void> {
     this.validateId(id);
     const career = await this.careerOpeningModel.findById(id).exec();
@@ -182,6 +240,13 @@ export class CareersService {
     }
   }
 
+  /**
+   * Toggles the active/inactive status of a career opening.
+   * Non-admin users may only toggle openings they created.
+   *
+   * @throws NotFoundException  if the opening does not exist.
+   * @throws ForbiddenException if the user does not own the opening.
+   */
   async toggleStatus(
     id: string,
     userRole: string,
@@ -198,7 +263,10 @@ export class CareersService {
     }
 
     career.status = !career.status;
-    if (!career.audit) career.audit = {} as any;
+    // Q4 fix: initialise audit with typed object rather than {} as any.
+    if (!career.audit) {
+      career.audit = { createdBy: userId, createdAt: new Date(), updatedBy: userId, updatedAt: new Date() } as typeof career.audit;
+    }
     career.audit.updatedAt = new Date();
     await career.save();
     return {
@@ -211,12 +279,29 @@ export class CareersService {
     };
   }
 
+  /**
+   * Validates that an ID is a 24-char hex MongoDB ObjectId or a valid UUID v4.
+   *
+   * Security (S3): `Types.ObjectId.isValid()` returns true for any 12-byte
+   * string, which is overly permissive. We require the canonical 24-character
+   * hex representation to prevent ambiguous ID matches.
+   *
+   * @throws BadRequestException if the ID does not match either format.
+   */
   private validateId(id: string): void {
-    if (!uuidValidate(id) && !Types.ObjectId.isValid(id)) {
+    const isMongoId = /^[a-f\d]{24}$/i.test(id);
+    if (!isMongoId && !uuidValidate(id)) {
       throw new BadRequestException("Invalid ID format");
     }
   }
 
+  /**
+   * Exports a list of career openings to CSV format.
+   *
+   * Security: Values starting with formula-injection characters (=, +, -, @,
+   * TAB, CR) are prefixed with a single quote to prevent spreadsheet formula
+   * injection when the CSV is opened in Excel or Google Sheets.
+   */
   exportToCsv(openings: CareerOpeningDto[]): string {
     const fields = [
       "id",
@@ -226,22 +311,23 @@ export class CareersService {
       "description",
       "status",
     ];
-    const opts = {
-      fields,
-      transforms: [
-        (field: { label: string }, value: unknown) => {
-          const str = String(value ?? "");
-          if (/^[=+\-@\t\r]/.test(str)) {
-            return { [field.label]: "'" + str };
-          }
-          return { [field.label]: str };
-        },
-      ],
-    };
-    const parser = new Parser(opts as any);
-    return parser.parse(openings);
+    // Pre-sanitise records using the correct @json2csv/plainjs v7 item API.
+    const sanitized = openings.map((o) => {
+      const record: Record<string, string> = {};
+      for (const field of fields) {
+        const str = String((o as unknown as Record<string, unknown>)[field] ?? "");
+        record[field] = /^[=+\-@\t\r]/.test(str) ? "'" + str : str;
+      }
+      return record;
+    });
+    const parser = new Parser({ fields });
+    return parser.parse(sanitized);
   }
 
+  /**
+   * Exports a list of career openings to a PDF buffer.
+   * Automatically paginates when content would overflow the page.
+   */
   exportToPdf(openings: CareerOpeningDto[]): Promise<Buffer> {
     const doc = new PDFDocument();
     const chunks: Buffer[] = [];

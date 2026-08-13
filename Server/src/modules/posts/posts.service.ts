@@ -21,6 +21,11 @@ export class PostsService {
     private readonly postModel: Model<Post>,
   ) {}
 
+  /**
+   * Returns a paginated list of posts, filtered by the provided criteria.
+   * Role-based visibility is applied: viewers only see published posts,
+   * operators also see their own drafts, and admins see everything.
+   */
   async findAll(
     filters?: {
       type?: ContentType;
@@ -88,6 +93,13 @@ export class PostsService {
     return posts.map((post) => this.mapToDto(post));
   }
 
+  /**
+   * Returns all posts of a given content type, applying role-based visibility.
+   *
+   * @param type     - Content type filter (news | blog | event).
+   * @param userRole - The authenticated user's role.
+   * @param userId   - The authenticated user's ID.
+   */
   async findByType(
     type: ContentType,
     userRole?: string,
@@ -96,6 +108,17 @@ export class PostsService {
     return this.findAll({ type }, userRole, userId);
   }
 
+  /**
+   * Returns a single post by ID.
+   *
+   * Security (S4): Applies role-based visibility before returning the post.
+   * Viewers may only see published (status=true) posts. Operators may also
+   * see drafts they created. Admins see all posts.
+   *
+   * @throws BadRequestException if the ID format is invalid.
+   * @throws NotFoundException if no matching post exists.
+   * @throws ForbiddenException if the user's role does not permit viewing this post.
+   */
   async findOne(
     id: string,
     userRole?: string,
@@ -103,26 +126,39 @@ export class PostsService {
   ): Promise<PostDto> {
     this.validateId(id);
     const query: Record<string, unknown> = { _id: id };
+
+    // Security (S4): Enforce status visibility at query level so viewers
+    // cannot retrieve inactive posts by supplying a known ID directly.
+    if (userRole !== undefined && userRole !== "admin") {
+      if (userRole === "operator") {
+        // Operators can see their own drafts or any published post.
+        query["$or"] = [{ status: true }, { "audit.createdBy": userId }];
+      } else {
+        // Viewers can only see published posts.
+        query.status = true;
+      }
+    }
+
     const post = await this.postModel.findOne(query).exec();
     if (!post) {
       throw new NotFoundException("Post not found");
     }
 
-    if (
-      userRole !== undefined &&
-      userRole !== "admin" &&
-      post.audit?.createdBy !== userId
-    ) {
-      throw new ForbiddenException("You can only view your own resources");
-    }
-
-    // Increment views
+    // Increment view counter.
     await this.postModel.findByIdAndUpdate(id, { $inc: { views: 1 } }).exec();
     post.views = (post.views || 0) + 1;
 
     return this.mapToDto(post);
   }
 
+  /**
+   * Creates a new post.
+   * Admins may set any initial status; operators default to published (status=true).
+   *
+   * @param payload  - Validated create-post DTO.
+   * @param userRole - The creator's role (determines default status).
+   * @param userId   - The creator's user ID (stored in audit trail).
+   */
   async create(
     payload: CreatePostDto,
     userRole: string,
@@ -147,6 +183,13 @@ export class PostsService {
     return this.mapToDto(saved);
   }
 
+  /**
+   * Updates an existing post.
+   * Non-admin users may only update posts they created.
+   *
+   * @throws NotFoundException if the post does not exist.
+   * @throws ForbiddenException if the user does not own the post.
+   */
   async update(
     id: string,
     payload: UpdatePostDto,
@@ -164,7 +207,10 @@ export class PostsService {
       throw new ForbiddenException("You can only modify your own resources");
     }
 
-    const updateData: any = { ...payload, "audit.updatedAt": new Date() };
+    const updateData: Record<string, unknown> = {
+      ...payload,
+      "audit.updatedAt": new Date(),
+    };
 
     const updated = await this.postModel
       .findByIdAndUpdate(id, { $set: updateData }, { new: true })
@@ -175,6 +221,13 @@ export class PostsService {
     return this.mapToDto(updated);
   }
 
+  /**
+   * Permanently deletes a post.
+   * Non-admin users may only delete posts they created.
+   *
+   * @throws NotFoundException if the post does not exist.
+   * @throws ForbiddenException if the user does not own the post.
+   */
   async remove(id: string, userRole: string, userId: string): Promise<void> {
     this.validateId(id);
     const post = await this.postModel.findById(id).exec();
@@ -192,6 +245,13 @@ export class PostsService {
     }
   }
 
+  /**
+   * Toggles the published/draft status of a post.
+   * Non-admin users may only toggle their own posts.
+   *
+   * @throws NotFoundException if the post does not exist.
+   * @throws ForbiddenException if the user does not own the post.
+   */
   async toggleStatus(
     id: string,
     userRole: string,
@@ -214,6 +274,12 @@ export class PostsService {
     return this.mapToDto(post);
   }
 
+  /**
+   * Exports a list of posts to CSV format.
+   *
+   * Security: Values starting with formula-injection characters are prefixed
+   * with a single quote to prevent spreadsheet formula injection.
+   */
   exportToCsv(posts: PostDto[]): string {
     const fields = [
       "id",
@@ -227,20 +293,16 @@ export class PostsService {
       "eventLocation",
       "tags",
     ];
-    const opts = {
-      fields,
-      transforms: [
-        (field: { label: string }, value: unknown) => {
-          const str = String(value ?? "");
-          if (/^[=+\-@\t\r]/.test(str)) {
-            return { [field.label]: "'" + str };
-          }
-          return { [field.label]: str };
-        },
-      ],
-    };
-    const parser = new Parser(opts as any);
-    return parser.parse(posts);
+    const sanitized = posts.map((p) => {
+      const record: Record<string, string> = {};
+      for (const field of fields) {
+        const str = String((p as unknown as Record<string, unknown>)[field] ?? "");
+        record[field] = /^[=+\-@\t\r]/.test(str) ? "'" + str : str;
+      }
+      return record;
+    });
+    const parser = new Parser({ fields });
+    return parser.parse(sanitized);
   }
 
   exportToPdf(posts: PostDto[]): Promise<Buffer> {
@@ -319,15 +381,30 @@ export class PostsService {
     });
   }
 
+  /**
+   * Validates that an ID string is a proper MongoDB ObjectId (24 hex chars)
+   * or a valid UUID v4.
+   *
+   * Security: Requires canonical 24-character hex format to prevent
+   * ambiguous short-string matches from ObjectId.isValid().
+   *
+   * @throws BadRequestException if the ID does not match either format.
+   */
   private validateId(id: string): void {
-    if (!uuidValidate(id) && !Types.ObjectId.isValid(id)) {
+    const isMongoId = /^[a-f\d]{24}$/i.test(id);
+    if (!isMongoId && !uuidValidate(id)) {
       throw new BadRequestException("Invalid ID format");
     }
   }
 
-  private mapToDto(post: any): PostDto {
+  /**
+   * Maps a Mongoose Post document to the public-facing PostDto.
+   * Serialises Date fields to ISO strings for consistent JSON output.
+   */
+  private mapToDto(post: Post & { _id: unknown; views?: number }): PostDto {
+    const docId = (post as unknown as { _id?: { toString(): string }; id?: string })._id;
     return {
-      id: post._id ? post._id.toString() : post.id,
+      id: docId ? docId.toString() : (post as unknown as { id: string }).id,
       title: post.title,
       content: post.content,
       type: post.type,

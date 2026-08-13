@@ -46,6 +46,11 @@ export class AuthService {
   private readonly logger = new Logger(AuthService.name);
   private readonly dummyHash: string;
 
+  /**
+   * Creates the service instance and pre-computes a dummy bcrypt hash.
+   * The dummy hash is used for constant-time comparison when a user is not
+   * found, preventing timing-based user enumeration attacks.
+   */
   constructor(
     private jwtService: JwtService,
     @InjectModel(User.name)
@@ -56,6 +61,15 @@ export class AuthService {
     this.dummyHash = bcrypt.hashSync("dummy", 12);
   }
 
+  /**
+   * Validates a user's email + password credentials.
+   *
+   * Security: Performs a constant-time dummy bcrypt compare even when the user
+   * is not found, preventing timing-based enumeration of registered emails.
+   * Returns a safe subset of user fields (no password hash).
+   *
+   * @throws UnauthorizedException if credentials are invalid or user is inactive.
+   */
   async validateUser(
     email: string,
     password: string,
@@ -102,6 +116,14 @@ export class AuthService {
       status: user.status,
     };
   }
+  /**
+   * Generates a JWT access + refresh token pair for the given user.
+   * Reads the current tokenVersion from the database to embed in both tokens,
+   * enabling instant session revocation via version increment.
+   *
+   * @param user - Validated user data (must already be authenticated).
+   * @returns Access token, refresh token, and expiry timestamp.
+   */
   async login(user: {
     id: string;
     fullName: string;
@@ -183,7 +205,10 @@ export class AuthService {
       });
     } catch (error) {
       if (error instanceof UnauthorizedException) throw error;
-      this.logger.warn(`Token refresh failed: ${error.message}`);
+      // S6 fix: Guard access to .message — error is typed as unknown in strict mode.
+      const message =
+        error instanceof Error ? error.message : "Token verification failed";
+      this.logger.warn(`Token refresh failed: ${message}`);
       throw new UnauthorizedException("Invalid or expired refresh token");
     }
   }
@@ -256,6 +281,12 @@ export class AuthService {
     return value * (multipliers[unit] || 60);
   }
 
+  /**
+   * Returns the public profile of a user by their ID.
+   * Used by the /auth/me endpoint after JWT validation.
+   *
+   * @throws UnauthorizedException if the user ID does not exist in the database.
+   */
   async getMe(userId: string): Promise<{
     id: string;
     fullName: string;
@@ -276,6 +307,13 @@ export class AuthService {
     };
   }
 
+  /**
+   * Invalidates the current session by blacklisting both tokens and incrementing
+   * the user's tokenVersion to invalidate all remaining active tokens.
+   *
+   * @param rawToken  - The access token from the Authorization header or cookie.
+   * @param refreshToken - Optional refresh token from the cookie to also blacklist.
+   */
   async logout(rawToken: string, refreshToken?: string): Promise<void> {
     let payload;
     try {
@@ -331,6 +369,14 @@ export class AuthService {
     this.logger.log("Token(s) blacklisted and session invalidated on logout");
   }
 
+  /**
+   * Initiates the password reset flow for the given email address.
+   *
+   * Security: Performs dummy bcrypt work when the email is not found so that
+   * response timing does not reveal whether the address is registered.
+   * A cryptographically random reset token is generated, hashed, and stored
+   * with a configurable expiry (default 1 hour).
+   */
   async forgotPassword(email: string): Promise<void> {
     const user = await this.userModel
       .findOne({ email: String(email).toLowerCase().trim() })
@@ -366,6 +412,15 @@ export class AuthService {
     }
   }
 
+  /**
+   * Completes the password reset flow by verifying the one-time token and
+   * setting the user's new password.
+   *
+   * The reset token and expiry fields are cleared on use, and the user's
+   * tokenVersion is incremented to invalidate all active sessions.
+   *
+   * @throws BadRequestException if the token is missing, expired, or invalid.
+   */
   async resetPassword(
     token: string,
     email: string,

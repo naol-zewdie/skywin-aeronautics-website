@@ -32,6 +32,15 @@ import { RolesGuard, Roles, Role } from "../../common/guards/roles.guard";
 
 const MAX_EXPORT_RECORDS = 10000;
 
+/** Typed request shape after JWT validation has populated req.user. */
+interface AuthenticatedRequest {
+  user: {
+    userId: string;
+    email: string;
+    role: string;
+  };
+}
+
 @ApiTags("Products")
 @Controller("products")
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -71,7 +80,7 @@ export class ProductsController {
   })
   @ApiOkResponse({ type: ProductDto, isArray: true })
   getProducts(
-    @Req() req,
+    @Req() req: AuthenticatedRequest,
     @Query("search") search?: string,
     @Query("category") category?: string,
     @Query("minPrice") minPrice?: string,
@@ -98,7 +107,7 @@ export class ProductsController {
   @ApiQuery({ name: "category", required: false })
   async exportCsv(
     @Res({ passthrough: true }) res: Response,
-    @Req() req,
+    @Req() req: AuthenticatedRequest,
     @Query("search") search?: string,
     @Query("category") category?: string,
   ): Promise<string> {
@@ -124,7 +133,7 @@ export class ProductsController {
   @ApiQuery({ name: "category", required: false })
   async exportPdf(
     @Res({ passthrough: true }) res: Response,
-    @Req() req,
+    @Req() req: AuthenticatedRequest,
     @Query("search") search?: string,
     @Query("category") category?: string,
   ): Promise<Buffer> {
@@ -148,7 +157,7 @@ export class ProductsController {
   @ApiOperation({ summary: "Get product by id" })
   @ApiParam({ name: "id", type: "string", description: "Product ID" })
   @ApiOkResponse({ type: ProductDto })
-  getProduct(@Param("id") id: string, @Req() req): Promise<ProductDto> {
+  getProduct(@Param("id") id: string, @Req() req: AuthenticatedRequest): Promise<ProductDto> {
     return this.productsService.findOne(id, req.user?.role, req.user?.userId);
   }
 
@@ -158,7 +167,7 @@ export class ProductsController {
   @ApiCreatedResponse({ type: ProductDto })
   createProduct(
     @Body() payload: CreateProductDto,
-    @Req() req,
+    @Req() req: AuthenticatedRequest,
   ): Promise<ProductDto> {
     return this.productsService.create(
       payload,
@@ -174,7 +183,7 @@ export class ProductsController {
   @ApiOkResponse({ type: ProductDto })
   toggleProductStatus(
     @Param("id") id: string,
-    @Req() req,
+    @Req() req: AuthenticatedRequest,
   ): Promise<ProductDto> {
     return this.productsService.toggleStatus(
       id,
@@ -191,7 +200,7 @@ export class ProductsController {
   updateProduct(
     @Param("id") id: string,
     @Body() payload: UpdateProductDto,
-    @Req() req,
+    @Req() req: AuthenticatedRequest,
   ): Promise<ProductDto> {
     return this.productsService.update(
       id,
@@ -207,7 +216,7 @@ export class ProductsController {
   @ApiOperation({ summary: "Delete product" })
   @ApiParam({ name: "id", type: "string", description: "Product ID" })
   @ApiNoContentResponse({ description: "Product deleted" })
-  removeProduct(@Param("id") id: string, @Req() req): Promise<void> {
+  removeProduct(@Param("id") id: string, @Req() req: AuthenticatedRequest): Promise<void> {
     return this.productsService.remove(id, req.user?.role, req.user?.userId);
   }
 }
