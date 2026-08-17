@@ -73,7 +73,7 @@ export class RateLimitGuard implements CanActivate {
       )
       .exec();
 
-    if (entry.attempts >= RateLimitGuard.MAX_ATTEMPTS) {
+    if (entry && entry.attempts >= RateLimitGuard.MAX_ATTEMPTS) {
       await this.rateLimitModel
         .updateOne(
           { key },

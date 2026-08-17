@@ -4,6 +4,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 import { useRouter, usePathname } from 'next/navigation';
 import { type User, type LoginCredentials } from '@/types';
 import { authApi } from '@/lib/api';
+import { OPAQUE_MAP_TO_ROLE } from '@/lib/route-roles';
 
 interface AuthContextType {
   user: User | null;
@@ -109,7 +110,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const hasRole = (roles: string[]): boolean => {
     if (!user) return false;
-    return roles.includes(user.role);
+    const userRole = OPAQUE_MAP_TO_ROLE[user.role] || user.role;
+    const targetRoles = roles.map((r) => OPAQUE_MAP_TO_ROLE[r] || r);
+    return targetRoles.includes(userRole);
   };
 
   return (

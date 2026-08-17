@@ -419,10 +419,13 @@ export class AuthService {
       const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3003";
       const resetLink = `${frontendUrl}/reset-password#token=${resetToken}&email=${encodeURIComponent(user.email)}`;
 
+      // Build a human-readable label that matches the configured expiry
+      const expiryLabel = this.formatExpiry(expiresIn);
+
       await this.mailService.sendMail({
         to: user.email,
         subject: "Skywin Admin — Password Reset Request",
-        html: this.buildResetEmailHtml(user.fullName, resetLink),
+        html: this.buildResetEmailHtml(user.fullName, resetLink, expiryLabel),
       });
 
       this.logger.log("Password reset email sent");
@@ -476,6 +479,25 @@ export class AuthService {
     this.logger.log("Password reset successful");
   }
 
+  /**
+   * Converts a duration string (e.g. '1h', '30m', '2d', '90s') into a
+   * human-readable label suitable for display in the password reset email.
+   */
+  private formatExpiry(expiresIn: string): string {
+    const match = expiresIn.match(/^(\d+)([smhd])$/);
+    if (!match) return '1 hour';
+    const value = parseInt(match[1], 10);
+    const unit = match[2];
+    const labels: Record<string, [string, string]> = {
+      s: ['second', 'seconds'],
+      m: ['minute', 'minutes'],
+      h: ['hour', 'hours'],
+      d: ['day', 'days'],
+    };
+    const [singular, plural] = labels[unit] || ['hour', 'hours'];
+    return `${value} ${value === 1 ? singular : plural}`;
+  }
+
   private parseExpirationToMs(expiresIn: string): number {
     const match = expiresIn.match(/^(\d+)([smhd])$/);
     if (!match) return 3600000; // default 1 hour
@@ -493,7 +515,7 @@ export class AuthService {
     return value * (multipliers[unit] || 3600000);
   }
 
-  private buildResetEmailHtml(fullName: string, resetLink: string): string {
+  private buildResetEmailHtml(fullName: string, resetLink: string, expiryLabel: string): string {
     const escapedName = fullName
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
@@ -521,7 +543,7 @@ export class AuthService {
                   <td style="padding:32px 40px">
                     <h2 style="margin:0 0 8px;font-size:18px;color:#18181b">Password Reset Request</h2>
                     <p style="margin:0 0 16px;font-size:14px;color:#52525b;line-height:1.6">Hello ${escapedName},</p>
-                    <p style="margin:0 0 16px;font-size:14px;color:#52525b;line-height:1.6">We received a request to reset your password for your Skywin Admin account. Click the button below to set a new password. This link expires in 1 hour.</p>
+                    <p style="margin:0 0 16px;font-size:14px;color:#52525b;line-height:1.6">We received a request to reset your password for your Skywin Admin account. Click the button below to set a new password. This link expires in ${expiryLabel}.</p>
                     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:24px 0">
                       <tr>
                         <td align="center">

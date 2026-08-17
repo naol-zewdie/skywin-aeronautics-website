@@ -57,10 +57,12 @@ export class PublicController {
     @Query("limit") limit?: string,
     @Query("offset") offset?: string,
   ) {
+    const parsedLimit = limit ? parseInt(limit, 10) : NaN;
+    const parsedOffset = offset ? parseInt(offset, 10) : NaN;
     const services = await this.servicesService.findAll({
       status: true,
-      limit: limit ? Math.min(Math.max(parseInt(limit, 10), 1), 100) : 20,
-      offset: offset ? Math.max(parseInt(offset, 10), 0) : 0,
+      limit: !isNaN(parsedLimit) ? Math.min(Math.max(parsedLimit, 1), 100) : 20,
+      offset: !isNaN(parsedOffset) ? Math.max(parsedOffset, 0) : 0,
     });
     return services.map(sanitizePublic);
   }
@@ -74,10 +76,12 @@ export class PublicController {
     @Query("limit") limit?: string,
     @Query("offset") offset?: string,
   ) {
+    const parsedLimit = limit ? parseInt(limit, 10) : NaN;
+    const parsedOffset = offset ? parseInt(offset, 10) : NaN;
     const products = await this.productsService.findAll({
       status: true,
-      limit: limit ? Math.min(Math.max(parseInt(limit, 10), 1), 100) : 20,
-      offset: offset ? Math.max(parseInt(offset, 10), 0) : 0,
+      limit: !isNaN(parsedLimit) ? Math.min(Math.max(parsedLimit, 1), 100) : 20,
+      offset: !isNaN(parsedOffset) ? Math.max(parsedOffset, 0) : 0,
     });
     return products.map(sanitizePublic);
   }
@@ -91,10 +95,12 @@ export class PublicController {
     @Query("limit") limit?: string,
     @Query("offset") offset?: string,
   ) {
+    const parsedLimit = limit ? parseInt(limit, 10) : NaN;
+    const parsedOffset = offset ? parseInt(offset, 10) : NaN;
     const careers = await this.careersService.findAll({
       status: true,
-      limit: limit ? Math.min(Math.max(parseInt(limit, 10), 1), 100) : 20,
-      offset: offset ? Math.max(parseInt(offset, 10), 0) : 0,
+      limit: !isNaN(parsedLimit) ? Math.min(Math.max(parsedLimit, 1), 100) : 20,
+      offset: !isNaN(parsedOffset) ? Math.max(parsedOffset, 0) : 0,
     });
     return careers.map(sanitizePublic);
   }
@@ -117,14 +123,16 @@ export class PublicController {
     @Query("offset") offset?: string,
   ) {
     const tagArray = tags ? tags.split(",").map((t) => t.trim()) : undefined;
+    const parsedLimit = limit ? parseInt(limit, 10) : NaN;
+    const parsedOffset = offset ? parseInt(offset, 10) : NaN;
     const posts = await this.postsService.findAll({
       type,
       search,
       author,
       tags: tagArray,
       status: true,
-      limit: limit ? Math.min(Math.max(parseInt(limit, 10), 1), 100) : 20,
-      offset: offset ? Math.max(parseInt(offset, 10), 0) : 0,
+      limit: !isNaN(parsedLimit) ? Math.min(Math.max(parsedLimit, 1), 100) : 20,
+      offset: !isNaN(parsedOffset) ? Math.max(parsedOffset, 0) : 0,
     });
     return posts.map(sanitizePublic);
   }
@@ -140,11 +148,13 @@ export class PublicController {
     @Query("limit") limit?: string,
     @Query("offset") offset?: string,
   ) {
+    const parsedLimit = limit ? parseInt(limit, 10) : NaN;
+    const parsedOffset = offset ? parseInt(offset, 10) : NaN;
     const posts = await this.postsService.findAll({
       type,
       status: true,
-      limit: limit ? Math.min(Math.max(parseInt(limit, 10), 1), 100) : 20,
-      offset: offset ? Math.max(parseInt(offset, 10), 0) : 0,
+      limit: !isNaN(parsedLimit) ? Math.min(Math.max(parsedLimit, 1), 100) : 20,
+      offset: !isNaN(parsedOffset) ? Math.max(parsedOffset, 0) : 0,
     });
     return posts.map(sanitizePublic);
   }

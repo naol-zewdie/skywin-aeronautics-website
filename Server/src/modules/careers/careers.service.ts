@@ -168,6 +168,14 @@ export class CareersService {
       employmentType: saved.employmentType,
       description: saved.description,
       status: saved.status,
+      audit: saved.audit
+        ? {
+            createdBy: saved.audit.createdBy,
+            createdAt: saved.audit.createdAt?.toISOString(),
+            updatedBy: saved.audit.updatedBy,
+            updatedAt: saved.audit.updatedAt?.toISOString(),
+          }
+        : undefined,
     };
   }
 
