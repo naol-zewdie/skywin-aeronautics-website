@@ -205,7 +205,9 @@ describe("CareersService", () => {
       await service.remove("507f1f77bcf86cd799439011", "admin", "u_001");
 
       expect(mockCareerOpeningModel.findOneAndDelete).toHaveBeenCalledWith(
-        { _id: "507f1f77bcf86cd799439011" },
+        expect.objectContaining({
+          $or: expect.arrayContaining([{ _id: "507f1f77bcf86cd799439011" }]),
+        }),
       );
     });
 
