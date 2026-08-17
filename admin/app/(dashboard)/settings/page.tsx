@@ -63,6 +63,16 @@ export default function SettingsPage() {
       return;
     }
 
+    if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(passwordForm.newPassword)) {
+      toast({
+        title: 'Error',
+        description: 'Password must contain at least one uppercase letter, one lowercase letter, and one number',
+        variant: 'destructive',
+      });
+      setIsChangingPassword(false);
+      return;
+    }
+
     try {
       if (!user?.id) throw new Error('User not found');
       await usersApi.changePassword(user.id, {
@@ -74,9 +84,11 @@ export default function SettingsPage() {
     } catch (error) {
       console.error('Error changing password:', error);
       let errorMessage = 'Failed to change password';
-      const err = error as { response?: { data?: { message?: string } }, message?: string };
+      const err = error as { response?: { data?: { message?: string | string[] } }, message?: string };
       if (err.response?.data?.message) {
-        errorMessage = err.response.data.message;
+        errorMessage = Array.isArray(err.response.data.message)
+          ? err.response.data.message.join(', ')
+          : err.response.data.message;
       } else if (err.message) {
         errorMessage = err.message;
       }
@@ -153,6 +165,9 @@ export default function SettingsPage() {
                   required
                   minLength={8}
                 />
+                <p className="text-xs text-muted-foreground">
+                  Must be at least 8 characters, including an uppercase letter, lowercase letter, and a number.
+                </p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="confirmPassword">Confirm New Password</Label>
