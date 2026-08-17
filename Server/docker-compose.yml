@@ -24,6 +24,8 @@ services:
       - SMTP_PASS=${SMTP_PASS}
       - SMTP_FROM=${SMTP_FROM}
       - COOKIE_SECURE=${COOKIE_SECURE}
+    volumes:
+      - uploads-data:/app/uploads
     depends_on:
       - mongo
     healthcheck:
@@ -49,3 +51,4 @@ services:
 
 volumes:
   mongo-data:
+  uploads-data:

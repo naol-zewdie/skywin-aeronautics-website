@@ -11,9 +11,11 @@ RUN npm run build
 FROM node:20-alpine
 WORKDIR /app
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+RUN mkdir -p /app/uploads && chown -R appuser:appgroup /app
 COPY --from=builder /tmp/node_modules-prod ./node_modules
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/package*.json ./
+RUN chown -R appuser:appgroup /app
 EXPOSE 3001
 USER appuser
 CMD ["node", "dist/main"]
