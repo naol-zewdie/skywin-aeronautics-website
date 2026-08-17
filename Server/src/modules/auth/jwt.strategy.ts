@@ -2,7 +2,7 @@ import { Injectable, UnauthorizedException } from "@nestjs/common";
 import { PassportStrategy } from "@nestjs/passport";
 import { ExtractJwt, Strategy } from "passport-jwt";
 import { InjectModel } from "@nestjs/mongoose";
-import { Model } from "mongoose";
+import { Model, Types } from "mongoose";
 import { TokenBlacklistService } from "./token-blacklist.service";
 import { User } from "../users/schemas/user.schema";
 import type { Request } from "express";
@@ -74,8 +74,13 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
     // Validate user status, tokenVersion, AND role from DB — never trust role from JWT alone.
     // This prevents privilege escalation when an admin changes a user's role while their JWT is still valid.
+    const sub = payload.sub;
+    const isObjId = Types.ObjectId.isValid(sub);
+    const userQuery: any = isObjId
+      ? { $or: [{ _id: sub }, { _id: new Types.ObjectId(sub) }] }
+      : { _id: sub };
     const user = await this.userModel
-      .findById(payload.sub)
+      .findOne(userQuery)
       .select("tokenVersion status role")
       .exec();
     if (!user || !user.status) {

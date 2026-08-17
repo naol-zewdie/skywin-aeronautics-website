@@ -6,6 +6,7 @@ import {
   SetMetadata,
 } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
+import { toInternalRole } from "../utils/role-obfuscator";
 
 /** Enum of all valid user roles in the system. */
 export enum Role {
@@ -54,7 +55,9 @@ export class RolesGuard implements CanActivate {
       throw new ForbiddenException("Access denied: No role assigned");
     }
 
-    if (!requiredRoles.includes(user.role as Role)) {
+    const internalUserRole = toInternalRole(user.role);
+
+    if (!requiredRoles.includes(internalUserRole as Role)) {
       throw new ForbiddenException("Access denied: Insufficient permissions");
     }
 

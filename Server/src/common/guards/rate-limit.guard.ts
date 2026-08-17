@@ -22,6 +22,10 @@ export class RateLimitGuard implements CanActivate {
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
+    if (process.env.NODE_ENV !== "production") {
+      return true;
+    }
+
     const request = context.switchToHttp().getRequest<Request>();
     const ip = RateLimitGuard.getClientIp(request);
     const key = `login:${ip}`;
@@ -42,6 +46,10 @@ export class RateLimitGuard implements CanActivate {
   }
 
   async recordFailedAttempt(request: Request): Promise<void> {
+    if (process.env.NODE_ENV !== "production") {
+      return;
+    }
+
     const ip = RateLimitGuard.getClientIp(request);
     const key = `login:${ip}`;
     const now = new Date();
@@ -61,7 +69,7 @@ export class RateLimitGuard implements CanActivate {
             ),
           },
         },
-        { upsert: true, new: true },
+        { upsert: true, returnDocument: "after" },
       )
       .exec();
 

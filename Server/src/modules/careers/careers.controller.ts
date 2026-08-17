@@ -58,15 +58,6 @@ export class CareersController {
     );
   }
 
-  @Get(":id")
-  @Roles(Role.ADMIN, Role.OPERATOR, Role.VIEWER)
-  @ApiOperation({ summary: "Get career opening by id" })
-  @ApiParam({ name: "id", type: "string", description: "Career Opening ID" })
-  @ApiOkResponse({ type: CareerOpeningDto })
-  getOpening(@Param("id") id: string, @Req() req: AuthenticatedRequest): Promise<CareerOpeningDto> {
-    return this.careersService.findOne(id, req.user?.role, req.user?.userId);
-  }
-
   @Post()
   @Roles(Role.ADMIN, Role.OPERATOR)
   @ApiOperation({ summary: "Create career opening" })
@@ -80,6 +71,57 @@ export class CareersController {
       req.user?.role,
       req.user?.userId,
     );
+  }
+
+  /**
+   * Export routes MUST be declared BEFORE `GET /:id` so that the literal path
+   * segment "export" is not matched as an `:id` parameter. Pentest Finding 2
+   * (IDOR): userRole and userId are passed through so the findAll query applies
+   * role-based visibility — operators only see their own records in exports.
+   */
+  @Get("export/csv")
+  @Roles(Role.ADMIN, Role.OPERATOR)
+  @ApiOperation({ summary: "Export career openings to CSV" })
+  async exportCsv(
+    @Res({ passthrough: true }) res: Response,
+    @Req() req: AuthenticatedRequest,
+  ): Promise<string> {
+    const openings = await this.careersService.findAll(
+      { limit: MAX_EXPORT_RECORDS },
+      req.user?.role,
+      req.user?.userId,
+    );
+    const csv = this.careersService.exportToCsv(openings);
+    res.setHeader("Content-Type", "text/csv");
+    res.setHeader("Content-Disposition", "attachment; filename=careers.csv");
+    return csv;
+  }
+
+  @Get("export/pdf")
+  @Roles(Role.ADMIN, Role.OPERATOR)
+  @ApiOperation({ summary: "Export career openings to PDF" })
+  async exportPdf(
+    @Res({ passthrough: true }) res: Response,
+    @Req() req: AuthenticatedRequest,
+  ): Promise<Buffer> {
+    const openings = await this.careersService.findAll(
+      { limit: MAX_EXPORT_RECORDS },
+      req.user?.role,
+      req.user?.userId,
+    );
+    const pdfBuffer = await this.careersService.exportToPdf(openings);
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", "attachment; filename=careers.pdf");
+    return pdfBuffer;
+  }
+
+  @Get(":id")
+  @Roles(Role.ADMIN, Role.OPERATOR, Role.VIEWER)
+  @ApiOperation({ summary: "Get career opening by id" })
+  @ApiParam({ name: "id", type: "string", description: "Career Opening ID" })
+  @ApiOkResponse({ type: CareerOpeningDto })
+  getOpening(@Param("id") id: string, @Req() req: AuthenticatedRequest): Promise<CareerOpeningDto> {
+    return this.careersService.findOne(id, req.user?.role, req.user?.userId);
   }
 
   @Patch(":id/toggle-status")
@@ -124,45 +166,5 @@ export class CareersController {
   @ApiNoContentResponse({ description: "Career opening deleted" })
   removeOpening(@Param("id") id: string, @Req() req: AuthenticatedRequest): Promise<void> {
     return this.careersService.remove(id, req.user?.role, req.user?.userId);
-  }
-
-  @Get("export/csv")
-  @Roles(Role.ADMIN, Role.OPERATOR)
-  @ApiOperation({ summary: "Export career openings to CSV" })
-  async exportCsv(
-    @Res({ passthrough: true }) res: Response,
-    @Req() req: AuthenticatedRequest,
-  ): Promise<string> {
-    const openings = await this.careersService.findAll({
-      limit: MAX_EXPORT_RECORDS,
-    });
-    const filtered =
-      req.user?.role !== "admin"
-        ? openings.filter((o) => o.audit?.createdBy === req.user?.userId)
-        : openings;
-    const csv = this.careersService.exportToCsv(filtered);
-    res.setHeader("Content-Type", "text/csv");
-    res.setHeader("Content-Disposition", "attachment; filename=careers.csv");
-    return csv;
-  }
-
-  @Get("export/pdf")
-  @Roles(Role.ADMIN, Role.OPERATOR)
-  @ApiOperation({ summary: "Export career openings to PDF" })
-  async exportPdf(
-    @Res({ passthrough: true }) res: Response,
-    @Req() req: AuthenticatedRequest,
-  ): Promise<Buffer> {
-    const openings = await this.careersService.findAll({
-      limit: MAX_EXPORT_RECORDS,
-    });
-    const filtered =
-      req.user?.role !== "admin"
-        ? openings.filter((o) => o.audit?.createdBy === req.user?.userId)
-        : openings;
-    const pdfBuffer = await this.careersService.exportToPdf(filtered);
-    res.setHeader("Content-Type", "application/pdf");
-    res.setHeader("Content-Disposition", "attachment; filename=careers.pdf");
-    return pdfBuffer;
   }
 }

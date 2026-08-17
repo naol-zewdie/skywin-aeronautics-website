@@ -76,7 +76,7 @@ export class ActivityController {
   }
 
   @Get("stats")
-  @Roles(Role.ADMIN, Role.OPERATOR)
+  @Roles(Role.ADMIN, Role.OPERATOR, Role.VIEWER)
   @ApiOperation({ summary: "Get dashboard statistics" })
   async getStats(): Promise<DashboardStats> {
     return this.activityService.getStats();

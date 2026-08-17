@@ -17,60 +17,23 @@ import {
   ApiOperation,
   ApiTags,
   ApiBearerAuth,
+  ApiBody,
 } from "@nestjs/swagger";
 import { AuthService } from "./auth.service";
 import { JwtAuthGuard } from "./jwt-auth.guard";
 import { Public } from "../../common/guards/public.decorator";
-import {
-  IsEmail,
-  IsString,
-  MinLength,
-  MaxLength,
-  Matches,
-} from "class-validator";
 import { RateLimitGuard } from "../../common/guards/rate-limit.guard";
 import { CsrfGuard, generateCsrfToken } from "../../common/guards/csrf.guard";
+import {
+  LoginDto,
+  RefreshTokenDto,
+  ForgotPasswordDto,
+  ResetPasswordDto,
+} from "./dto/auth.dto";
 import type {
   Request as ExpressRequest,
   Response as ExpressResponse,
 } from "express";
-
-class LoginDto {
-  @IsEmail({}, { message: "Please provide a valid email address" })
-  email: string;
-
-  @IsString()
-  @MinLength(1, { message: "Password is required" })
-  password: string;
-}
-
-class RefreshTokenDto {
-  // Optional because the token is primarily read from the HTTP-only cookie
-  refreshToken?: string;
-}
-
-class ForgotPasswordDto {
-  @IsEmail({}, { message: "Please provide a valid email address" })
-  email: string;
-}
-
-class ResetPasswordDto {
-  @IsEmail({}, { message: "Please provide a valid email address" })
-  email: string;
-
-  @IsString()
-  @MinLength(1, { message: "Reset token is required" })
-  token: string;
-
-  @IsString()
-  @MinLength(8, { message: "Password must be at least 8 characters" })
-  @MaxLength(100, { message: "Password cannot exceed 100 characters" })
-  @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, {
-    message:
-      "Password must contain at least one uppercase letter, one lowercase letter, and one number",
-  })
-  password: string;
-}
 
 interface LoginResponse {
   accessToken: string;
@@ -129,6 +92,7 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @UseGuards(RateLimitGuard)
   @ApiOperation({ summary: "Login with email and password" })
+  @ApiBody({ type: LoginDto })
   /**
    * Authenticates a user with email + password credentials.
    * On success, sets httpOnly cookies for the access and refresh tokens,
@@ -201,6 +165,7 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @UseGuards(RateLimitGuard)
   @ApiOperation({ summary: "Refresh access token using refresh token" })
+  @ApiBody({ type: RefreshTokenDto })
   /**
    * Issues a new access + refresh token pair by verifying the provided refresh
    * token. The old refresh token is immediately blacklisted (rotation).
@@ -242,6 +207,7 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @UseGuards(RateLimitGuard)
   @ApiOperation({ summary: "Request a password reset email" })
+  @ApiBody({ type: ForgotPasswordDto })
   @ApiOkResponse({
     schema: {
       type: "object",
@@ -278,6 +244,7 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @UseGuards(RateLimitGuard)
   @ApiOperation({ summary: "Reset password using a reset token" })
+  @ApiBody({ type: ResetPasswordDto })
   /**
    * Validates a one-time reset token and sets the user's new password.
    * The token is consumed on use and the user's session version is incremented
@@ -335,7 +302,11 @@ export class AuthController {
       try {
         await this.authService.logout(token, refreshToken);
       } catch (e) {
-        // Token might already be invalid, but we still want to clear the cookies
+        // Log unexpected errors (e.g. DB failures) but do not block cookie clearing,
+        // which must always succeed so the client session is terminated.
+        if (e instanceof Error) {
+          console.warn(`[AuthController] logout warning: ${e.message}`);
+        }
       }
     }
 

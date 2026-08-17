@@ -122,17 +122,22 @@ export class ProductsService {
     userId?: string,
   ): Promise<ProductDto> {
     this.validateId(id);
-    const product = await this.productModel.findById(id).exec();
-    if (!product) {
-      throw new NotFoundException("Product not found");
+
+    const query: Record<string, unknown> = { _id: id };
+
+    // Security (IDOR): Enforce visibility at query level so non-admin users
+    // cannot probe or retrieve restricted products by ID.
+    if (userRole !== undefined && userRole !== "admin") {
+      if (userRole === "operator") {
+        query["$or"] = [{ status: true }, { "audit.createdBy": userId }];
+      } else {
+        query.status = true;
+      }
     }
 
-    if (
-      userRole !== undefined &&
-      userRole !== "admin" &&
-      product.audit?.createdBy !== userId
-    ) {
-      throw new ForbiddenException("You can only view your own resources");
+    const product = await this.productModel.findOne(query as any).exec();
+    if (!product) {
+      throw new NotFoundException("Product not found");
     }
 
     return {
@@ -230,26 +235,30 @@ export class ProductsService {
   ): Promise<ProductDto> {
     this.validateId(id);
 
-    const existing = await this.productModel.findById(id).exec();
-    if (!existing) {
-      throw new NotFoundException("Product not found");
-    }
-
-    if (userRole !== "admin" && existing.audit?.createdBy !== userId) {
-      throw new ForbiddenException("You can only modify your own resources");
-    }
+    // Security (IDOR TOCTOU fix): embed ownership check atomically inside query
+    const ownerFilter =
+      userRole === "admin"
+        ? { _id: id }
+        : { _id: id, "audit.createdBy": userId };
 
     const updateData: Record<string, unknown> = {
       ...payload,
+      "audit.updatedBy": userId,
       "audit.updatedAt": new Date(),
     };
 
     const updated = await this.productModel
-      .findByIdAndUpdate(id, { $set: updateData }, { new: true })
+      .findOneAndUpdate(ownerFilter, { $set: updateData }, { returnDocument: "after" })
       .exec();
+
     if (!updated) {
-      throw new NotFoundException("Product not found");
+      const exists = await this.productModel.exists({ _id: id }).exec();
+      if (!exists) {
+        throw new NotFoundException("Product not found");
+      }
+      throw new ForbiddenException("You can only modify your own resources");
     }
+
     return {
       id: updated._id.toString(),
       name: updated.name,
@@ -276,18 +285,21 @@ export class ProductsService {
    */
   async remove(id: string, userRole: string, userId: string): Promise<void> {
     this.validateId(id);
-    const product = await this.productModel.findById(id).exec();
-    if (!product) {
-      throw new NotFoundException("Product not found");
-    }
 
-    if (userRole !== "admin" && product.audit?.createdBy !== userId) {
+    // Security (IDOR TOCTOU fix): atomic ownership-check-and-delete
+    const ownerFilter =
+      userRole === "admin"
+        ? { _id: id }
+        : { _id: id, "audit.createdBy": userId };
+
+    const deleted = await this.productModel.findOneAndDelete(ownerFilter).exec();
+
+    if (!deleted) {
+      const exists = await this.productModel.exists({ _id: id }).exec();
+      if (!exists) {
+        throw new NotFoundException("Product not found");
+      }
       throw new ForbiddenException("You can only delete your own resources");
-    }
-
-    const result = await this.productModel.findByIdAndDelete(id).exec();
-    if (!result) {
-      throw new NotFoundException("Product not found");
     }
   }
 
@@ -315,6 +327,7 @@ export class ProductsService {
     if (!product.audit) {
       product.audit = { createdBy: userId, createdAt: new Date(), updatedBy: userId, updatedAt: new Date() } as typeof product.audit;
     }
+    product.audit.updatedBy = userId;
     product.audit.updatedAt = new Date();
     await product.save();
     return {

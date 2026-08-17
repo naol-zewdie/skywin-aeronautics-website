@@ -73,17 +73,20 @@ async function bootstrap() {
     next();
   });
 
-  // Security: Trust first proxy when behind reverse proxy (enables correct client IP)
-  if (process.env.TRUST_PROXY === "true") {
+  // Security: Trust first proxy when behind reverse proxy or dev proxy (enables correct client IP)
+  if (process.env.TRUST_PROXY === "true" || process.env.NODE_ENV !== "production") {
     app.set("trust proxy", 1);
   }
+
+  const isProductionMode = process.env.NODE_ENV === "production";
 
   // Security: Global rate limiting to prevent brute-force and DoS
   const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: process.env.NODE_ENV === "production" ? 100 : 1000, // Higher limit in development
+    max: 100,
     standardHeaders: true,
     legacyHeaders: false,
+    skip: () => !isProductionMode,
     message: {
       statusCode: 429,
       message: "Too many requests, please try again later",
@@ -94,9 +97,10 @@ async function bootstrap() {
   // Stricter rate limit for auth endpoints
   const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: 20, // 20 login attempts per 15 min
+    max: 20,
     standardHeaders: true,
     legacyHeaders: false,
+    skip: () => !isProductionMode,
     message: {
       statusCode: 429,
       message: "Too many login attempts, please try again later",
@@ -111,6 +115,7 @@ async function bootstrap() {
     max: 30,
     standardHeaders: true,
     legacyHeaders: false,
+    skip: () => !isProductionMode,
     message: {
       statusCode: 429,
       message: "Too many token refresh attempts, please try again later",
@@ -118,12 +123,13 @@ async function bootstrap() {
   });
   app.use("/v1/auth/refresh", refreshLimiter);
 
-  // Stricter rate limit for forgot-password (prevents email enumeration / mail bombing)
+  // Stricter rate limit for forgot-password
   const forgotPasswordLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 5,
     standardHeaders: true,
     legacyHeaders: false,
+    skip: () => !isProductionMode,
     message: {
       statusCode: 429,
       message: "Too many password reset requests, please try again later",
@@ -131,12 +137,13 @@ async function bootstrap() {
   });
   app.use("/v1/auth/forgot-password", forgotPasswordLimiter);
 
-  // Stricter rate limit for reset-password (prevents token brute-force)
+  // Stricter rate limit for reset-password
   const resetPasswordLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 5,
     standardHeaders: true,
     legacyHeaders: false,
+    skip: () => !isProductionMode,
     message: {
       statusCode: 429,
       message: "Too many password reset attempts, please try again later",
@@ -144,12 +151,13 @@ async function bootstrap() {
   });
   app.use("/v1/auth/reset-password", resetPasswordLimiter);
 
-  // Stricter rate limit for file uploads (prevent disk/memory exhaustion)
+  // Stricter rate limit for file uploads
   const uploadLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: 20, // 20 uploads per 15 min
+    max: 20,
     standardHeaders: true,
     legacyHeaders: false,
+    skip: () => !isProductionMode,
     message: {
       statusCode: 429,
       message: "Too many upload attempts, please try again later",
@@ -206,7 +214,12 @@ async function bootstrap() {
   app.useBodyParser("urlencoded", { limit: "10mb", extended: true });
 
   // Security: Sanitize data-supplied user input to prevent MongoDB Operator Injection
-  app.use(mongoSanitize());
+  app.use((req: Request, _res: Response, next: NextFunction) => {
+    if (req.body) mongoSanitize.sanitize(req.body);
+    if (req.params) mongoSanitize.sanitize(req.params);
+    if (req.query) mongoSanitize.sanitize(req.query);
+    next();
+  });
 
   // Security: Protect against HTTP Parameter Pollution attacks
   app.use(hpp());
@@ -234,7 +247,7 @@ async function bootstrap() {
   });
 
   // Serve static files from uploads directory
-  app.useStaticAssets(join(__dirname, "..", "uploads"), {
+  app.useStaticAssets(join(process.cwd(), "uploads"), {
     prefix: "/uploads/",
     setHeaders: (res) => {
       res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");

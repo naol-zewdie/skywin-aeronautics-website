@@ -32,6 +32,15 @@ import { ActivityService } from "../activity/activity.service";
 
 const MAX_EXPORT_RECORDS = 10000;
 
+/** Typed request shape after JWT validation has populated req.user. */
+interface AuthenticatedRequest extends Request {
+  user: {
+    userId: string;
+    email: string;
+    role: string;
+  };
+}
+
 @ApiTags("Users")
 @Controller("users")
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -50,112 +59,30 @@ export class UsersController {
     return this.usersService.findAll();
   }
 
-  @Get(":id")
-  @Roles(Role.ADMIN)
-  @ApiOperation({ summary: "Get user by id (Admin only)" })
-  @ApiParam({ name: "id", type: "string", description: "User ID" })
-  @ApiOkResponse({ type: UserDto })
-  getUser(@Param("id") id: string): Promise<UserDto> {
-    return this.usersService.findOne(id);
-  }
-
   @Post()
   @Roles(Role.ADMIN)
   @ApiOperation({ summary: "Create user (Admin only)" })
   @ApiCreatedResponse({ type: UserDto })
   async createUser(
     @Body() payload: CreateUserDto,
-    @Req() req: Request,
+    @Req() req: AuthenticatedRequest,
   ): Promise<UserDto> {
-    const actor = req.user as any;
-    const result = await this.usersService.create(payload, actor?.userId);
+    const result = await this.usersService.create(payload, req.user?.userId);
     this.activityService
-      .logUserCreated(payload.fullName, result.id, actor?.userId, actor?.email)
+      .logUserCreated(
+        payload.fullName,
+        result.id,
+        req.user?.userId,
+        req.user?.email,
+      )
       .catch(() => {});
     return result;
   }
 
-  @Patch(":id")
-  @Roles(Role.ADMIN)
-  @ApiOperation({ summary: "Update user (Admin only)" })
-  @ApiParam({ name: "id", type: "string", description: "User ID" })
-  @ApiOkResponse({ type: UserDto })
-  async updateUser(
-    @Param("id") id: string,
-    @Body() payload: UpdateUserDto,
-    @Req() req: Request,
-  ): Promise<UserDto> {
-    const currentUserId = (req.user as any)?.userId;
-    const result = await this.usersService.update(id, payload, currentUserId);
-    const actor = req.user as any;
-    this.activityService
-      .log({
-        action: "UPDATE",
-        entityType: "user",
-        entityId: id,
-        entityName: result.fullName,
-        userId: actor?.userId,
-        userName: actor?.email,
-        details: { message: `Updated user ${result.fullName}` },
-      })
-      .catch(() => {});
-    return result;
-  }
-
-  @Post(":id/change-password")
-  @HttpCode(204)
-  @Roles(Role.ADMIN, Role.OPERATOR, Role.VIEWER)
-  @ApiOperation({ summary: "Change password" })
-  @ApiParam({ name: "id", type: "string", description: "User ID" })
-  @ApiNoContentResponse({ description: "Password changed successfully" })
-  async changePassword(
-    @Param("id") id: string,
-    @Body() payload: ChangePasswordDto,
-    @Req() req: Request,
-  ): Promise<void> {
-    const currentUserId = (req.user as any)?.userId;
-    await this.usersService.changePassword(id, currentUserId, payload);
-    const actor = req.user as any;
-    this.activityService
-      .log({
-        action: "UPDATE",
-        entityType: "user",
-        entityId: id,
-        entityName: actor?.email || "User",
-        userId: actor?.userId,
-        userName: actor?.email,
-        details: { message: `User changed password` },
-      })
-      .catch(() => {});
-  }
-
-  @Delete(":id")
-  @HttpCode(204)
-  @Roles(Role.ADMIN)
-  @ApiOperation({ summary: "Delete user (Admin only)" })
-  @ApiParam({ name: "id", type: "string", description: "User ID" })
-  @ApiNoContentResponse({ description: "User deleted" })
-  async removeUser(
-    @Param("id") id: string,
-    @Req() req: Request,
-  ): Promise<void> {
-    const currentUserId = (req.user as any)?.userId;
-    const targetUser = await this.usersService.findOne(id);
-    await this.usersService.remove(id, currentUserId);
-    const actor = req.user as any;
-    this.activityService
-      .log({
-        action: "DELETE",
-        entityType: "user",
-        entityId: id,
-        entityName: targetUser.fullName,
-        userId: actor?.userId,
-        userName: actor?.email,
-        details: { message: `Deleted user ${targetUser.fullName}` },
-      })
-      .catch(() => {});
-  }
-
+  /**
+   * Export routes must be declared BEFORE `GET /:id` so that the literal
+   * path segment "export" is not matched as an `id` parameter.
+   */
   @Get("export/csv")
   @Roles(Role.ADMIN)
   @ApiOperation({ summary: "Export users to CSV" })
@@ -178,5 +105,93 @@ export class UsersController {
     res.setHeader("Content-Type", "application/pdf");
     res.setHeader("Content-Disposition", "attachment; filename=users.pdf");
     return pdfBuffer;
+  }
+
+  @Get(":id")
+  @Roles(Role.ADMIN)
+  @ApiOperation({ summary: "Get user by id (Admin only)" })
+  @ApiParam({ name: "id", type: "string", description: "User ID" })
+  @ApiOkResponse({ type: UserDto })
+  getUser(@Param("id") id: string): Promise<UserDto> {
+    return this.usersService.findOne(id);
+  }
+
+  @Patch(":id")
+  @Roles(Role.ADMIN)
+  @ApiOperation({ summary: "Update user (Admin only)" })
+  @ApiParam({ name: "id", type: "string", description: "User ID" })
+  @ApiOkResponse({ type: UserDto })
+  async updateUser(
+    @Param("id") id: string,
+    @Body() payload: UpdateUserDto,
+    @Req() req: AuthenticatedRequest,
+  ): Promise<UserDto> {
+    const result = await this.usersService.update(
+      id,
+      payload,
+      req.user?.userId,
+    );
+    this.activityService
+      .log({
+        action: "UPDATE",
+        entityType: "user",
+        entityId: id,
+        entityName: result.fullName,
+        userId: req.user?.userId,
+        userName: req.user?.email,
+        details: { message: `Updated user ${result.fullName}` },
+      })
+      .catch(() => {});
+    return result;
+  }
+
+  @Post(":id/change-password")
+  @HttpCode(204)
+  @Roles(Role.ADMIN, Role.OPERATOR, Role.VIEWER)
+  @ApiOperation({ summary: "Change password" })
+  @ApiParam({ name: "id", type: "string", description: "User ID" })
+  @ApiNoContentResponse({ description: "Password changed successfully" })
+  async changePassword(
+    @Param("id") id: string,
+    @Body() payload: ChangePasswordDto,
+    @Req() req: AuthenticatedRequest,
+  ): Promise<void> {
+    await this.usersService.changePassword(id, req.user?.userId, payload);
+    this.activityService
+      .log({
+        action: "UPDATE",
+        entityType: "user",
+        entityId: id,
+        entityName: req.user?.email || "User",
+        userId: req.user?.userId,
+        userName: req.user?.email,
+        details: { message: `User changed password` },
+      })
+      .catch(() => {});
+  }
+
+  @Delete(":id")
+  @HttpCode(204)
+  @Roles(Role.ADMIN)
+  @ApiOperation({ summary: "Delete user (Admin only)" })
+  @ApiParam({ name: "id", type: "string", description: "User ID" })
+  @ApiNoContentResponse({ description: "User deleted" })
+  async removeUser(
+    @Param("id") id: string,
+    @Req() req: AuthenticatedRequest,
+  ): Promise<void> {
+    const targetUser = await this.usersService.findOne(id);
+    await this.usersService.remove(id, req.user?.userId);
+    this.activityService
+      .log({
+        action: "DELETE",
+        entityType: "user",
+        entityId: id,
+        entityName: targetUser.fullName,
+        userId: req.user?.userId,
+        userName: req.user?.email,
+        details: { message: `Deleted user ${targetUser.fullName}` },
+      })
+      .catch(() => {});
   }
 }

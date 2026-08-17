@@ -16,4 +16,3 @@ export const TokenBlacklistSchema =
   SchemaFactory.createForClass(TokenBlacklist);
 
 TokenBlacklistSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
-TokenBlacklistSchema.index({ token: 1 });

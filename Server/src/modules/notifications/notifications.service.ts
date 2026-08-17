@@ -2,6 +2,7 @@ import {
   Injectable,
   BadRequestException,
   ForbiddenException,
+  NotFoundException,
 } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { Model, Types } from "mongoose";
@@ -47,12 +48,15 @@ export class NotificationsService {
     });
   }
 
-  async markAsRead(id: string, userId: string): Promise<Notification | null> {
-    if (!Types.ObjectId.isValid(id)) {
+  async markAsRead(id: string, userId: string): Promise<Notification> {
+    const isMongoId = /^[a-f\d]{24}$/i.test(id);
+    if (!isMongoId) {
       throw new BadRequestException("Invalid ID format");
     }
     const notification = await this.notificationModel.findById(id).exec();
-    if (!notification) return null;
+    if (!notification) {
+      throw new NotFoundException("Notification not found");
+    }
 
     if (notification.userId === userId) {
       notification.read = true;
@@ -62,7 +66,7 @@ export class NotificationsService {
         notification.readBy.push(userId);
       }
     } else {
-      return null;
+      throw new ForbiddenException("You cannot modify another user's notification");
     }
     return notification.save();
   }

@@ -58,15 +58,6 @@ export class ServicesController {
     );
   }
 
-  @Get(":id")
-  @Roles(Role.ADMIN, Role.OPERATOR, Role.VIEWER)
-  @ApiOperation({ summary: "Get service by id" })
-  @ApiParam({ name: "id", type: "string", description: "Service ID" })
-  @ApiOkResponse({ type: ServiceDto })
-  getService(@Param("id") id: string, @Req() req: AuthenticatedRequest): Promise<ServiceDto> {
-    return this.servicesService.findOne(id, req.user?.role, req.user?.userId);
-  }
-
   @Post()
   @Roles(Role.ADMIN, Role.OPERATOR)
   @ApiOperation({ summary: "Create service" })
@@ -80,6 +71,58 @@ export class ServicesController {
       req.user?.role,
       req.user?.userId,
     );
+  }
+
+  /**
+   * Export routes MUST be declared BEFORE `GET /:id` so that the literal path
+   * segment "export" is not matched as an `:id` parameter, which would trigger
+   * ID validation failure and return 400 instead of the CSV/PDF content.
+   * Security: userRole and userId are threaded through so the findAll query
+   * applies the same role-based visibility filter as the list endpoint.
+   */
+  @Get("export/csv")
+  @Roles(Role.ADMIN, Role.OPERATOR)
+  @ApiOperation({ summary: "Export services to CSV" })
+  async exportCsv(
+    @Res({ passthrough: true }) res: Response,
+    @Req() req: AuthenticatedRequest,
+  ): Promise<string> {
+    const services = await this.servicesService.findAll(
+      { limit: MAX_EXPORT_RECORDS },
+      req.user?.role,
+      req.user?.userId,
+    );
+    const csv = this.servicesService.exportToCsv(services);
+    res.setHeader("Content-Type", "text/csv");
+    res.setHeader("Content-Disposition", "attachment; filename=services.csv");
+    return csv;
+  }
+
+  @Get("export/pdf")
+  @Roles(Role.ADMIN, Role.OPERATOR)
+  @ApiOperation({ summary: "Export services to PDF" })
+  async exportPdf(
+    @Res({ passthrough: true }) res: Response,
+    @Req() req: AuthenticatedRequest,
+  ): Promise<Buffer> {
+    const services = await this.servicesService.findAll(
+      { limit: MAX_EXPORT_RECORDS },
+      req.user?.role,
+      req.user?.userId,
+    );
+    const pdfBuffer = await this.servicesService.exportToPdf(services);
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", "attachment; filename=services.pdf");
+    return pdfBuffer;
+  }
+
+  @Get(":id")
+  @Roles(Role.ADMIN, Role.OPERATOR, Role.VIEWER)
+  @ApiOperation({ summary: "Get service by id" })
+  @ApiParam({ name: "id", type: "string", description: "Service ID" })
+  @ApiOkResponse({ type: ServiceDto })
+  getService(@Param("id") id: string, @Req() req: AuthenticatedRequest): Promise<ServiceDto> {
+    return this.servicesService.findOne(id, req.user?.role, req.user?.userId);
   }
 
   @Patch(":id/toggle-status")
@@ -124,45 +167,5 @@ export class ServicesController {
   @ApiNoContentResponse({ description: "Service deleted" })
   removeService(@Param("id") id: string, @Req() req: AuthenticatedRequest): Promise<void> {
     return this.servicesService.remove(id, req.user?.role, req.user?.userId);
-  }
-
-  @Get("export/csv")
-  @Roles(Role.ADMIN, Role.OPERATOR)
-  @ApiOperation({ summary: "Export services to CSV" })
-  async exportCsv(
-    @Res({ passthrough: true }) res: Response,
-    @Req() req: AuthenticatedRequest,
-  ): Promise<string> {
-    const services = await this.servicesService.findAll({
-      limit: MAX_EXPORT_RECORDS,
-    });
-    const filtered =
-      req.user?.role !== "admin"
-        ? services.filter((s) => s.audit?.createdBy === req.user?.userId)
-        : services;
-    const csv = this.servicesService.exportToCsv(filtered);
-    res.setHeader("Content-Type", "text/csv");
-    res.setHeader("Content-Disposition", "attachment; filename=services.csv");
-    return csv;
-  }
-
-  @Get("export/pdf")
-  @Roles(Role.ADMIN, Role.OPERATOR)
-  @ApiOperation({ summary: "Export services to PDF" })
-  async exportPdf(
-    @Res({ passthrough: true }) res: Response,
-    @Req() req: AuthenticatedRequest,
-  ): Promise<Buffer> {
-    const services = await this.servicesService.findAll({
-      limit: MAX_EXPORT_RECORDS,
-    });
-    const filtered =
-      req.user?.role !== "admin"
-        ? services.filter((s) => s.audit?.createdBy === req.user?.userId)
-        : services;
-    const pdfBuffer = await this.servicesService.exportToPdf(filtered);
-    res.setHeader("Content-Type", "application/pdf");
-    res.setHeader("Content-Disposition", "attachment; filename=services.pdf");
-    return pdfBuffer;
   }
 }

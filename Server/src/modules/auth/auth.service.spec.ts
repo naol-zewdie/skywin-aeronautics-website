@@ -135,7 +135,8 @@ describe("AuthService", () => {
         status: true,
       };
 
-      mockUserModel.findById.mockReturnValue({
+      // The service calls findOne(...).select("tokenVersion").exec() for the login query.
+      mockUserModel.findOne.mockReturnValue({
         select: jest.fn().mockReturnValue({
           exec: jest.fn().mockResolvedValue({ tokenVersion: 0 }),
         }),
@@ -150,7 +151,7 @@ describe("AuthService", () => {
       expect(result.accessToken).toBe("mock-access-token");
       expect(result.refreshToken).toBe("mock-refresh-token");
       expect(result.expiresAt).toBeGreaterThan(Date.now());
-      expect(result.user).toEqual(user);
+      expect(result.user).toEqual({ ...user, role: "r_9a3f" });
 
       expect(mockJwtService.signAsync).toHaveBeenCalledWith(
         expect.objectContaining({ type: "access" }),
@@ -177,13 +178,14 @@ describe("AuthService", () => {
       };
 
       mockJwtService.verify.mockReturnValue(payload);
-      mockUserModel.findById.mockReturnValue({
+      // The service calls findOne(subQuery).exec() — NOT findById — in refreshToken.
+      mockUserModel.findOne.mockReturnValue({
         exec: jest.fn().mockResolvedValue({
           _id: "u_001",
           email: "test@skywin.aero",
           role: "admin",
           status: true,
-          tokenVersion: 0,
+          tokenVersion: 0, // Must match payload.tokenVersion to avoid invalidation
         }),
       });
       mockJwtService.decode.mockReturnValue({
@@ -282,7 +284,8 @@ describe("AuthService", () => {
         status: true,
       };
 
-      mockUserModel.findById.mockReturnValue({
+      // The service calls findOne(...).select("tokenVersion").exec() for login.
+      mockUserModel.findOne.mockReturnValue({
         select: jest.fn().mockReturnValue({
           exec: jest.fn().mockResolvedValue({ tokenVersion: 0 }),
         }),
@@ -297,6 +300,40 @@ describe("AuthService", () => {
       const expectedExpiry = Date.now() + 15 * 60 * 1000;
       expect(result.expiresAt).toBeGreaterThan(Date.now());
       expect(result.expiresAt).toBeLessThanOrEqual(expectedExpiry + 5000);
+    });
+  });
+
+  describe("getMe", () => {
+    it("should return user profile with opaque role when user exists", async () => {
+      mockUserModel.findOne.mockReturnValue({
+        exec: jest.fn().mockResolvedValue({
+          _id: "507f1f77bcf86cd799439011",
+          fullName: "Test User",
+          email: "test@skywin.aero",
+          role: "admin",
+          status: true,
+        }),
+      });
+
+      const result = await service.getMe("507f1f77bcf86cd799439011");
+
+      expect(result).toEqual({
+        id: "507f1f77bcf86cd799439011",
+        fullName: "Test User",
+        email: "test@skywin.aero",
+        role: "r_9a3f",
+        status: true,
+      });
+    });
+
+    it("should throw UnauthorizedException when user not found", async () => {
+      mockUserModel.findOne.mockReturnValue({
+        exec: jest.fn().mockResolvedValue(null),
+      });
+
+      await expect(service.getMe("nonexistent")).rejects.toThrow(
+        UnauthorizedException,
+      );
     });
   });
 });

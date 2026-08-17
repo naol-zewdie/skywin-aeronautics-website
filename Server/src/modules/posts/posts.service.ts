@@ -198,25 +198,28 @@ export class PostsService {
   ): Promise<PostDto> {
     this.validateId(id);
 
-    const existing = await this.postModel.findById(id).exec();
-    if (!existing) {
-      throw new NotFoundException("Post not found");
-    }
-
-    if (userRole !== "admin" && existing.audit?.createdBy !== userId) {
-      throw new ForbiddenException("You can only modify your own resources");
-    }
+    // Security (IDOR TOCTOU fix): embed ownership check atomically inside query
+    const ownerFilter =
+      userRole === "admin"
+        ? { _id: id }
+        : { _id: id, "audit.createdBy": userId };
 
     const updateData: Record<string, unknown> = {
       ...payload,
+      "audit.updatedBy": userId,
       "audit.updatedAt": new Date(),
     };
 
     const updated = await this.postModel
-      .findByIdAndUpdate(id, { $set: updateData }, { new: true })
+      .findOneAndUpdate(ownerFilter, { $set: updateData }, { returnDocument: "after" })
       .exec();
+
     if (!updated) {
-      throw new NotFoundException("Post not found");
+      const exists = await this.postModel.exists({ _id: id }).exec();
+      if (!exists) {
+        throw new NotFoundException("Post not found");
+      }
+      throw new ForbiddenException("You can only modify your own resources");
     }
     return this.mapToDto(updated);
   }
@@ -230,18 +233,21 @@ export class PostsService {
    */
   async remove(id: string, userRole: string, userId: string): Promise<void> {
     this.validateId(id);
-    const post = await this.postModel.findById(id).exec();
-    if (!post) {
-      throw new NotFoundException("Post not found");
-    }
 
-    if (userRole !== "admin" && post.audit?.createdBy !== userId) {
+    // Security (IDOR TOCTOU fix): atomic ownership-check-and-delete
+    const ownerFilter =
+      userRole === "admin"
+        ? { _id: id }
+        : { _id: id, "audit.createdBy": userId };
+
+    const deleted = await this.postModel.findOneAndDelete(ownerFilter).exec();
+
+    if (!deleted) {
+      const exists = await this.postModel.exists({ _id: id }).exec();
+      if (!exists) {
+        throw new NotFoundException("Post not found");
+      }
       throw new ForbiddenException("You can only delete your own resources");
-    }
-
-    const result = await this.postModel.findByIdAndDelete(id).exec();
-    if (!result) {
-      throw new NotFoundException("Post not found");
     }
   }
 
@@ -268,7 +274,10 @@ export class PostsService {
     }
 
     post.status = !post.status;
-    if (!post.audit) post.audit = {} as any;
+    if (!post.audit) {
+      post.audit = { createdBy: userId, createdAt: new Date(), updatedBy: userId, updatedAt: new Date() } as typeof post.audit;
+    }
+    post.audit.updatedBy = userId;
     post.audit.updatedAt = new Date();
     await post.save();
     return this.mapToDto(post);

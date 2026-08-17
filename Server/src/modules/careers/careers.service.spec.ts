@@ -61,6 +61,15 @@ describe("CareersService", () => {
   mockCareerOpeningModel.findByIdAndDelete = jest
     .fn()
     .mockImplementation(() => mockExec(null));
+  mockCareerOpeningModel.findOneAndUpdate = jest
+    .fn()
+    .mockImplementation(() => mockExec(null));
+  mockCareerOpeningModel.findOneAndDelete = jest
+    .fn()
+    .mockImplementation(() => mockExec(null));
+  mockCareerOpeningModel.exists = jest
+    .fn()
+    .mockImplementation(() => mockExec(false));
   mockCareerOpeningModel.findOne = jest
     .fn()
     .mockImplementation(() => mockExec(null));
@@ -150,15 +159,12 @@ describe("CareersService", () => {
   });
 
   describe("update", () => {
-    it("should update career opening with audit trail", async () => {
+    it("should update career opening", async () => {
       const updateCareerOpeningDto: UpdateCareerOpeningDto = {
         title: "Updated Title",
       };
 
-      mockCareerOpeningModel.findById.mockReturnValue(
-        mockExec(mockCareerOpening),
-      );
-      mockCareerOpeningModel.findByIdAndUpdate.mockReturnValue(
+      mockCareerOpeningModel.findOneAndUpdate.mockReturnValue(
         mockExec({
           ...mockCareerOpening,
           title: "Updated Title",
@@ -176,7 +182,8 @@ describe("CareersService", () => {
     });
 
     it("should throw NotFoundException when updating non-existent career opening", async () => {
-      mockCareerOpeningModel.findById.mockReturnValue(mockExec(null));
+      mockCareerOpeningModel.findOneAndUpdate.mockReturnValue(mockExec(null));
+      mockCareerOpeningModel.exists.mockReturnValue(mockExec(null));
 
       await expect(
         service.update(
@@ -191,22 +198,20 @@ describe("CareersService", () => {
 
   describe("remove", () => {
     it("should remove a career opening", async () => {
-      mockCareerOpeningModel.findById.mockReturnValue(
-        mockExec(mockCareerOpening),
-      );
-      mockCareerOpeningModel.findByIdAndDelete.mockReturnValue(
+      mockCareerOpeningModel.findOneAndDelete.mockReturnValue(
         mockExec(mockCareerOpening),
       );
 
       await service.remove("507f1f77bcf86cd799439011", "admin", "u_001");
 
-      expect(mockCareerOpeningModel.findByIdAndDelete).toHaveBeenCalledWith(
-        "507f1f77bcf86cd799439011",
+      expect(mockCareerOpeningModel.findOneAndDelete).toHaveBeenCalledWith(
+        { _id: "507f1f77bcf86cd799439011" },
       );
     });
 
     it("should throw NotFoundException when removing non-existent career opening", async () => {
-      mockCareerOpeningModel.findById.mockReturnValue(mockExec(null));
+      mockCareerOpeningModel.findOneAndDelete.mockReturnValue(mockExec(null));
+      mockCareerOpeningModel.exists.mockReturnValue(mockExec(null));
 
       await expect(
         service.remove("507f1f77bcf86cd799439011", "admin", "u_001"),

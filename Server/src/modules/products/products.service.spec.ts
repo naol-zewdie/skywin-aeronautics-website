@@ -55,6 +55,15 @@ describe("ProductsService", () => {
   mockProductModel.findByIdAndDelete = jest
     .fn()
     .mockImplementation(() => mockExec(null));
+  mockProductModel.findOneAndUpdate = jest
+    .fn()
+    .mockImplementation(() => mockExec(null));
+  mockProductModel.findOneAndDelete = jest
+    .fn()
+    .mockImplementation(() => mockExec(null));
+  mockProductModel.exists = jest
+    .fn()
+    .mockImplementation(() => mockExec(false));
   mockProductModel.findOne = jest.fn().mockImplementation(() => mockExec(null));
   mockProductModel.create = jest.fn();
 
@@ -98,7 +107,7 @@ describe("ProductsService", () => {
 
   describe("findOne", () => {
     it("should return a single product", async () => {
-      mockProductModel.findById.mockReturnValue(mockExec(mockProduct));
+      mockProductModel.findOne.mockReturnValue(mockExec(mockProduct));
 
       const result = await service.findOne("507f1f77bcf86cd799439011");
 
@@ -107,7 +116,7 @@ describe("ProductsService", () => {
     });
 
     it("should throw NotFoundException when product not found", async () => {
-      mockProductModel.findById.mockReturnValue(mockExec(null));
+      mockProductModel.findOne.mockReturnValue(mockExec(null));
 
       await expect(service.findOne("507f1f77bcf86cd799439011")).rejects.toThrow(
         NotFoundException,
@@ -143,8 +152,7 @@ describe("ProductsService", () => {
         stock: 30,
       };
 
-      mockProductModel.findById.mockReturnValue(mockExec(mockProduct));
-      mockProductModel.findByIdAndUpdate.mockReturnValue(
+      mockProductModel.findOneAndUpdate.mockReturnValue(
         mockExec({
           ...mockProduct,
           price: 12000.0,
@@ -164,7 +172,8 @@ describe("ProductsService", () => {
     });
 
     it("should throw NotFoundException when updating non-existent product", async () => {
-      mockProductModel.findById.mockReturnValue(mockExec(null));
+      mockProductModel.findOneAndUpdate.mockReturnValue(mockExec(null));
+      mockProductModel.exists.mockReturnValue(mockExec(null));
 
       await expect(
         service.update(
@@ -179,18 +188,18 @@ describe("ProductsService", () => {
 
   describe("remove", () => {
     it("should remove a product", async () => {
-      mockProductModel.findById.mockReturnValue(mockExec(mockProduct));
-      mockProductModel.findByIdAndDelete.mockReturnValue(mockExec(mockProduct));
+      mockProductModel.findOneAndDelete.mockReturnValue(mockExec(mockProduct));
 
       await service.remove("507f1f77bcf86cd799439011", "admin", "u_001");
 
-      expect(mockProductModel.findByIdAndDelete).toHaveBeenCalledWith(
-        "507f1f77bcf86cd799439011",
+      expect(mockProductModel.findOneAndDelete).toHaveBeenCalledWith(
+        { _id: "507f1f77bcf86cd799439011" },
       );
     });
 
     it("should throw NotFoundException when removing non-existent product", async () => {
-      mockProductModel.findById.mockReturnValue(mockExec(null));
+      mockProductModel.findOneAndDelete.mockReturnValue(mockExec(null));
+      mockProductModel.exists.mockReturnValue(mockExec(null));
 
       await expect(
         service.remove("507f1f77bcf86cd799439011", "admin", "u_001"),

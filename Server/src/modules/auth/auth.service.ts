@@ -7,12 +7,13 @@ import {
 } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import { InjectModel } from "@nestjs/mongoose";
-import { Model } from "mongoose";
+import { Model, Types } from "mongoose";
 import * as bcrypt from "bcrypt";
 import * as crypto from "crypto";
 import { User } from "../users/schemas/user.schema";
 import { MailService } from "../../common/mail/mail.service";
 import { TokenBlacklistService } from "./token-blacklist.service";
+import { toOpaqueRole } from "../../common/utils/role-obfuscator";
 
 export interface TokenPayload {
   email: string;
@@ -132,8 +133,12 @@ export class AuthService {
     status: boolean;
   }): Promise<LoginResult> {
     // Read current tokenVersion from DB
+    const isObjId = Types.ObjectId.isValid(user.id);
+    const userQuery: any = isObjId
+      ? { $or: [{ _id: user.id }, { _id: new Types.ObjectId(user.id) }] }
+      : { _id: user.id };
     const dbUser = await this.userModel
-      .findById(user.id)
+      .findOne(userQuery)
       .select("tokenVersion")
       .exec();
     const tokenVersion = dbUser?.tokenVersion ?? 0;
@@ -149,7 +154,10 @@ export class AuthService {
 
     return {
       ...tokens,
-      user,
+      user: {
+        ...user,
+        role: toOpaqueRole(user.role),
+      },
     };
   }
 
@@ -173,7 +181,12 @@ export class AuthService {
       }
 
       // Read current user from DB — validate status AND tokenVersion
-      const user = await this.userModel.findById(payload.sub).exec();
+      const sub = payload.sub;
+      const isSubObjId = Types.ObjectId.isValid(sub);
+      const subQuery: any = isSubObjId
+        ? { $or: [{ _id: sub }, { _id: new Types.ObjectId(sub) }] }
+        : { _id: sub };
+      const user = await this.userModel.findOne(subQuery).exec();
       if (!user || !user.status) {
         throw new UnauthorizedException("User not found or inactive");
       }
@@ -294,7 +307,11 @@ export class AuthService {
     role: string;
     status: boolean;
   } | null> {
-    const user = await this.userModel.findById(userId).exec();
+    const isObjId = Types.ObjectId.isValid(userId);
+    const userQuery: any = isObjId
+      ? { $or: [{ _id: userId }, { _id: new Types.ObjectId(userId) }] }
+      : { _id: userId };
+    const user = await this.userModel.findOne(userQuery).exec();
     if (!user) {
       throw new UnauthorizedException("User not found");
     }
@@ -302,7 +319,7 @@ export class AuthService {
       id: user._id.toString(),
       fullName: user.fullName,
       email: user.email,
-      role: user.role,
+      role: toOpaqueRole(user.role),
       status: user.status,
     };
   }

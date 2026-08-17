@@ -49,9 +49,10 @@ async function proxy(request: NextRequest, params: { path: string[] }) {
   };
 
   if (!['GET', 'HEAD'].includes(request.method)) {
-    init.body = request.body;
-    // @ts-expect-error duplex is needed for streaming body in Node fetch
-    init.duplex = 'half';
+    const bodyBuffer = await request.arrayBuffer();
+    if (bodyBuffer.byteLength > 0) {
+      init.body = bodyBuffer;
+    }
   }
 
   const backendResponse = await fetch(targetUrl, init);

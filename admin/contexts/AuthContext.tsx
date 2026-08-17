@@ -82,8 +82,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (credentials: LoginCredentials) => {
     setIsLoading(true);
     try {
-      const response = await authApi.login(credentials);
-      setUser(response.user);
+      await authApi.login(credentials);
+      // Security: Never trust unverified client-side response JSON payloads for role assignment.
+      // Immediately fetch the authoritative profile from /v1/auth/me which checks the signed
+      // JWT cookie and verifies the user's role directly from the server database.
+      const userData = await authApi.getMe();
+      setUser(userData);
       router.push('/dashboard');
     } finally {
       setIsLoading(false);

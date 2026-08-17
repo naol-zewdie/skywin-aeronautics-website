@@ -78,6 +78,15 @@ describe("PostsService", () => {
   mockPostModel.findByIdAndDelete = jest
     .fn()
     .mockImplementation(() => mockExec(null));
+  mockPostModel.findOneAndUpdate = jest
+    .fn()
+    .mockImplementation(() => mockExec(null));
+  mockPostModel.findOneAndDelete = jest
+    .fn()
+    .mockImplementation(() => mockExec(null));
+  mockPostModel.exists = jest
+    .fn()
+    .mockImplementation(() => mockExec(false));
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({

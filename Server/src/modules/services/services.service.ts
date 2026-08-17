@@ -88,17 +88,22 @@ export class ServicesService {
     userId?: string,
   ): Promise<ServiceDto> {
     this.validateId(id);
-    const service = await this.serviceModel.findById(id).exec();
-    if (!service) {
-      throw new NotFoundException("Service not found");
+
+    const query: Record<string, unknown> = { _id: id };
+
+    // Security (IDOR): Enforce visibility at query level so non-admin users
+    // cannot probe or retrieve restricted services by ID.
+    if (userRole !== undefined && userRole !== "admin") {
+      if (userRole === "operator") {
+        query["$or"] = [{ status: true }, { "audit.createdBy": userId }];
+      } else {
+        query.status = true;
+      }
     }
 
-    if (
-      userRole !== undefined &&
-      userRole !== "admin" &&
-      service.audit?.createdBy !== userId
-    ) {
-      throw new ForbiddenException("You can only view your own resources");
+    const service = await this.serviceModel.findOne(query as any).exec();
+    if (!service) {
+      throw new NotFoundException("Service not found");
     }
 
     return {
@@ -180,26 +185,35 @@ export class ServicesService {
   ): Promise<ServiceDto> {
     this.validateId(id);
 
-    const existing = await this.serviceModel.findById(id).exec();
-    if (!existing) {
-      throw new NotFoundException("Service not found");
-    }
-
-    if (userRole !== "admin" && existing.audit?.createdBy !== userId) {
-      throw new ForbiddenException("You can only modify your own resources");
-    }
+    // Security (IDOR TOCTOU fix): embed the ownership check atomically inside
+    // the update query instead of using a separate findById + findByIdAndUpdate.
+    // This eliminates the race window where a role change between the two DB
+    // calls could allow an escalated operation.
+    const ownerFilter =
+      userRole === "admin"
+        ? { _id: id }
+        : { _id: id, "audit.createdBy": userId };
 
     const updateData: Record<string, unknown> = {
       ...payload,
+      "audit.updatedBy": userId,
       "audit.updatedAt": new Date(),
     };
 
     const updated = await this.serviceModel
-      .findByIdAndUpdate(id, { $set: updateData }, { new: true })
+      .findOneAndUpdate(ownerFilter, { $set: updateData }, { returnDocument: "after" })
       .exec();
+
     if (!updated) {
-      throw new NotFoundException("Service not found");
+      // Could be: not found, or ownership check failed. To prevent enumeration
+      // we do not distinguish between the two cases for non-admin users.
+      const exists = await this.serviceModel.exists({ _id: id }).exec();
+      if (!exists) {
+        throw new NotFoundException("Service not found");
+      }
+      throw new ForbiddenException("You can only modify your own resources");
     }
+
     return {
       id: updated._id.toString(),
       name: updated.name,
@@ -223,18 +237,22 @@ export class ServicesService {
    */
   async remove(id: string, userRole: string, userId: string): Promise<void> {
     this.validateId(id);
-    const service = await this.serviceModel.findById(id).exec();
-    if (!service) {
-      throw new NotFoundException("Service not found");
-    }
 
-    if (userRole !== "admin" && service.audit?.createdBy !== userId) {
+    // Security (IDOR TOCTOU fix): atomic ownership-check-and-delete so no race
+    // window exists between fetching the document and deleting it.
+    const ownerFilter =
+      userRole === "admin"
+        ? { _id: id }
+        : { _id: id, "audit.createdBy": userId };
+
+    const deleted = await this.serviceModel.findOneAndDelete(ownerFilter).exec();
+
+    if (!deleted) {
+      const exists = await this.serviceModel.exists({ _id: id }).exec();
+      if (!exists) {
+        throw new NotFoundException("Service not found");
+      }
       throw new ForbiddenException("You can only delete your own resources");
-    }
-
-    const result = await this.serviceModel.findByIdAndDelete(id).exec();
-    if (!result) {
-      throw new NotFoundException("Service not found");
     }
   }
 

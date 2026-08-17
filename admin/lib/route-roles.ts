@@ -1,14 +1,14 @@
-export type UserRole = 'admin' | 'operator' | 'viewer';
+export type UserRole = 'r_9a3f' | 'r_4b7e' | 'r_1c2d' | 'admin' | 'operator' | 'viewer';
 
 /** Route-prefix → allowed roles. Order matters: more specific prefixes first. */
 const ROUTE_RULES: { prefix: string; roles: UserRole[] }[] = [
-  { prefix: '/users', roles: ['admin'] },
-  { prefix: '/settings', roles: ['admin'] },
-  { prefix: '/products', roles: ['admin', 'operator'] },
-  { prefix: '/services', roles: ['admin', 'operator'] },
-  { prefix: '/careers', roles: ['admin', 'operator'] },
-  { prefix: '/posts', roles: ['admin', 'operator'] },
-  { prefix: '/dashboard', roles: ['admin', 'operator', 'viewer'] },
+  { prefix: '/users', roles: ['r_9a3f', 'admin'] },
+  { prefix: '/settings', roles: ['r_9a3f', 'admin'] },
+  { prefix: '/products', roles: ['r_9a3f', 'r_4b7e', 'admin', 'operator'] },
+  { prefix: '/services', roles: ['r_9a3f', 'r_4b7e', 'admin', 'operator'] },
+  { prefix: '/careers', roles: ['r_9a3f', 'r_4b7e', 'admin', 'operator'] },
+  { prefix: '/posts', roles: ['r_9a3f', 'r_4b7e', 'admin', 'operator'] },
+  { prefix: '/dashboard', roles: ['r_9a3f', 'r_4b7e', 'r_1c2d', 'admin', 'operator', 'viewer'] },
 ];
 
 export function getRequiredRoles(pathname: string): UserRole[] {
@@ -17,7 +17,7 @@ export function getRequiredRoles(pathname: string): UserRole[] {
       return rule.roles;
     }
   }
-  return ['admin', 'operator', 'viewer'];
+  return ['r_9a3f', 'r_4b7e', 'r_1c2d', 'admin', 'operator', 'viewer'];
 }
 
 export function hasRequiredRole(userRole: UserRole, requiredRoles: UserRole[]): boolean {

@@ -121,7 +121,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
 export class AllExceptionsFilter implements ExceptionFilter {
   private readonly logger = new Logger(AllExceptionsFilter.name);
 
-  catch(exception: Error, host: ArgumentsHost) {
+  catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
@@ -134,9 +134,14 @@ export class AllExceptionsFilter implements ExceptionFilter {
       path: request.url,
     };
 
+    // Guard against non-Error throwables (e.g. thrown strings or plain objects)
+    const message =
+      exception instanceof Error ? exception.message : String(exception);
+    const stack = exception instanceof Error ? exception.stack : undefined;
+
     this.logger.error(
-      `Unhandled Exception: ${sanitize(exception.message)}`,
-      exception.stack,
+      `Unhandled Exception: ${sanitize(message)}`,
+      stack,
     );
 
     response.status(HttpStatus.INTERNAL_SERVER_ERROR).json(errorResponse);

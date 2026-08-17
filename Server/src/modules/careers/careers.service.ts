@@ -186,25 +186,28 @@ export class CareersService {
   ): Promise<CareerOpeningDto> {
     this.validateId(id);
 
-    const existing = await this.careerOpeningModel.findById(id).exec();
-    if (!existing) {
-      throw new NotFoundException("Career opening not found");
-    }
-
-    if (userRole !== "admin" && existing.audit?.createdBy !== userId) {
-      throw new ForbiddenException("You can only modify your own resources");
-    }
+    // Security (IDOR TOCTOU fix): embed ownership check atomically inside query
+    const ownerFilter =
+      userRole === "admin"
+        ? { _id: id }
+        : { _id: id, "audit.createdBy": userId };
 
     const updateData: Record<string, unknown> = {
       ...payload,
+      "audit.updatedBy": userId,
       "audit.updatedAt": new Date(),
     };
 
     const updated = await this.careerOpeningModel
-      .findByIdAndUpdate(id, { $set: updateData }, { new: true })
+      .findOneAndUpdate(ownerFilter, { $set: updateData }, { returnDocument: "after" })
       .exec();
+
     if (!updated) {
-      throw new NotFoundException("Career opening not found");
+      const exists = await this.careerOpeningModel.exists({ _id: id }).exec();
+      if (!exists) {
+        throw new NotFoundException("Career opening not found");
+      }
+      throw new ForbiddenException("You can only modify your own resources");
     }
     return {
       id: updated._id.toString(),
@@ -225,18 +228,21 @@ export class CareersService {
    */
   async remove(id: string, userRole: string, userId: string): Promise<void> {
     this.validateId(id);
-    const career = await this.careerOpeningModel.findById(id).exec();
-    if (!career) {
-      throw new NotFoundException("Career opening not found");
-    }
 
-    if (userRole !== "admin" && career.audit?.createdBy !== userId) {
+    // Security (IDOR TOCTOU fix): atomic ownership-check-and-delete
+    const ownerFilter =
+      userRole === "admin"
+        ? { _id: id }
+        : { _id: id, "audit.createdBy": userId };
+
+    const deleted = await this.careerOpeningModel.findOneAndDelete(ownerFilter).exec();
+
+    if (!deleted) {
+      const exists = await this.careerOpeningModel.exists({ _id: id }).exec();
+      if (!exists) {
+        throw new NotFoundException("Career opening not found");
+      }
       throw new ForbiddenException("You can only delete your own resources");
-    }
-
-    const result = await this.careerOpeningModel.findByIdAndDelete(id).exec();
-    if (!result) {
-      throw new NotFoundException("Career opening not found");
     }
   }
 
@@ -267,6 +273,7 @@ export class CareersService {
     if (!career.audit) {
       career.audit = { createdBy: userId, createdAt: new Date(), updatedBy: userId, updatedAt: new Date() } as typeof career.audit;
     }
+    career.audit.updatedBy = userId;
     career.audit.updatedAt = new Date();
     await career.save();
     return {

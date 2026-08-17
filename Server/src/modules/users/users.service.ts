@@ -15,6 +15,7 @@ import { UpdateUserDto } from "./dto/update-user.dto";
 import { UserDto } from "./dto/user.dto";
 import { ChangePasswordDto } from "./dto/change-password.dto";
 import { User } from "./schemas/user.schema";
+import { toOpaqueRole, toInternalRole } from "../../common/utils/role-obfuscator";
 
 @Injectable()
 export class UsersService {
@@ -36,7 +37,7 @@ export class UsersService {
       id: user._id.toString(),
       fullName: user.fullName,
       email: user.email,
-      role: user.role,
+      role: toOpaqueRole(user.role),
       status: user.status,
     }));
   }
@@ -50,7 +51,7 @@ export class UsersService {
   async findOne(id: string): Promise<UserDto> {
     this.validateId(id);
     const user = await this.userModel
-      .findById(id)
+      .findOne(this.buildIdQuery(id))
       .select("-password -passwordResetToken -passwordResetExpires")
       .exec();
     if (!user) {
@@ -60,7 +61,7 @@ export class UsersService {
       id: user._id.toString(),
       fullName: user.fullName,
       email: user.email,
-      role: user.role,
+      role: toOpaqueRole(user.role),
       status: user.status,
     };
   }
@@ -103,7 +104,7 @@ export class UsersService {
         id: saved._id.toString(),
         fullName: saved.fullName,
         email: saved.email,
-        role: saved.role,
+        role: toOpaqueRole(saved.role),
         status: saved.status,
       };
     } catch (err: any) {
@@ -132,32 +133,34 @@ export class UsersService {
   ): Promise<UserDto> {
     this.validateId(id);
     const targetUser = await this.findOne(id);
+    const targetRole = toInternalRole(targetUser.role);
+    const requestedRole = payload.role ? toInternalRole(payload.role) : undefined;
 
     // Prevent admin from editing another admin
-    if (targetUser.role === "admin" && currentUserId !== id) {
+    if (targetRole === "admin" && currentUserId !== id) {
       throw new ForbiddenException("Cannot edit another admin account");
     }
 
     // Prevent admin from demoting themselves (only one admin allowed)
     if (
-      targetUser.role === "admin" &&
+      targetRole === "admin" &&
       currentUserId === id &&
-      payload.role &&
-      payload.role !== "admin"
+      requestedRole &&
+      requestedRole !== "admin"
     ) {
       throw new ForbiddenException("Cannot demote your own admin account");
     }
 
     // Prevent privilege escalation: no non-admin should ever set role to admin
-    if (payload.role && payload.role !== targetUser.role) {
-      if (payload.role === "admin") {
+    if (requestedRole && requestedRole !== targetRole) {
+      if (requestedRole === "admin") {
         throw new ForbiddenException(
           "Cannot promote users to admin via this endpoint",
         );
       }
 
       // Prevent demoting the last admin
-      if (targetUser.role === "admin") {
+      if (targetRole === "admin") {
         const adminCount = await this.userModel
           .countDocuments({ role: "admin" })
           .exec();
@@ -169,16 +172,17 @@ export class UsersService {
 
     const updateData: Record<string, unknown> = {
       ...payload,
+      ...(requestedRole ? { role: requestedRole } : {}),
       "audit.updatedAt": new Date(),
     };
 
     // Invalidate all sessions if critical fields (role, status) are updated
     if (
-      (payload.role && payload.role !== targetUser.role) ||
+      (requestedRole && requestedRole !== targetRole) ||
       (payload.status !== undefined && payload.status !== targetUser.status)
     ) {
       const userDoc = await this.userModel
-        .findById(id)
+        .findOne(this.buildIdQuery(id))
         .select("tokenVersion")
         .exec();
       const currentTokenVersion = userDoc?.tokenVersion ?? 0;
@@ -187,7 +191,7 @@ export class UsersService {
 
     try {
       const updated = await this.userModel
-        .findByIdAndUpdate(id, { $set: updateData }, { new: true })
+        .findOneAndUpdate(this.buildIdQuery(id), { $set: updateData }, { returnDocument: "after" })
         .exec();
       if (!updated) {
         throw new NotFoundException("User not found");
@@ -196,7 +200,7 @@ export class UsersService {
         id: updated._id.toString(),
         fullName: updated.fullName,
         email: updated.email,
-        role: updated.role,
+        role: toOpaqueRole(updated.role),
         status: updated.status,
       };
     } catch (err: any) {
@@ -223,7 +227,7 @@ export class UsersService {
       throw new ForbiddenException("You can only change your own password");
     }
 
-    const user = await this.userModel.findById(id).exec();
+    const user = await this.userModel.findOne(this.buildIdQuery(id)).exec();
     if (!user) {
       throw new NotFoundException("User not found");
     }
@@ -256,10 +260,17 @@ export class UsersService {
       throw new ForbiddenException("Cannot delete your own account");
     }
 
-    const result = await this.userModel.findByIdAndDelete(id).exec();
+    const result = await this.userModel.findOneAndDelete(this.buildIdQuery(id)).exec();
     if (!result) {
       throw new NotFoundException("User not found");
     }
+  }
+
+  private buildIdQuery(id: string): Record<string, unknown> {
+    const isObjId = Types.ObjectId.isValid(id);
+    return isObjId
+      ? { $or: [{ _id: id }, { _id: new Types.ObjectId(id) }] }
+      : { _id: id };
   }
 
   /**

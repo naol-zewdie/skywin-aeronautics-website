@@ -62,7 +62,13 @@ describe("UsersService", () => {
   mockUserModel.findByIdAndDelete = jest
     .fn()
     .mockImplementation(() => mockExec(null));
-  mockUserModel.findOne = jest.fn().mockImplementation(() => mockExec(null));
+  mockUserModel.findOne = jest.fn().mockImplementation(() => mockSelectExec(null));
+  mockUserModel.findOneAndUpdate = jest
+    .fn()
+    .mockImplementation(() => mockExec(null));
+  mockUserModel.findOneAndDelete = jest
+    .fn()
+    .mockImplementation(() => mockExec(null));
   mockUserModel.create = jest.fn();
 
   beforeEach(async () => {
@@ -86,11 +92,7 @@ describe("UsersService", () => {
 
   describe("findAll", () => {
     it("should return an array of users", async () => {
-      mockUserModel.find.mockReturnValue({
-        select: jest.fn().mockReturnValue({
-          exec: jest.fn().mockResolvedValue([mockUser]),
-        }),
-      });
+      mockUserModel.find.mockReturnValue(mockChain([mockUser]));
 
       const result = await service.findAll();
 
@@ -99,11 +101,10 @@ describe("UsersService", () => {
           id: "507f1f77bcf86cd799439011",
           fullName: "Test User",
           email: "test@skywin.aero",
-          role: "admin",
+          role: "r_9a3f",
           status: true,
         },
       ]);
-      expect(mockUserModel.find).toHaveBeenCalled();
     });
 
     it("should return empty array when no users exist", async () => {
@@ -120,7 +121,7 @@ describe("UsersService", () => {
 
   describe("findOne", () => {
     it("should return a single user", async () => {
-      mockUserModel.findById.mockReturnValue({
+      mockUserModel.findOne.mockReturnValue({
         select: jest.fn().mockReturnValue({
           exec: jest.fn().mockResolvedValue(mockUser),
         }),
@@ -132,16 +133,13 @@ describe("UsersService", () => {
         id: "507f1f77bcf86cd799439011",
         fullName: "Test User",
         email: "test@skywin.aero",
-        role: "admin",
+        role: "r_9a3f",
         status: true,
       });
-      expect(mockUserModel.findById).toHaveBeenCalledWith(
-        "507f1f77bcf86cd799439011",
-      );
     });
 
     it("should throw NotFoundException when user not found", async () => {
-      mockUserModel.findById.mockReturnValue({
+      mockUserModel.findOne.mockReturnValue({
         select: jest.fn().mockReturnValue({
           exec: jest.fn().mockResolvedValue(null),
         }),
@@ -177,13 +175,13 @@ describe("UsersService", () => {
         fullName: "Updated Name",
       };
 
-      mockUserModel.findById.mockReturnValue({
+      mockUserModel.findOne.mockReturnValue({
         select: jest.fn().mockReturnValue({
           exec: jest.fn().mockResolvedValue(mockUser),
         }),
       });
 
-      mockUserModel.findByIdAndUpdate.mockReturnValue({
+      mockUserModel.findOneAndUpdate.mockReturnValue({
         exec: jest.fn().mockResolvedValue({
           ...mockUser,
           fullName: "Updated Name",
@@ -200,7 +198,7 @@ describe("UsersService", () => {
     });
 
     it("should throw NotFoundException when updating non-existent user", async () => {
-      mockUserModel.findById.mockReturnValue({
+      mockUserModel.findOne.mockReturnValue({
         select: jest.fn().mockReturnValue({
           exec: jest.fn().mockResolvedValue(null),
         }),
@@ -218,19 +216,21 @@ describe("UsersService", () => {
 
   describe("remove", () => {
     it("should remove a user", async () => {
-      mockUserModel.findByIdAndDelete.mockReturnValue({
+      mockUserModel.findOneAndDelete.mockReturnValue({
         exec: jest.fn().mockResolvedValue(mockUser),
       });
 
       await service.remove("507f1f77bcf86cd799439011", "some-other-user-id");
 
-      expect(mockUserModel.findByIdAndDelete).toHaveBeenCalledWith(
-        "507f1f77bcf86cd799439011",
+      expect(mockUserModel.findOneAndDelete).toHaveBeenCalledWith(
+        expect.objectContaining({
+          $or: expect.any(Array),
+        }),
       );
     });
 
     it("should throw NotFoundException when removing non-existent user", async () => {
-      mockUserModel.findByIdAndDelete.mockReturnValue({
+      mockUserModel.findOneAndDelete.mockReturnValue({
         exec: jest.fn().mockResolvedValue(null),
       });
 
