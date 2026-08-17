@@ -16,9 +16,19 @@ const escapeHtml = (str: string): string =>
 export async function POST(request: NextRequest) {
   try {
     const origin = request.headers.get('origin');
-    const host = request.headers.get('host');
-    if (origin && host && new URL(origin).host !== host) {
-      return NextResponse.json({ error: 'Invalid origin' }, { status: 403 });
+    const host = request.headers.get('x-forwarded-host') || request.headers.get('host');
+    if (origin && host) {
+      try {
+        const originHost = new URL(origin).host;
+        const reqHost = host.split(',')[0].trim();
+        const originHostname = new URL(origin).hostname;
+        const reqHostname = reqHost.split(':')[0];
+        if (originHost !== reqHost && originHostname !== reqHostname) {
+          return NextResponse.json({ error: 'Invalid origin' }, { status: 403 });
+        }
+      } catch {
+        return NextResponse.json({ error: 'Invalid origin' }, { status: 403 });
+      }
     }
     // Rate limiting: securely extract IP
     let ip = (request as NextRequest & { ip?: string }).ip;
