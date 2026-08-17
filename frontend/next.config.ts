@@ -5,7 +5,7 @@ const apiHost = process.env.BACKEND_URL
   : 'localhost';
 const apiPort = process.env.BACKEND_URL
   ? new URL(process.env.BACKEND_URL).port || undefined
-  : '3001';
+  : '3005';
 const apiProtocol = process.env.BACKEND_URL
   ? new URL(process.env.BACKEND_URL).protocol.replace(':', '')
   : 'http';
@@ -25,13 +25,13 @@ const nextConfig: NextConfig = {
       {
         protocol: 'http',
         hostname: 'localhost',
-        port: '3001',
+        port: '3005',
         pathname: '/uploads/**',
       },
       {
         protocol: 'http',
         hostname: '127.0.0.1',
-        port: '3001',
+        port: '3005',
         pathname: '/uploads/**',
       },
       {
@@ -43,7 +43,7 @@ const nextConfig: NextConfig = {
     ],
   },
   async rewrites() {
-    const backendUrl = process.env.BACKEND_URL || 'http://localhost:3001';
+    const backendUrl = process.env.BACKEND_URL || 'http://localhost:3005';
     return [
       {
         source: '/api/v1/public/:path*',
