@@ -17,7 +17,7 @@ function buildCsp(nonce: string): string {
     "default-src 'self'",
     scriptSrc,
     "style-src 'self' 'unsafe-inline'",
-    "img-src 'self' https://images.pexels.com data: blob:",
+    "img-src 'self' http: https: data: blob:",
     "font-src 'self'",
     connectDirective,
     "frame-ancestors 'none'",
