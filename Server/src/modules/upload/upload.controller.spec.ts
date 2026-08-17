@@ -73,4 +73,25 @@ describe("UploadController Security & Validation", () => {
     expect(result.url).toMatch(/^\/uploads\/[a-f0-9]{32}\.jpg$/);
     expect(result.filename).toMatch(/^[a-f0-9]{32}\.jpg$/);
   });
+
+  it("should successfully process and sanitize valid PNG image", async () => {
+    const pngHeader = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x0d]);
+    const iendChunk = Buffer.from([0x49, 0x45, 0x4e, 0x44, 0xae, 0x42, 0x60, 0x82]);
+    const validBuffer = Buffer.concat([pngHeader, Buffer.from("clean png data"), iendChunk]);
+
+    const fakeFile = {
+      fieldname: "file",
+      originalname: "test.png",
+      encoding: "7bit",
+      mimetype: "image/png",
+      size: validBuffer.length,
+      buffer: validBuffer,
+    };
+
+    const result = await controller.uploadImage(fakeFile);
+
+    expect(result).toHaveProperty("url");
+    expect(result.url).toMatch(/^\/uploads\/[a-f0-9]{32}\.png$/);
+    expect(result.filename).toMatch(/^[a-f0-9]{32}\.png$/);
+  });
 });

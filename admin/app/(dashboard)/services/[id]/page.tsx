@@ -39,8 +39,9 @@ export default function EditServicePage() {
       const uploadResult = await uploadApi.uploadImage(file);
       setForm({ ...form, image: uploadResult.url, imageUrl: '' });
       toast({ title: 'Success', description: 'Image uploaded successfully' });
-    } catch {
-      toast({ title: 'Error', description: 'Failed to upload image', variant: 'destructive' });
+    } catch (error: any) {
+      const msg = error?.response?.data?.message || 'Failed to upload image';
+      toast({ title: 'Error', description: msg, variant: 'destructive' });
     } finally {
       setIsUploading(false);
     }
@@ -82,7 +83,7 @@ export default function EditServicePage() {
     setIsSaving(true);
     try {
       const { imageUrl: _ignored, ...data } = form;
-      const serviceData = { ...data, image: form.image || null } as Partial<Service>;
+      const serviceData = { ...data, image: form.image || undefined } as Partial<Service>;
       await servicesApi.update(params.id as string, serviceData);
       toast({ title: 'Success', description: 'Service updated successfully' });
       router.push('/services');

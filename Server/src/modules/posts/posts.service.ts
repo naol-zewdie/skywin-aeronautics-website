@@ -11,6 +11,7 @@ import { CreatePostDto } from "./dto/create-post.dto";
 import { PostDto } from "./dto/post.dto";
 import { UpdatePostDto } from "./dto/update-post.dto";
 import { Post, ContentType } from "./schemas/post.schema";
+import { toInternalRole } from "../../common/utils/role-obfuscator";
 import { Parser } from "@json2csv/plainjs";
 import PDFDocument from "pdfkit";
 
@@ -39,6 +40,7 @@ export class PostsService {
     userRole?: string,
     userId?: string,
   ): Promise<PostDto[]> {
+    const role = userRole ? toInternalRole(userRole) : undefined;
     const query: any = {};
 
     if (filters?.type) {
@@ -69,9 +71,9 @@ export class PostsService {
       query.tags = { $in: filters.tags };
     }
 
-    if (userRole && userRole !== "admin") {
+    if (role && role !== "admin") {
       const roleCondition =
-        userRole === "operator"
+        role === "operator"
           ? { $or: [{ status: true }, { "audit.createdBy": userId }] }
           : { status: true };
 
@@ -125,18 +127,19 @@ export class PostsService {
     userId?: string,
   ): Promise<PostDto> {
     this.validateId(id);
-    const query: Record<string, unknown> = { _id: id };
+    const role = userRole ? toInternalRole(userRole) : undefined;
+    const isObjId = Types.ObjectId.isValid(id);
+    const idConditions: any[] = isObjId ? [{ _id: id }, { _id: new Types.ObjectId(id) }] : [{ _id: id }];
 
-    // Security (S4): Enforce status visibility at query level so viewers
-    // cannot retrieve inactive posts by supplying a known ID directly.
-    if (userRole !== undefined && userRole !== "admin") {
-      if (userRole === "operator") {
-        // Operators can see their own drafts or any published post.
-        query["$or"] = [{ status: true }, { "audit.createdBy": userId }];
-      } else {
-        // Viewers can only see published posts.
-        query.status = true;
-      }
+    let query: Record<string, unknown>;
+    if (role !== undefined && role !== "admin") {
+      const roleConditions: any[] =
+        role === "operator"
+          ? [{ status: true }, { "audit.createdBy": userId }]
+          : [{ status: true }];
+      query = { $and: [{ $or: idConditions }, { $or: roleConditions }] };
+    } else {
+      query = { $or: idConditions };
     }
 
     const post = await this.postModel.findOne(query).exec();
@@ -145,7 +148,7 @@ export class PostsService {
     }
 
     // Increment view counter.
-    await this.postModel.findByIdAndUpdate(id, { $inc: { views: 1 } }).exec();
+    await this.postModel.findOneAndUpdate({ $or: idConditions }, { $inc: { views: 1 } }).exec();
     post.views = (post.views || 0) + 1;
 
     return this.mapToDto(post);
@@ -164,9 +167,10 @@ export class PostsService {
     userRole: string,
     userId: string,
   ): Promise<PostDto> {
+    const role = userRole ? toInternalRole(userRole) : undefined;
     // Set status based on user role: admin can set status, operator defaults to true
     const status =
-      userRole === "admin"
+      role === "admin"
         ? (payload.status ?? false)
         : (payload.status ?? true);
 
@@ -198,11 +202,14 @@ export class PostsService {
   ): Promise<PostDto> {
     this.validateId(id);
 
-    // Security (IDOR TOCTOU fix): embed ownership check atomically inside query
-    const ownerFilter =
-      userRole === "admin"
-        ? { _id: id }
-        : { _id: id, "audit.createdBy": userId };
+    const role = userRole ? toInternalRole(userRole) : undefined;
+    const isObjId = Types.ObjectId.isValid(id);
+    const idConditions: any[] = isObjId ? [{ _id: id }, { _id: new Types.ObjectId(id) }] : [{ _id: id }];
+
+    const ownerFilter: any =
+      role === "admin"
+        ? { $or: idConditions }
+        : { $and: [{ $or: idConditions }, { "audit.createdBy": userId }] };
 
     const updateData: Record<string, unknown> = {
       ...payload,
@@ -215,7 +222,7 @@ export class PostsService {
       .exec();
 
     if (!updated) {
-      const exists = await this.postModel.exists({ _id: id }).exec();
+      const exists = await this.postModel.exists({ $or: idConditions }).exec();
       if (!exists) {
         throw new NotFoundException("Post not found");
       }
@@ -234,16 +241,19 @@ export class PostsService {
   async remove(id: string, userRole: string, userId: string): Promise<void> {
     this.validateId(id);
 
-    // Security (IDOR TOCTOU fix): atomic ownership-check-and-delete
-    const ownerFilter =
-      userRole === "admin"
-        ? { _id: id }
-        : { _id: id, "audit.createdBy": userId };
+    const role = userRole ? toInternalRole(userRole) : undefined;
+    const isObjId = Types.ObjectId.isValid(id);
+    const idConditions: any[] = isObjId ? [{ _id: id }, { _id: new Types.ObjectId(id) }] : [{ _id: id }];
+
+    const ownerFilter: any =
+      role === "admin"
+        ? { $or: idConditions }
+        : { $and: [{ $or: idConditions }, { "audit.createdBy": userId }] };
 
     const deleted = await this.postModel.findOneAndDelete(ownerFilter).exec();
 
     if (!deleted) {
-      const exists = await this.postModel.exists({ _id: id }).exec();
+      const exists = await this.postModel.exists({ $or: idConditions }).exec();
       if (!exists) {
         throw new NotFoundException("Post not found");
       }
@@ -264,12 +274,15 @@ export class PostsService {
     userId: string,
   ): Promise<PostDto> {
     this.validateId(id);
-    const post = await this.postModel.findById(id).exec();
+    const isObjId = Types.ObjectId.isValid(id);
+    const idConditions: any[] = isObjId ? [{ _id: id }, { _id: new Types.ObjectId(id) }] : [{ _id: id }];
+    const post = await this.postModel.findOne({ $or: idConditions }).exec();
     if (!post) {
       throw new NotFoundException("Post not found");
     }
 
-    if (userRole !== "admin" && post.audit?.createdBy !== userId) {
+    const role = userRole ? toInternalRole(userRole) : undefined;
+    if (role !== "admin" && post.audit?.createdBy !== userId) {
       throw new ForbiddenException("You can only modify your own resources");
     }
 

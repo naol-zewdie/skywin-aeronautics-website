@@ -51,7 +51,9 @@ async function proxy(request: NextRequest, params: { path: string[] }) {
   if (!['GET', 'HEAD'].includes(request.method)) {
     const bodyBuffer = await request.arrayBuffer();
     if (bodyBuffer.byteLength > 0) {
-      init.body = bodyBuffer;
+      const buffer = Buffer.from(bodyBuffer);
+      init.body = buffer;
+      headers.set('content-length', buffer.length.toString());
     }
   }
 

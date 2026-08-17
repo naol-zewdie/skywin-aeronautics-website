@@ -220,6 +220,10 @@ export const usersApi = {
     const { data } = await api.get('/v1/users/export/pdf', { responseType: 'blob' });
     return data;
   },
+
+  changePassword: async (id: string, payload: { currentPassword: string; newPassword: string }): Promise<void> => {
+    await api.post(`/v1/users/${id}/change-password`, payload);
+  },
 };
 
 // Products API
@@ -414,7 +418,11 @@ export const uploadApi = {
     const formData = new FormData();
     formData.append('file', file);
 
-    const { data } = await api.post<{ url: string; filename: string; size: number }>('/v1/upload/image', formData);
+    const { data } = await api.post<{ url: string; filename: string; size: number }>('/v1/upload/image', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
     return data;
   },
 };

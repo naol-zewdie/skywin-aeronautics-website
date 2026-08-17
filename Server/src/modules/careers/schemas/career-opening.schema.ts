@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
-import { HydratedDocument } from "mongoose";
+import { HydratedDocument, Schema as MongooseSchema } from "mongoose";
 import { v4 as uuidv4 } from "uuid";
 import { Audit } from "../../../common/schemas/audit.schema";
 
@@ -7,7 +7,7 @@ export type CareerOpeningDocument = HydratedDocument<CareerOpening>;
 
 @Schema()
 export class CareerOpening {
-  @Prop({ type: String, default: uuidv4 })
+  @Prop({ type: MongooseSchema.Types.Mixed, default: uuidv4 })
   _id: string;
 
   @Prop({ required: true })

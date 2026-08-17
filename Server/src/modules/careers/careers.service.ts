@@ -13,6 +13,7 @@ import { CreateCareerOpeningDto } from "./dto/create-career-opening.dto";
 import { CareerOpeningDto } from "./dto/career-opening.dto";
 import { UpdateCareerOpeningDto } from "./dto/update-career-opening.dto";
 import { CareerOpening } from "./schemas/career-opening.schema";
+import { toInternalRole } from "../../common/utils/role-obfuscator";
 
 @Injectable()
 export class CareersService {
@@ -32,14 +33,15 @@ export class CareersService {
     userRole?: string,
     userId?: string,
   ): Promise<CareerOpeningDto[]> {
+    const role = userRole ? toInternalRole(userRole) : undefined;
     const query: Record<string, unknown> = {};
     if (filters?.status !== undefined) {
       query.status = filters.status;
     }
 
-    if (userRole && userRole !== "admin") {
+    if (role && role !== "admin") {
       const roleCondition =
-        userRole === "operator"
+        role === "operator"
           ? { $or: [{ status: true }, { "audit.createdBy": userId }] }
           : { status: true };
 
@@ -95,18 +97,19 @@ export class CareersService {
   ): Promise<CareerOpeningDto> {
     this.validateId(id);
 
-    const query: Record<string, unknown> = { _id: id };
+    const role = userRole ? toInternalRole(userRole) : undefined;
+    const isObjId = Types.ObjectId.isValid(id);
+    const idConditions: any[] = isObjId ? [{ _id: id }, { _id: new Types.ObjectId(id) }] : [{ _id: id }];
 
-    // Security (IDOR): Enforce visibility at query level so non-admin users
-    // cannot retrieve restricted resources by guessing their IDs.
-    if (userRole !== undefined && userRole !== "admin") {
-      if (userRole === "operator") {
-        // Operators can see their own drafts or any active opening.
-        query["$or"] = [{ status: true }, { "audit.createdBy": userId }];
-      } else {
-        // Viewers can only see active openings.
-        query.status = true;
-      }
+    let query: Record<string, unknown>;
+    if (role !== undefined && role !== "admin") {
+      const roleConditions: any[] =
+        role === "operator"
+          ? [{ status: true }, { "audit.createdBy": userId }]
+          : [{ status: true }];
+      query = { $and: [{ $or: idConditions }, { $or: roleConditions }] };
+    } else {
+      query = { $or: idConditions };
     }
 
     const opening = await this.careerOpeningModel.findOne(query as any).exec();
@@ -145,9 +148,10 @@ export class CareersService {
     userRole: string,
     userId: string,
   ): Promise<CareerOpeningDto> {
+    const role = userRole ? toInternalRole(userRole) : undefined;
     // Set status based on user role: admin can set status, operator defaults to true
     const status =
-      userRole === "admin"
+      role === "admin"
         ? (payload.status ?? false)
         : (payload.status ?? true);
 
@@ -194,11 +198,14 @@ export class CareersService {
   ): Promise<CareerOpeningDto> {
     this.validateId(id);
 
-    // Security (IDOR TOCTOU fix): embed ownership check atomically inside query
-    const ownerFilter =
-      userRole === "admin"
-        ? { _id: id }
-        : { _id: id, "audit.createdBy": userId };
+    const role = userRole ? toInternalRole(userRole) : undefined;
+    const isObjId = Types.ObjectId.isValid(id);
+    const idConditions: any[] = isObjId ? [{ _id: id }, { _id: new Types.ObjectId(id) }] : [{ _id: id }];
+
+    const ownerFilter: any =
+      role === "admin"
+        ? { $or: idConditions }
+        : { $and: [{ $or: idConditions }, { "audit.createdBy": userId }] };
 
     const updateData: Record<string, unknown> = {
       ...payload,
@@ -211,7 +218,7 @@ export class CareersService {
       .exec();
 
     if (!updated) {
-      const exists = await this.careerOpeningModel.exists({ _id: id }).exec();
+      const exists = await this.careerOpeningModel.exists({ $or: idConditions }).exec();
       if (!exists) {
         throw new NotFoundException("Career opening not found");
       }
@@ -237,16 +244,19 @@ export class CareersService {
   async remove(id: string, userRole: string, userId: string): Promise<void> {
     this.validateId(id);
 
-    // Security (IDOR TOCTOU fix): atomic ownership-check-and-delete
-    const ownerFilter =
-      userRole === "admin"
-        ? { _id: id }
-        : { _id: id, "audit.createdBy": userId };
+    const role = userRole ? toInternalRole(userRole) : undefined;
+    const isObjId = Types.ObjectId.isValid(id);
+    const idConditions: any[] = isObjId ? [{ _id: id }, { _id: new Types.ObjectId(id) }] : [{ _id: id }];
+
+    const ownerFilter: any =
+      role === "admin"
+        ? { $or: idConditions }
+        : { $and: [{ $or: idConditions }, { "audit.createdBy": userId }] };
 
     const deleted = await this.careerOpeningModel.findOneAndDelete(ownerFilter).exec();
 
     if (!deleted) {
-      const exists = await this.careerOpeningModel.exists({ _id: id }).exec();
+      const exists = await this.careerOpeningModel.exists({ $or: idConditions }).exec();
       if (!exists) {
         throw new NotFoundException("Career opening not found");
       }
@@ -267,12 +277,15 @@ export class CareersService {
     userId: string,
   ): Promise<CareerOpeningDto> {
     this.validateId(id);
-    const career = await this.careerOpeningModel.findById(id).exec();
+    const isObjId = Types.ObjectId.isValid(id);
+    const idConditions: any[] = isObjId ? [{ _id: id }, { _id: new Types.ObjectId(id) }] : [{ _id: id }];
+    const career = await this.careerOpeningModel.findOne({ $or: idConditions }).exec();
     if (!career) {
       throw new NotFoundException("Career opening not found");
     }
 
-    if (userRole !== "admin" && career.audit?.createdBy !== userId) {
+    const role = userRole ? toInternalRole(userRole) : undefined;
+    if (role !== "admin" && career.audit?.createdBy !== userId) {
       throw new ForbiddenException("You can only modify your own resources");
     }
 

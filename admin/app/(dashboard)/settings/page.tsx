@@ -65,7 +65,10 @@ export default function SettingsPage() {
 
     try {
       if (!user?.id) throw new Error('User not found');
-      await usersApi.update(user.id, { password: passwordForm.newPassword } as unknown as Parameters<typeof usersApi.update>[1]);
+      await usersApi.changePassword(user.id, {
+        currentPassword: passwordForm.currentPassword,
+        newPassword: passwordForm.newPassword,
+      });
       toast({ title: 'Success', description: 'Password changed successfully' });
       setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
     } catch (error) {

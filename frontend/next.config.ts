@@ -15,11 +15,24 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   allowedDevOrigins: ['127.0.0.1'],
   images: {
+    dangerouslyAllowLocalIP: true,
     remotePatterns: [
       {
         protocol: 'https',
         hostname: 'images.pexels.com',
         pathname: '/**',
+      },
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+        port: '3001',
+        pathname: '/uploads/**',
+      },
+      {
+        protocol: 'http',
+        hostname: '127.0.0.1',
+        port: '3001',
+        pathname: '/uploads/**',
       },
       {
         protocol: apiProtocol as 'http' | 'https',

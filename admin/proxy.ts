@@ -24,7 +24,7 @@ function buildCsp(nonce: string): string {
     "default-src 'self'",
     scriptSrc,
     "style-src 'self' 'unsafe-inline'",
-    "img-src 'self' data: blob:",
+    "img-src 'self' https: data: blob:",
     "font-src 'self'",
     `connect-src ${connectSrc}`,
     "frame-ancestors 'none'",

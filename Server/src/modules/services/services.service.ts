@@ -13,6 +13,7 @@ import { CreateServiceDto } from "./dto/create-service.dto";
 import { ServiceDto } from "./dto/service.dto";
 import { UpdateServiceDto } from "./dto/update-service.dto";
 import { Service } from "./schemas/service.schema";
+import { toInternalRole } from "../../common/utils/role-obfuscator";
 
 @Injectable()
 export class ServicesService {
@@ -31,14 +32,15 @@ export class ServicesService {
     userRole?: string,
     userId?: string,
   ): Promise<ServiceDto[]> {
+    const role = userRole ? toInternalRole(userRole) : undefined;
     const query: any = {};
     if (filters?.status !== undefined) {
       query.status = filters.status;
     }
 
-    if (userRole && userRole !== "admin") {
+    if (role && role !== "admin") {
       const roleCondition =
-        userRole === "operator"
+        role === "operator"
           ? { $or: [{ status: true }, { "audit.createdBy": userId }] }
           : { status: true };
 
@@ -89,16 +91,19 @@ export class ServicesService {
   ): Promise<ServiceDto> {
     this.validateId(id);
 
-    const query: Record<string, unknown> = { _id: id };
+    const role = userRole ? toInternalRole(userRole) : undefined;
+    const isObjId = Types.ObjectId.isValid(id);
+    const idConditions: any[] = isObjId ? [{ _id: id }, { _id: new Types.ObjectId(id) }] : [{ _id: id }];
 
-    // Security (IDOR): Enforce visibility at query level so non-admin users
-    // cannot probe or retrieve restricted services by ID.
-    if (userRole !== undefined && userRole !== "admin") {
-      if (userRole === "operator") {
-        query["$or"] = [{ status: true }, { "audit.createdBy": userId }];
-      } else {
-        query.status = true;
-      }
+    let query: Record<string, unknown>;
+    if (role !== undefined && role !== "admin") {
+      const roleConditions: any[] =
+        role === "operator"
+          ? [{ status: true }, { "audit.createdBy": userId }]
+          : [{ status: true }];
+      query = { $and: [{ $or: idConditions }, { $or: roleConditions }] };
+    } else {
+      query = { $or: idConditions };
     }
 
     const service = await this.serviceModel.findOne(query as any).exec();
@@ -136,9 +141,10 @@ export class ServicesService {
     userRole: string,
     userId: string,
   ): Promise<ServiceDto> {
+    const role = userRole ? toInternalRole(userRole) : undefined;
     // Set status based on user role: admin can set status, operator defaults to true
     const status =
-      userRole === "admin"
+      role === "admin"
         ? (payload.status ?? false)
         : (payload.status ?? true);
 
@@ -185,14 +191,14 @@ export class ServicesService {
   ): Promise<ServiceDto> {
     this.validateId(id);
 
-    // Security (IDOR TOCTOU fix): embed the ownership check atomically inside
-    // the update query instead of using a separate findById + findByIdAndUpdate.
-    // This eliminates the race window where a role change between the two DB
-    // calls could allow an escalated operation.
-    const ownerFilter =
-      userRole === "admin"
-        ? { _id: id }
-        : { _id: id, "audit.createdBy": userId };
+    const role = userRole ? toInternalRole(userRole) : undefined;
+    const isObjId = Types.ObjectId.isValid(id);
+    const idConditions: any[] = isObjId ? [{ _id: id }, { _id: new Types.ObjectId(id) }] : [{ _id: id }];
+
+    const ownerFilter: any =
+      role === "admin"
+        ? { $or: idConditions }
+        : { $and: [{ $or: idConditions }, { "audit.createdBy": userId }] };
 
     const updateData: Record<string, unknown> = {
       ...payload,
@@ -205,9 +211,7 @@ export class ServicesService {
       .exec();
 
     if (!updated) {
-      // Could be: not found, or ownership check failed. To prevent enumeration
-      // we do not distinguish between the two cases for non-admin users.
-      const exists = await this.serviceModel.exists({ _id: id }).exec();
+      const exists = await this.serviceModel.exists({ $or: idConditions }).exec();
       if (!exists) {
         throw new NotFoundException("Service not found");
       }
@@ -238,17 +242,19 @@ export class ServicesService {
   async remove(id: string, userRole: string, userId: string): Promise<void> {
     this.validateId(id);
 
-    // Security (IDOR TOCTOU fix): atomic ownership-check-and-delete so no race
-    // window exists between fetching the document and deleting it.
-    const ownerFilter =
-      userRole === "admin"
-        ? { _id: id }
-        : { _id: id, "audit.createdBy": userId };
+    const role = userRole ? toInternalRole(userRole) : undefined;
+    const isObjId = Types.ObjectId.isValid(id);
+    const idConditions: any[] = isObjId ? [{ _id: id }, { _id: new Types.ObjectId(id) }] : [{ _id: id }];
+
+    const ownerFilter: any =
+      role === "admin"
+        ? { $or: idConditions }
+        : { $and: [{ $or: idConditions }, { "audit.createdBy": userId }] };
 
     const deleted = await this.serviceModel.findOneAndDelete(ownerFilter).exec();
 
     if (!deleted) {
-      const exists = await this.serviceModel.exists({ _id: id }).exec();
+      const exists = await this.serviceModel.exists({ $or: idConditions }).exec();
       if (!exists) {
         throw new NotFoundException("Service not found");
       }
@@ -266,12 +272,15 @@ export class ServicesService {
     userId: string,
   ): Promise<ServiceDto> {
     this.validateId(id);
-    const service = await this.serviceModel.findById(id).exec();
+    const isObjId = Types.ObjectId.isValid(id);
+    const idConditions: any[] = isObjId ? [{ _id: id }, { _id: new Types.ObjectId(id) }] : [{ _id: id }];
+    const service = await this.serviceModel.findOne({ $or: idConditions }).exec();
     if (!service) {
       throw new NotFoundException("Service not found");
     }
 
-    if (userRole !== "admin" && service.audit?.createdBy !== userId) {
+    const role = userRole ? toInternalRole(userRole) : undefined;
+    if (role !== "admin" && service.audit?.createdBy !== userId) {
       throw new ForbiddenException("You can only modify your own resources");
     }
 

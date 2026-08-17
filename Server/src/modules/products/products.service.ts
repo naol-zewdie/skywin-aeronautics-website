@@ -12,6 +12,7 @@ import { CreateProductDto } from "./dto/create-product.dto";
 import { ProductDto } from "./dto/product.dto";
 import { UpdateProductDto } from "./dto/update-product.dto";
 import { Product } from "./schemas/product.schema";
+import { toInternalRole } from "../../common/utils/role-obfuscator";
 import { Parser } from "@json2csv/plainjs";
 import PDFDocument from "pdfkit";
 
@@ -29,18 +30,26 @@ export class ProductsService {
    */
   async findAll(
     filters?: {
-      search?: string;
       category?: string;
+      search?: string;
+      status?: boolean;
       minPrice?: number;
       maxPrice?: number;
-      status?: boolean;
       limit?: number;
       offset?: number;
     },
     userRole?: string,
     userId?: string,
   ): Promise<ProductDto[]> {
+    const role = userRole ? toInternalRole(userRole) : undefined;
     const query: any = {};
+
+    if (filters?.category) {
+      query.category = {
+        $regex: filters.category.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
+        $options: "i",
+      };
+    }
 
     if (filters?.search) {
       const escaped = filters.search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -48,13 +57,6 @@ export class ProductsService {
         { name: { $regex: escaped, $options: "i" } },
         { description: { $regex: escaped, $options: "i" } },
       ];
-    }
-
-    if (filters?.category) {
-      query.category = {
-        $regex: filters.category.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
-        $options: "i",
-      };
     }
 
     if (filters?.status !== undefined) {
@@ -67,9 +69,9 @@ export class ProductsService {
       if (filters.maxPrice !== undefined) query.price.$lte = filters.maxPrice;
     }
 
-    if (userRole && userRole !== "admin") {
+    if (role && role !== "admin") {
       const roleCondition =
-        userRole === "operator"
+        role === "operator"
           ? { $or: [{ status: true }, { "audit.createdBy": userId }] }
           : { status: true };
 
@@ -123,16 +125,19 @@ export class ProductsService {
   ): Promise<ProductDto> {
     this.validateId(id);
 
-    const query: Record<string, unknown> = { _id: id };
+    const role = userRole ? toInternalRole(userRole) : undefined;
+    const isObjId = Types.ObjectId.isValid(id);
+    const idConditions: any[] = isObjId ? [{ _id: id }, { _id: new Types.ObjectId(id) }] : [{ _id: id }];
 
-    // Security (IDOR): Enforce visibility at query level so non-admin users
-    // cannot probe or retrieve restricted products by ID.
-    if (userRole !== undefined && userRole !== "admin") {
-      if (userRole === "operator") {
-        query["$or"] = [{ status: true }, { "audit.createdBy": userId }];
-      } else {
-        query.status = true;
-      }
+    let query: Record<string, unknown>;
+    if (role !== undefined && role !== "admin") {
+      const roleConditions: any[] =
+        role === "operator"
+          ? [{ status: true }, { "audit.createdBy": userId }]
+          : [{ status: true }];
+      query = { $and: [{ $or: idConditions }, { $or: roleConditions }] };
+    } else {
+      query = { $or: idConditions };
     }
 
     const product = await this.productModel.findOne(query as any).exec();
@@ -172,6 +177,7 @@ export class ProductsService {
     userRole: string,
     userId: string,
   ): Promise<ProductDto> {
+    const role = userRole ? toInternalRole(userRole) : undefined;
     // Check for duplicate product name
     const escaped = payload.name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     const existingProduct = await this.productModel
@@ -185,7 +191,7 @@ export class ProductsService {
 
     // Set status based on user role: admin can set status, operator defaults to true
     const status =
-      userRole === "admin"
+      role === "admin"
         ? (payload.status ?? false)
         : (payload.status ?? true);
 
@@ -235,11 +241,14 @@ export class ProductsService {
   ): Promise<ProductDto> {
     this.validateId(id);
 
-    // Security (IDOR TOCTOU fix): embed ownership check atomically inside query
-    const ownerFilter =
-      userRole === "admin"
-        ? { _id: id }
-        : { _id: id, "audit.createdBy": userId };
+    const role = userRole ? toInternalRole(userRole) : undefined;
+    const isObjId = Types.ObjectId.isValid(id);
+    const idConditions: any[] = isObjId ? [{ _id: id }, { _id: new Types.ObjectId(id) }] : [{ _id: id }];
+
+    const ownerFilter: any =
+      role === "admin"
+        ? { $or: idConditions }
+        : { $and: [{ $or: idConditions }, { "audit.createdBy": userId }] };
 
     const updateData: Record<string, unknown> = {
       ...payload,
@@ -252,7 +261,7 @@ export class ProductsService {
       .exec();
 
     if (!updated) {
-      const exists = await this.productModel.exists({ _id: id }).exec();
+      const exists = await this.productModel.exists({ $or: idConditions }).exec();
       if (!exists) {
         throw new NotFoundException("Product not found");
       }
@@ -286,16 +295,19 @@ export class ProductsService {
   async remove(id: string, userRole: string, userId: string): Promise<void> {
     this.validateId(id);
 
-    // Security (IDOR TOCTOU fix): atomic ownership-check-and-delete
-    const ownerFilter =
-      userRole === "admin"
-        ? { _id: id }
-        : { _id: id, "audit.createdBy": userId };
+    const role = userRole ? toInternalRole(userRole) : undefined;
+    const isObjId = Types.ObjectId.isValid(id);
+    const idConditions: any[] = isObjId ? [{ _id: id }, { _id: new Types.ObjectId(id) }] : [{ _id: id }];
+
+    const ownerFilter: any =
+      role === "admin"
+        ? { $or: idConditions }
+        : { $and: [{ $or: idConditions }, { "audit.createdBy": userId }] };
 
     const deleted = await this.productModel.findOneAndDelete(ownerFilter).exec();
 
     if (!deleted) {
-      const exists = await this.productModel.exists({ _id: id }).exec();
+      const exists = await this.productModel.exists({ $or: idConditions }).exec();
       if (!exists) {
         throw new NotFoundException("Product not found");
       }
@@ -313,12 +325,15 @@ export class ProductsService {
     userId: string,
   ): Promise<ProductDto> {
     this.validateId(id);
-    const product = await this.productModel.findById(id).exec();
+    const isObjId = Types.ObjectId.isValid(id);
+    const idConditions: any[] = isObjId ? [{ _id: id }, { _id: new Types.ObjectId(id) }] : [{ _id: id }];
+    const product = await this.productModel.findOne({ $or: idConditions }).exec();
     if (!product) {
       throw new NotFoundException("Product not found");
     }
 
-    if (userRole !== "admin" && product.audit?.createdBy !== userId) {
+    const role = userRole ? toInternalRole(userRole) : undefined;
+    if (role !== "admin" && product.audit?.createdBy !== userId) {
       throw new ForbiddenException("You can only modify your own resources");
     }
 

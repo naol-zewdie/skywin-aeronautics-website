@@ -25,6 +25,8 @@ const UPLOAD_DIR = join(process.cwd(), "uploads");
 const MIME_TO_EXT: Record<string, string> = {
   "image/jpeg": ".jpg",
   "image/png": ".png",
+  "image/x-png": ".png",
+  "image/apng": ".png",
   "image/gif": ".gif",
   "image/webp": ".webp",
 };
@@ -38,6 +40,16 @@ const IMAGE_SIGNATURES: Array<{ mime: string; bytes: Buffer; offset: number }> =
       bytes: Buffer.from([0x89, 0x50, 0x4e, 0x47]),
       offset: 0,
     },
+    {
+      mime: "image/x-png",
+      bytes: Buffer.from([0x89, 0x50, 0x4e, 0x47]),
+      offset: 0,
+    },
+    {
+      mime: "image/apng",
+      bytes: Buffer.from([0x89, 0x50, 0x4e, 0x47]),
+      offset: 0,
+    },
     { mime: "image/gif", bytes: Buffer.from("GIF87a"), offset: 0 },
     { mime: "image/gif", bytes: Buffer.from("GIF89a"), offset: 0 },
     { mime: "image/webp", bytes: Buffer.from("RIFF"), offset: 0 },
@@ -45,8 +57,9 @@ const IMAGE_SIGNATURES: Array<{ mime: string; bytes: Buffer; offset: number }> =
 
 function validateImageMagicBytes(buffer: Buffer, claimedMime: string): boolean {
   if (buffer.length < 12) return false;
+  const mimeLower = claimedMime.toLowerCase();
   for (const sig of IMAGE_SIGNATURES) {
-    if (sig.mime === claimedMime) {
+    if (sig.mime === mimeLower) {
       if (sig.mime === "image/webp") {
         // WebP: starts with RIFF....WEBP
         if (
@@ -78,18 +91,15 @@ function sanitizeAndTruncateImageBuffer(buffer: Buffer, mimetype: string): Buffe
   // 1. Scan for forbidden script tags or executable signatures
   const textContent = buffer.toString("binary");
   const FORBIDDEN_PATTERNS = [
-    /<\s*script/i,
+    /<\s*script[\s>]/i,
     /<\s*\?php/i,
-    /<\s*html/i,
-    /<\s*svg/i,
+    /<\s*html[\s>]/i,
+    /<\s*svg[\s>]/i,
     /javascript\s*:/i,
-    /onerror\s*=/i,
-    /onload\s*=/i,
     /<!ENTITY/i,
-    /<\s*iframe/i,
-    /<\s*object/i,
-    /<\s*embed/i,
-    /eval\s*\(/i,
+    /<\s*iframe[\s>]/i,
+    /<\s*object[\s>]/i,
+    /<\s*embed[\s>]/i,
   ];
 
   for (const pattern of FORBIDDEN_PATTERNS) {
@@ -108,11 +118,9 @@ function sanitizeAndTruncateImageBuffer(buffer: Buffer, mimetype: string): Buffe
       return buffer.subarray(0, eoiIndex + 2);
     }
   } else if (mimetype === "image/png") {
-    // PNG ends with IEND chunk: 49 45 4E 44 AE 42 60 82
-    const iendMarker = Buffer.from([
-      0x49, 0x45, 0x4e, 0x44, 0xae, 0x42, 0x60, 0x82,
-    ]);
-    const iendIndex = buffer.lastIndexOf(iendMarker);
+    // PNG ends with IEND chunk header: 49 45 4E 44 followed by 4-byte CRC
+    const iendChunkHeader = Buffer.from([0x49, 0x45, 0x4e, 0x44]);
+    const iendIndex = buffer.lastIndexOf(iendChunkHeader);
     if (iendIndex !== -1 && iendIndex + 8 < buffer.length) {
       return buffer.subarray(0, iendIndex + 8);
     }
@@ -151,7 +159,7 @@ export class UploadController {
    * Accepts a single image upload (JPEG, PNG, GIF, or WebP).
    *
    * Security & Sanitization:
-   * - File size is capped at 5 MB (well within the 10 MB body-parser limit).
+   * - File size is capped at 10 MB.
    * - MIME type is checked via both the `Content-Type` header and magic-byte
    *   inspection of the raw buffer — preventing MIME confusion attacks.
    * - Deep binary sanitization checks for embedded scripts or HTML/PHP code.
@@ -163,10 +171,10 @@ export class UploadController {
     FileInterceptor("file", {
       storage,
       limits: {
-        fileSize: 5 * 1024 * 1024,
+        fileSize: 10 * 1024 * 1024,
       },
       fileFilter: (req, file, callback) => {
-        if (!file.mimetype.match(/\/(jpg|jpeg|png|gif|webp)$/)) {
+        if (!file.mimetype.match(/\/(jpg|jpeg|png|x-png|apng|gif|webp)$/i)) {
           return callback(
             new BadRequestException("Only image files are allowed"),
             false,

@@ -38,8 +38,9 @@ export default function NewProductPage() {
       const uploadResult = await uploadApi.uploadImage(file);
       setForm({ ...form, image: uploadResult.url, imageUrl: '' });
       toast({ title: 'Success', description: 'Image uploaded successfully' });
-    } catch {
-      toast({ title: 'Error', description: 'Failed to upload image', variant: 'destructive' });
+    } catch (error: any) {
+      const msg = error?.response?.data?.message || 'Failed to upload image';
+      toast({ title: 'Error', description: msg, variant: 'destructive' });
       setSelectedFile(null);
     } finally {
       setIsUploading(false);

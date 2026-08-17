@@ -52,8 +52,9 @@ export default function EditProductPage() {
       const uploadResult = await uploadApi.uploadImage(file);
       setForm({ ...form, image: uploadResult.url, imageUrl: '' });
       toast({ title: 'Success', description: 'Image uploaded successfully' });
-    } catch {
-      toast({ title: 'Error', description: 'Failed to upload image', variant: 'destructive' });
+    } catch (error: any) {
+      const msg = error?.response?.data?.message || 'Failed to upload image';
+      toast({ title: 'Error', description: msg, variant: 'destructive' });
       setSelectedFile(null);
     } finally {
       setIsUploading(false);
@@ -107,7 +108,7 @@ export default function EditProductPage() {
     setIsSaving(true);
     try {
       const { imageUrl, ...data } = form;
-      const productData: any = { ...data, image: form.image || null };
+      const productData: any = { ...data, image: form.image || undefined };
       await productsApi.update(params.id as string, productData);
       toast({ title: 'Success', description: 'Product updated successfully' });
       router.push('/products');
