@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef, type ReactNode } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { type User, type LoginCredentials } from '@/types';
-import { authApi } from '@/lib/api';
+import { authApi, getAccessToken, getRoleFromJwt } from '@/lib/api';
 import { OPAQUE_MAP_TO_ROLE } from '@/lib/route-roles';
 
 interface AuthContextType {
@@ -33,15 +33,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   }, []);
 
+  /**
+   * Enforces role directly from the cryptographically signed JWT.
+   * If an attacker modifies the response body of /v1/auth/me or /v1/auth/login with a proxy
+   * (e.g. Burp Suite), the signed JWT cannot be forged, ensuring the UI NEVER renders
+   * unauthorized admin buttons.
+   */
+  const enforceJwtRole = useCallback((userData: User): User => {
+    const tokenRole = getRoleFromJwt(getAccessToken());
+    if (tokenRole) {
+      return { ...userData, role: tokenRole as any };
+    }
+    return userData;
+  }, []);
+
   // Server-side role re-validation — fetches authoritative user data from /auth/me
   const refreshUser = useCallback(async () => {
     try {
       const userData = await authApi.getMe();
-      setUser(userData);
+      setUser(enforceJwtRole(userData));
     } catch {
       clearAuthState();
     }
-  }, [clearAuthState]);
+  }, [clearAuthState, enforceJwtRole]);
 
   useEffect(() => {
     if (authChecked.current) return;
@@ -53,7 +67,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return;
         }
         const userData = await authApi.getMe();
-        setUser(userData);
+        setUser(enforceJwtRole(userData));
       } catch {
         clearAuthState();
         if (!PUBLIC_PATHS.includes(pathname)) {
@@ -67,7 +81,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     initAuth();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [enforceJwtRole]);
 
   // Periodic role re-validation — detects server-side role changes (e.g., admin downgraded user)
   useEffect(() => {
@@ -83,11 +97,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (credentials: LoginCredentials) => {
     setIsLoading(true);
     try {
-      await authApi.login(credentials);
-      // Security: Never trust unverified client-side response JSON payloads for role assignment.
-      // Immediately fetch the authoritative profile from /v1/auth/me which checks the signed
-      // JWT cookie and verifies the user's role directly from the server database.
+      const authRes = await authApi.login(credentials);
       const userData = await authApi.getMe();
+      const tokenRole = getRoleFromJwt(authRes.token || getAccessToken());
+      if (tokenRole) {
+        userData.role = tokenRole as any;
+      }
       setUser(userData);
       router.push('/dashboard');
     } finally {

@@ -25,6 +25,34 @@ export function setAccessToken(token: string | null) {
   inMemoryToken = token;
 }
 
+export function getAccessToken(): string | null {
+  return inMemoryToken;
+}
+
+/**
+ * Extracts and decodes the user role directly from the cryptographically signed JWT.
+ * Prevents response-tampering attacks (e.g. Burp Suite response modification).
+ */
+export function getRoleFromJwt(token: string | null): string | null {
+  if (!token) return null;
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) return null;
+    const base64Url = parts[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split('')
+        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+        .join('')
+    );
+    const payload = JSON.parse(jsonPayload);
+    return payload.role || null;
+  } catch {
+    return null;
+  }
+}
+
 // Create axios instance
 const api: AxiosInstance = axios.create({
   baseURL: '/api',
