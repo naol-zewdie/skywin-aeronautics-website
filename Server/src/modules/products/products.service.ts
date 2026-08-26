@@ -25,7 +25,7 @@ export class ProductsService {
 
   /**
    * Returns a paginated list of products, filtered by the provided criteria.
-   * Role-based visibility is enforced: viewers only see active products,
+   * Role-based visibility is enforced: operators only see their own active products,
    * operators also see their own inactive ones, admins see all.
    */
   async findAll(
@@ -45,14 +45,15 @@ export class ProductsService {
     const query: any = {};
 
     if (filters?.category) {
+      const escapedCat = filters.category.slice(0, 100).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
       query.category = {
-        $regex: filters.category.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
+        $regex: escapedCat,
         $options: "i",
       };
     }
 
     if (filters?.search) {
-      const escaped = filters.search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const escaped = filters.search.slice(0, 200).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
       query.$or = [
         { name: { $regex: escaped, $options: "i" } },
         { description: { $regex: escaped, $options: "i" } },
@@ -70,10 +71,10 @@ export class ProductsService {
     }
 
     if (role && role !== "admin") {
-      const roleCondition =
-        role === "operator"
-          ? { $or: [{ status: true }, { "audit.createdBy": userId }] }
-          : { status: true };
+      if (role !== "operator") {
+        throw new ForbiddenException("Access denied: Insufficient permissions");
+      }
+      const roleCondition = { $or: [{ status: true }, { "audit.createdBy": userId }] };
 
       if (query.$or && roleCondition.$or) {
         query.$and = [{ $or: query.$or }, roleCondition];
@@ -83,8 +84,8 @@ export class ProductsService {
       }
     }
 
-    const limit = filters?.limit ?? 20;
-    const offset = filters?.offset ?? 0;
+    const limit = Math.min(Math.max(filters?.limit ?? 20, 1), 10000);
+    const offset = Math.max(filters?.offset ?? 0, 0);
     const products = await this.productModel
       .find(query)
       .skip(offset)
@@ -131,10 +132,10 @@ export class ProductsService {
 
     let query: Record<string, unknown>;
     if (role !== undefined && role !== "admin") {
-      const roleConditions: any[] =
-        role === "operator"
-          ? [{ status: true }, { "audit.createdBy": userId }]
-          : [{ status: true }];
+      if (role !== "operator") {
+        throw new ForbiddenException("Access denied: Insufficient permissions");
+      }
+      const roleConditions: any[] = [{ status: true }, { "audit.createdBy": userId }];
       query = { $and: [{ $or: idConditions }, { $or: roleConditions }] };
     } else {
       query = { $or: idConditions };
@@ -394,7 +395,7 @@ export class ProductsService {
       const record: Record<string, string> = {};
       for (const field of fields) {
         const str = String((p as unknown as Record<string, unknown>)[field] ?? "");
-        record[field] = /^[=+\-@\t\r]/.test(str) ? "'" + str : str;
+        record[field] = /^\s*[=+\-@\t\r|%]/.test(str) ? "'" + str : str;
       }
       return record;
     });

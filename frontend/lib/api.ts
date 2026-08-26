@@ -119,17 +119,16 @@ class ApiClient {
 
   private getImageUrl(imagePath?: string): string {
     if (!imagePath) return '/drone.jpg';
-    if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
-      return imagePath;
+    const trimmed = imagePath.trim();
+    if (trimmed.startsWith('https://') || trimmed.startsWith('http://')) {
+      return trimmed;
     }
-    const baseUrl = getApiBaseUrl();
-    const path = imagePath.startsWith('/') ? imagePath : `/${imagePath}`;
-    if (baseUrl.startsWith('/')) {
-      // In browser, return proxied path which Next will forward to backend
+    if (/^[a-zA-Z0-9_\-\./]+$/.test(trimmed)) {
+      const baseUrl = getApiBaseUrl();
+      const path = trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
       return `${baseUrl}${path}`;
     }
-    // Absolute backend base (e.g. http://localhost:3001)
-    return `${baseUrl}${path}`;
+    return '/drone.jpg';
   }
 
   async getServices(): Promise<FrontendService[]> {

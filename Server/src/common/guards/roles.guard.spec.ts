@@ -23,7 +23,7 @@ describe("RolesGuard", () => {
   it("allows access when no roles are required", () => {
     jest.spyOn(reflector, "getAllAndOverride").mockReturnValue(undefined);
 
-    expect(guard.canActivate(createContext({ role: "viewer" }))).toBe(true);
+    expect(guard.canActivate(createContext({ role: "operator" }))).toBe(true);
   });
 
   it("allows access when user has a required role", () => {
@@ -39,7 +39,7 @@ describe("RolesGuard", () => {
       .spyOn(reflector, "getAllAndOverride")
       .mockReturnValue([Role.ADMIN, Role.OPERATOR]);
 
-    expect(() => guard.canActivate(createContext({ role: "viewer" }))).toThrow(
+    expect(() => guard.canActivate(createContext({ role: "invalid-role" }))).toThrow(
       ForbiddenException,
     );
   });

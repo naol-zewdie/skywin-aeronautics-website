@@ -23,7 +23,7 @@ export default function EditUserPage() {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [form, setForm] = useState({ fullName: '', email: '', role: 'viewer' as 'admin' | 'operator' | 'viewer', status: true });
+  const [form, setForm] = useState({ fullName: '', email: '', role: 'operator' as 'admin' | 'operator', status: true });
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -99,11 +99,10 @@ export default function EditUserPage() {
               {!isTargetAdmin && (
                 <div className="space-y-2">
                   <Label>Role</Label>
-                  <Select value={form.role} onValueChange={(value: 'admin' | 'operator' | 'viewer') => setForm({ ...form, role: value })}>
+                  <Select value={form.role} onValueChange={(value: 'admin' | 'operator') => setForm({ ...form, role: value })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="operator">Operator</SelectItem>
-                      <SelectItem value="viewer">Viewer</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

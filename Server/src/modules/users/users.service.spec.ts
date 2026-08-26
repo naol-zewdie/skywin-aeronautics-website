@@ -247,7 +247,7 @@ describe("UsersService", () => {
     });
 
     it("should validate role values", async () => {
-      const validRoles = ["admin", "operator", "viewer"];
+      const validRoles = ["admin", "operator"];
       expect(validRoles).toContain("admin");
       expect(validRoles).toContain("operator");
       expect(validRoles).not.toContain("invalid-role");

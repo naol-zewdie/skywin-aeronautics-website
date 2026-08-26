@@ -50,7 +50,7 @@ export class PostsController {
   constructor(private readonly postsService: PostsService) {}
 
   @Get()
-  @Roles(Role.ADMIN, Role.OPERATOR, Role.VIEWER)
+  @Roles(Role.ADMIN, Role.OPERATOR)
   @ApiOperation({
     summary: "List all posts with optional filters",
     description:
@@ -106,7 +106,7 @@ export class PostsController {
   }
 
   @Get("by-type/:type")
-  @Roles(Role.ADMIN, Role.OPERATOR, Role.VIEWER)
+  @Roles(Role.ADMIN, Role.OPERATOR)
   @ApiOperation({ summary: "Get posts by content type" })
   @ApiParam({ name: "type", enum: ContentType, description: "Content type" })
   @ApiOkResponse({ type: PostDto, isArray: true })
@@ -166,7 +166,7 @@ export class PostsController {
   }
 
   @Get(":id")
-  @Roles(Role.ADMIN, Role.OPERATOR, Role.VIEWER)
+  @Roles(Role.ADMIN, Role.OPERATOR)
   @ApiOperation({ summary: "Get post by id" })
   @ApiParam({ name: "id", type: "string", description: "Post ID" })
   @ApiOkResponse({ type: PostDto })

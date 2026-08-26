@@ -32,11 +32,11 @@ export class CreateUserDto {
   @ApiProperty({
     example: "admin",
     description: "User role",
-    enum: ["admin", "operator", "viewer"],
+    enum: ["admin", "operator"],
   })
   @IsString({ message: "Role must be a string" })
-  @IsIn(["admin", "operator", "viewer"], {
-    message: "Role must be admin, operator, or viewer",
+  @IsIn(["admin", "operator"], {
+    message: "Role must be admin or operator",
   })
   role: string;
 

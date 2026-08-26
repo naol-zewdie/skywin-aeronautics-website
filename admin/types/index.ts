@@ -2,7 +2,7 @@ export interface User {
   id: string;
   fullName: string;
   email: string;
-  role: 'admin' | 'operator' | 'viewer';
+  role: 'admin' | 'operator';
   status: boolean;
   audit?: AuditInfo;
 }

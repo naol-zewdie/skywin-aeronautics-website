@@ -529,7 +529,7 @@ async function testUsers(): Promise<void> {
     const res = await client.post("/users", {
       fullName: "Test User",
       email: `testuser${Date.now()}@test.com`,
-      role: "viewer",
+      role: "operator",
       password: "TestPass123!",
     });
     if (res.status === 201 && res.data.id) {
@@ -544,7 +544,7 @@ async function testUsers(): Promise<void> {
     const res = await client.post("/users", {
       fullName: "Test User",
       email: "test@test.com",
-      role: "viewer",
+      role: "operator",
       password: "weak",
     });
     return { success: res.status === 400, status: res.status };
@@ -555,7 +555,7 @@ async function testUsers(): Promise<void> {
     const res = await client.post("/users", {
       fullName: "Test User",
       email: "invalid-email",
-      role: "viewer",
+      role: "operator",
       password: "TestPass123!",
     });
     return { success: res.status === 400, status: res.status };
@@ -596,19 +596,9 @@ async function testUsers(): Promise<void> {
 async function testRolesAndSecurity(): Promise<void> {
   console.log("\n=== ROLES & SECURITY TESTS ===\n");
 
-  // Test Viewer Role - can only view
-  await runTest("Security: Viewer can access GET endpoints", async () => {
-    // Create a viewer user and login
-    const viewerEmail = `viewer${Date.now()}@test.com`;
-    await client.post("/users", {
-      fullName: "Viewer User",
-      email: viewerEmail,
-      role: "viewer",
-      password: "ViewerPass123!",
-    });
-
-    // Note: This would need actual implementation with proper user creation
-    // For now, we're testing with existing fallback users
+  // Test Operator Role - can access GET endpoints
+  await runTest("Security: Operator can access GET endpoints", async () => {
+    // Operators have access to all content endpoints
     const res = await client.get("/posts");
     return { success: res.status === 200, status: res.status };
   });

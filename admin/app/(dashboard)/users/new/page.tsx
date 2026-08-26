@@ -18,7 +18,7 @@ export default function NewUserPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
-  const [form, setForm] = useState({ fullName: '', email: '', role: 'viewer' as 'admin' | 'operator' | 'viewer', password: '', status: true });
+  const [form, setForm] = useState({ fullName: '', email: '', role: 'operator' as 'admin' | 'operator', password: '', status: true });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -64,11 +64,10 @@ export default function NewUserPage() {
               <div className="space-y-2"><Label htmlFor="password">Password</Label><Input id="password" type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} required minLength={8} /><p className="text-xs text-muted-foreground">8+ characters, uppercase, lowercase, number required</p></div>
               <div className="space-y-2">
                 <Label>Role</Label>
-                <Select value={form.role} onValueChange={(value: 'admin' | 'operator' | 'viewer') => setForm({ ...form, role: value })}>
+                <Select value={form.role} onValueChange={(value: 'admin' | 'operator') => setForm({ ...form, role: value })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="operator">Operator</SelectItem>
-                    <SelectItem value="viewer">Viewer</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

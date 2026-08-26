@@ -24,7 +24,7 @@ export class CareersService {
 
   /**
    * Returns a paginated list of career openings.
-   * Role-based visibility is applied: viewers only see active openings,
+   * Role-based visibility is applied: operators only see active openings,
    * operators also see their own inactive ones, admins see everything.
    */
 
@@ -40,10 +40,10 @@ export class CareersService {
     }
 
     if (role && role !== "admin") {
-      const roleCondition =
-        role === "operator"
-          ? { $or: [{ status: true }, { "audit.createdBy": userId }] }
-          : { status: true };
+      if (role !== "operator") {
+        throw new ForbiddenException("Access denied: Insufficient permissions");
+      }
+      const roleCondition = { $or: [{ status: true }, { "audit.createdBy": userId }] };
 
       if (query.$or && roleCondition.$or) {
         query.$and = [{ $or: query.$or }, roleCondition];
@@ -53,8 +53,8 @@ export class CareersService {
       }
     }
 
-    const limit = filters?.limit ?? 20;
-    const offset = filters?.offset ?? 0;
+    const limit = Math.min(Math.max(filters?.limit ?? 20, 1), 10000);
+    const offset = Math.max(filters?.offset ?? 0, 0);
     const openings = await this.careerOpeningModel
       .find(query)
       .skip(offset)
@@ -82,7 +82,7 @@ export class CareersService {
    * Returns a single career opening by ID.
    *
    * Security (IDOR): Applies role-based visibility at the MongoDB query level.
-   * Viewers may only retrieve active (status=true) openings. Operators may also
+   * Operators may only retrieve active (status=true) openings they did not create.
    * retrieve drafts they created. Admins see all openings.
    * Using a query-level filter prevents timing-based enumeration attacks that
    * would arise from fetching first and then checking ownership.
@@ -103,10 +103,10 @@ export class CareersService {
 
     let query: Record<string, unknown>;
     if (role !== undefined && role !== "admin") {
-      const roleConditions: any[] =
-        role === "operator"
-          ? [{ status: true }, { "audit.createdBy": userId }]
-          : [{ status: true }];
+      if (role !== "operator") {
+        throw new ForbiddenException("Access denied: Insufficient permissions");
+      }
+      const roleConditions: any[] = [{ status: true }, { "audit.createdBy": userId }];
       query = { $and: [{ $or: idConditions }, { $or: roleConditions }] };
     } else {
       query = { $or: idConditions };
@@ -344,7 +344,7 @@ export class CareersService {
       const record: Record<string, string> = {};
       for (const field of fields) {
         const str = String((o as unknown as Record<string, unknown>)[field] ?? "");
-        record[field] = /^[=+\-@\t\r]/.test(str) ? "'" + str : str;
+        record[field] = /^\s*[=+\-@\t\r|%]/.test(str) ? "'" + str : str;
       }
       return record;
     });

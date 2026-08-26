@@ -1,4 +1,4 @@
-export type UserRole = 'r_9a3f' | 'r_4b7e' | 'r_1c2d' | 'admin' | 'operator' | 'viewer';
+export type UserRole = 'r_9a3f' | 'r_4b7e' | 'admin' | 'operator';
 
 /** Route-prefix → allowed roles. Order matters: more specific prefixes first. */
 const ROUTE_RULES: { prefix: string; roles: UserRole[] }[] = [
@@ -8,7 +8,7 @@ const ROUTE_RULES: { prefix: string; roles: UserRole[] }[] = [
   { prefix: '/services', roles: ['r_9a3f', 'r_4b7e', 'admin', 'operator'] },
   { prefix: '/careers', roles: ['r_9a3f', 'r_4b7e', 'admin', 'operator'] },
   { prefix: '/posts', roles: ['r_9a3f', 'r_4b7e', 'admin', 'operator'] },
-  { prefix: '/dashboard', roles: ['r_9a3f', 'r_4b7e', 'r_1c2d', 'admin', 'operator', 'viewer'] },
+  { prefix: '/dashboard', roles: ['r_9a3f', 'r_4b7e', 'admin', 'operator'] },
 ];
 
 export function getRequiredRoles(pathname: string): UserRole[] {
@@ -17,19 +17,17 @@ export function getRequiredRoles(pathname: string): UserRole[] {
       return rule.roles;
     }
   }
-  return ['r_9a3f', 'r_4b7e', 'r_1c2d', 'admin', 'operator', 'viewer'];
+  return ['r_9a3f', 'r_4b7e', 'admin', 'operator'];
 }
 
 export const ROLE_MAP_TO_OPAQUE: Record<string, string> = {
   admin: 'r_9a3f',
   operator: 'r_4b7e',
-  viewer: 'r_1c2d',
 };
 
 export const OPAQUE_MAP_TO_ROLE: Record<string, string> = {
   r_9a3f: 'admin',
   r_4b7e: 'operator',
-  r_1c2d: 'viewer',
 };
 
 export function normalizeRole(role: string): string {

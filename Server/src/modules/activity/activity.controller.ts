@@ -76,8 +76,8 @@ export class ActivityController {
   }
 
   @Get("stats")
-  @Roles(Role.ADMIN, Role.OPERATOR, Role.VIEWER)
-  @ApiOperation({ summary: "Get dashboard statistics" })
+  @Roles(Role.ADMIN)
+  @ApiOperation({ summary: "Get dashboard statistics (Admin only)" })
   async getStats(): Promise<DashboardStats> {
     return this.activityService.getStats();
   }
@@ -86,8 +86,14 @@ export class ActivityController {
   @Roles(Role.ADMIN, Role.OPERATOR)
   @ApiOperation({ summary: "Get recent activity" })
   @ApiQuery({ name: "limit", required: false, type: Number })
-  async getRecent(@Query("limit") limit?: string): Promise<Activity[]> {
+  async getRecent(
+    @Req() req: AuthenticatedRequest,
+    @Query("limit") limit?: string,
+  ): Promise<Activity[]> {
+    // Operators only see their own activity; admins see all.
+    const userId = req.user?.role === Role.ADMIN ? undefined : req.user?.userId;
     return this.activityService.findAll({
+      userId,
       limit: limit ? Math.min(Math.max(parseInt(limit, 10), 1), 100) : 20,
     });
   }

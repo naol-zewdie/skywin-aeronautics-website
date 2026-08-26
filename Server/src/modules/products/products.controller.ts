@@ -49,7 +49,7 @@ export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}
 
   @Get()
-  @Roles(Role.ADMIN, Role.OPERATOR, Role.VIEWER)
+  @Roles(Role.ADMIN, Role.OPERATOR)
   @ApiOperation({
     summary: "List all products with optional search and filter",
   })
@@ -111,16 +111,16 @@ export class ProductsController {
     @Query("search") search?: string,
     @Query("category") category?: string,
   ): Promise<string> {
-    const products = await this.productsService.findAll({
-      search,
-      category,
-      limit: MAX_EXPORT_RECORDS,
-    });
-    const filtered =
-      req.user?.role !== "admin"
-        ? products.filter((p) => p.audit?.createdBy === req.user?.userId)
-        : products;
-    const csv = this.productsService.exportToCsv(filtered);
+    const products = await this.productsService.findAll(
+      {
+        search,
+        category,
+        limit: MAX_EXPORT_RECORDS,
+      },
+      req.user?.role,
+      req.user?.userId,
+    );
+    const csv = this.productsService.exportToCsv(products);
     res.setHeader("Content-Type", "text/csv");
     res.setHeader("Content-Disposition", "attachment; filename=products.csv");
     return csv;
@@ -137,23 +137,23 @@ export class ProductsController {
     @Query("search") search?: string,
     @Query("category") category?: string,
   ): Promise<Buffer> {
-    const products = await this.productsService.findAll({
-      search,
-      category,
-      limit: MAX_EXPORT_RECORDS,
-    });
-    const filtered =
-      req.user?.role !== "admin"
-        ? products.filter((p) => p.audit?.createdBy === req.user?.userId)
-        : products;
-    const pdfBuffer = await this.productsService.exportToPdf(filtered);
+    const products = await this.productsService.findAll(
+      {
+        search,
+        category,
+        limit: MAX_EXPORT_RECORDS,
+      },
+      req.user?.role,
+      req.user?.userId,
+    );
+    const pdfBuffer = await this.productsService.exportToPdf(products);
     res.setHeader("Content-Type", "application/pdf");
     res.setHeader("Content-Disposition", "attachment; filename=products.pdf");
     return pdfBuffer;
   }
 
   @Get(":id")
-  @Roles(Role.ADMIN, Role.OPERATOR, Role.VIEWER)
+  @Roles(Role.ADMIN, Role.OPERATOR)
   @ApiOperation({ summary: "Get product by id" })
   @ApiParam({ name: "id", type: "string", description: "Product ID" })
   @ApiOkResponse({ type: ProductDto })

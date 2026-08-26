@@ -47,7 +47,7 @@ export class ServicesController {
   constructor(private readonly servicesService: ServicesService) {}
 
   @Get()
-  @Roles(Role.ADMIN, Role.OPERATOR, Role.VIEWER)
+  @Roles(Role.ADMIN, Role.OPERATOR)
   @ApiOperation({ summary: "List all services" })
   @ApiOkResponse({ type: ServiceDto, isArray: true })
   getServices(@Req() req: AuthenticatedRequest): Promise<ServiceDto[]> {
@@ -117,7 +117,7 @@ export class ServicesController {
   }
 
   @Get(":id")
-  @Roles(Role.ADMIN, Role.OPERATOR, Role.VIEWER)
+  @Roles(Role.ADMIN, Role.OPERATOR)
   @ApiOperation({ summary: "Get service by id" })
   @ApiParam({ name: "id", type: "string", description: "Service ID" })
   @ApiOkResponse({ type: ServiceDto })

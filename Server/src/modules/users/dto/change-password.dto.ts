@@ -4,6 +4,7 @@ import { ApiProperty } from "@nestjs/swagger";
 export class ChangePasswordDto {
   @ApiProperty({ description: "The current password of the user" })
   @IsString()
+  @MaxLength(100, { message: "Password cannot exceed 100 characters" })
   currentPassword: string;
 
   @ApiProperty({ description: "The new password to set" })

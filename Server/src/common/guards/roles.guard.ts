@@ -12,7 +12,6 @@ import { toInternalRole } from "../utils/role-obfuscator";
 export enum Role {
   ADMIN = "admin",
   OPERATOR = "operator",
-  VIEWER = "viewer",
 }
 
 /** Metadata key used to store required roles on route handlers. */

@@ -147,7 +147,7 @@ export class UsersController {
 
   @Post(":id/change-password")
   @HttpCode(204)
-  @Roles(Role.ADMIN, Role.OPERATOR, Role.VIEWER)
+  @Roles(Role.ADMIN, Role.OPERATOR)
   @ApiOperation({ summary: "Change password" })
   @ApiParam({ name: "id", type: "string", description: "User ID" })
   @ApiNoContentResponse({ description: "Password changed successfully" })

@@ -6,7 +6,7 @@ export interface VerifiedToken {
   sub: string;
 }
 
-const VALID_ROLES: UserRole[] = ['r_9a3f', 'r_4b7e', 'r_1c2d', 'admin', 'operator', 'viewer'];
+const VALID_ROLES: UserRole[] = ['r_9a3f', 'r_4b7e', 'admin', 'operator'];
 
 export async function verifyAccessToken(token: string): Promise<VerifiedToken | null> {
   const secret = process.env.JWT_SECRET;

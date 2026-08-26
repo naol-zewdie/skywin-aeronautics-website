@@ -166,7 +166,7 @@ export class PublicController {
   /**
    * Returns a single active post by ID for unauthenticated public access.
    *
-   * Security (IDOR Gap B): Passes userRole='viewer' into postsService.findOne
+   * Security (IDOR Gap B): Passes userRole='public' into postsService.findOne
    * so the status=true filter is applied at the MongoDB query level — not as
    * an application-layer check after the data has been fetched. This prevents:
    *   1. View-counter inflation on inactive/draft posts.
@@ -177,8 +177,8 @@ export class PublicController {
    * real createdBy value, which ensures only status=true posts are returned.
    */
   async getActivePost(@Param("id") id: string) {
-    // 'viewer' role + non-existent userId → only status=true posts returned.
-    const post = await this.postsService.findOne(id, "viewer", "__public__");
+    // 'public' sentinel role + non-existent userId → only status=true posts returned.
+    const post = await this.postsService.findOne(id, "public", "__public__");
     return sanitizePublic(post as unknown as Record<string, unknown>);
   }
 }

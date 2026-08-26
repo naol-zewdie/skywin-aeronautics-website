@@ -24,7 +24,7 @@ export class ServicesService {
 
   /**
    * Returns a paginated list of services.
-   * Viewers only see active services. Operators also see their own inactive ones.
+   * Operators see their own inactive services; admins see all.
    * Admins see everything.
    */
   async findAll(
@@ -39,10 +39,10 @@ export class ServicesService {
     }
 
     if (role && role !== "admin") {
-      const roleCondition =
-        role === "operator"
-          ? { $or: [{ status: true }, { "audit.createdBy": userId }] }
-          : { status: true };
+      if (role !== "operator") {
+        throw new ForbiddenException("Access denied: Insufficient permissions");
+      }
+      const roleCondition = { $or: [{ status: true }, { "audit.createdBy": userId }] };
 
       if (query.$or && roleCondition.$or) {
         query.$and = [{ $or: query.$or }, roleCondition];
@@ -52,8 +52,8 @@ export class ServicesService {
       }
     }
 
-    const limit = filters?.limit ?? 20;
-    const offset = filters?.offset ?? 0;
+    const limit = Math.min(Math.max(filters?.limit ?? 20, 1), 10000);
+    const offset = Math.max(filters?.offset ?? 0, 0);
     const services = await this.serviceModel
       .find(query)
       .skip(offset)
@@ -97,10 +97,10 @@ export class ServicesService {
 
     let query: Record<string, unknown>;
     if (role !== undefined && role !== "admin") {
-      const roleConditions: any[] =
-        role === "operator"
-          ? [{ status: true }, { "audit.createdBy": userId }]
-          : [{ status: true }];
+      if (role !== "operator") {
+        throw new ForbiddenException("Access denied: Insufficient permissions");
+      }
+      const roleConditions: any[] = [{ status: true }, { "audit.createdBy": userId }];
       query = { $and: [{ $or: idConditions }, { $or: roleConditions }] };
     } else {
       query = { $or: idConditions };
@@ -329,7 +329,7 @@ export class ServicesService {
       const record: Record<string, string> = {};
       for (const field of fields) {
         const str = String((s as unknown as Record<string, unknown>)[field] ?? "");
-        record[field] = /^[=+\-@\t\r]/.test(str) ? "'" + str : str;
+        record[field] = /^\s*[=+\-@\t\r|%]/.test(str) ? "'" + str : str;
       }
       return record;
     });

@@ -24,7 +24,7 @@ export class PostsService {
 
   /**
    * Returns a paginated list of posts, filtered by the provided criteria.
-   * Role-based visibility is applied: viewers only see published posts,
+   * Role-based visibility is applied: operators only see published posts,
    * operators also see their own drafts, and admins see everything.
    */
   async findAll(
@@ -48,7 +48,7 @@ export class PostsService {
     }
 
     if (filters?.search) {
-      const escaped = filters.search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const escaped = filters.search.slice(0, 200).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
       query.$or = [
         { title: { $regex: escaped, $options: "i" } },
         { content: { $regex: escaped, $options: "i" } },
@@ -57,8 +57,9 @@ export class PostsService {
     }
 
     if (filters?.author) {
+      const escapedAuthor = filters.author.slice(0, 100).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
       query.author = {
-        $regex: filters.author.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
+        $regex: escapedAuthor,
         $options: "i",
       };
     }
@@ -68,14 +69,14 @@ export class PostsService {
     }
 
     if (filters?.tags && filters.tags.length > 0) {
-      query.tags = { $in: filters.tags };
+      query.tags = { $in: filters.tags.slice(0, 20).map((t) => String(t).slice(0, 50)) };
     }
 
     if (role && role !== "admin") {
-      const roleCondition =
-        role === "operator"
-          ? { $or: [{ status: true }, { "audit.createdBy": userId }] }
-          : { status: true };
+      if (role !== "operator") {
+        throw new ForbiddenException("Access denied: Insufficient permissions");
+      }
+      const roleCondition = { $or: [{ status: true }, { "audit.createdBy": userId }] };
 
       if (query.$or && roleCondition.$or) {
         query.$and = [{ $or: query.$or }, roleCondition];
@@ -85,8 +86,8 @@ export class PostsService {
       }
     }
 
-    const limit = filters?.limit ?? 20;
-    const offset = filters?.offset ?? 0;
+    const limit = Math.min(Math.max(filters?.limit ?? 20, 1), 10000);
+    const offset = Math.max(filters?.offset ?? 0, 0);
     const posts = await this.postModel
       .find(query)
       .skip(offset)
@@ -114,7 +115,7 @@ export class PostsService {
    * Returns a single post by ID.
    *
    * Security (S4): Applies role-based visibility before returning the post.
-   * Viewers may only see published (status=true) posts. Operators may also
+   * Operators may only see published (status=true) posts they did not create.
    * see drafts they created. Admins see all posts.
    *
    * @throws BadRequestException if the ID format is invalid.
@@ -133,10 +134,10 @@ export class PostsService {
 
     let query: Record<string, unknown>;
     if (role !== undefined && role !== "admin") {
-      const roleConditions: any[] =
-        role === "operator"
-          ? [{ status: true }, { "audit.createdBy": userId }]
-          : [{ status: true }];
+      if (role !== "operator") {
+        throw new ForbiddenException("Access denied: Insufficient permissions");
+      }
+      const roleConditions: any[] = [{ status: true }, { "audit.createdBy": userId }];
       query = { $and: [{ $or: idConditions }, { $or: roleConditions }] };
     } else {
       query = { $or: idConditions };
@@ -319,7 +320,7 @@ export class PostsService {
       const record: Record<string, string> = {};
       for (const field of fields) {
         const str = String((p as unknown as Record<string, unknown>)[field] ?? "");
-        record[field] = /^[=+\-@\t\r]/.test(str) ? "'" + str : str;
+        record[field] = /^\s*[=+\-@\t\r|%]/.test(str) ? "'" + str : str;
       }
       return record;
     });

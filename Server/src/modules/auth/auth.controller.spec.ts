@@ -156,7 +156,7 @@ describe("AuthController", () => {
         user: {
           userId: "non-existent",
           email: "test@test.com",
-          role: "viewer",
+          role: "operator",
         },
       };
       mockAuthService.getMe.mockRejectedValue(

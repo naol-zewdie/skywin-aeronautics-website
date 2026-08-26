@@ -47,7 +47,7 @@ export class CareersController {
   constructor(private readonly careersService: CareersService) {}
 
   @Get()
-  @Roles(Role.ADMIN, Role.OPERATOR, Role.VIEWER)
+  @Roles(Role.ADMIN, Role.OPERATOR)
   @ApiOperation({ summary: "List open career positions" })
   @ApiOkResponse({ type: CareerOpeningDto, isArray: true })
   getOpenings(@Req() req: AuthenticatedRequest): Promise<CareerOpeningDto[]> {
@@ -116,7 +116,7 @@ export class CareersController {
   }
 
   @Get(":id")
-  @Roles(Role.ADMIN, Role.OPERATOR, Role.VIEWER)
+  @Roles(Role.ADMIN, Role.OPERATOR)
   @ApiOperation({ summary: "Get career opening by id" })
   @ApiParam({ name: "id", type: "string", description: "Career Opening ID" })
   @ApiOkResponse({ type: CareerOpeningDto })

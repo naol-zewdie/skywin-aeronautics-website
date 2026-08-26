@@ -128,8 +128,7 @@ export async function POST(request: NextRequest) {
         );
       }
     } else {
-      console.warn('[ContactForm] RESEND_API_KEY is not configured. Contact submission logged:');
-      console.log({ name, email, message, timestamp: new Date().toISOString() });
+      console.warn('[ContactForm] RESEND_API_KEY is not configured. Contact submission received for:', email);
     }
 
     return NextResponse.json(

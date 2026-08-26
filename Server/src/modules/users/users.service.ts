@@ -68,7 +68,7 @@ export class UsersService {
 
   /**
    * Creates a new user account with a bcrypt-hashed password.
-   * Only `operator` and `viewer` roles may be created; admin creation is blocked.
+   * Only the `operator` role may be created; admin creation is blocked.
    *
    * @param payload      - Validated create-user DTO.
    * @param currentUserId - ID of the admin performing the action (for audit trail).
@@ -304,7 +304,7 @@ export class UsersService {
       const record: Record<string, string> = {};
       for (const field of fields) {
         const str = String((u as unknown as Record<string, unknown>)[field] ?? "");
-        record[field] = /^[=+\-@\t\r]/.test(str) ? "'" + str : str;
+        record[field] = /^\s*[=+\-@\t\r|%]/.test(str) ? "'" + str : str;
       }
       return record;
     });
