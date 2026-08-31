@@ -83,23 +83,56 @@ function validateImageMagicBytes(buffer: Buffer, claimedMime: string): boolean {
 }
 
 /**
- * Deeply scans the uploaded image buffer for embedded scripts, HTML, PHP tags,
- * and polyglot payload signatures. Truncates trailing payload data appended
- * past valid image EOF markers (e.g. JPEG EOI or PNG IEND chunks).
+ * Deeply scans the uploaded image buffer for executable headers, shell scripts,
+ * embedded web shells, PHP/ASP/JSP tags, macros, and polyglot payload signatures.
+ * Truncates trailing payload data appended past valid image EOF markers.
  */
 function sanitizeAndTruncateImageBuffer(buffer: Buffer, mimetype: string): Buffer {
-  // 1. Scan for forbidden script tags or executable signatures
+  // 1. Binary executable headers and archive embedding check (MZ, ELF, Mach-O, ZIP/RAR/7z polyglots)
+  const DANGEROUS_BINARY_HEADERS: Array<{ name: string; bytes: Buffer }> = [
+    { name: "Windows PE/MZ", bytes: Buffer.from([0x4d, 0x5a]) }, // 'MZ'
+    { name: "Linux ELF", bytes: Buffer.from([0x7f, 0x45, 0x4c, 0x46]) }, // '\x7fELF'
+    { name: "Mach-O 32-bit", bytes: Buffer.from([0xfe, 0xed, 0xfa, 0xce]) },
+    { name: "Mach-O 64-bit", bytes: Buffer.from([0xfe, 0xed, 0xfa, 0xcf]) },
+    { name: "Mach-O Fat", bytes: Buffer.from([0xca, 0xfe, 0xba, 0xbe]) },
+    { name: "ZIP Archive", bytes: Buffer.from([0x50, 0x4b, 0x03, 0x04]) }, // 'PK\x03\x04'
+    { name: "RAR Archive", bytes: Buffer.from([0x52, 0x61, 0x72, 0x21]) }, // 'Rar!'
+    { name: "7-Zip Archive", bytes: Buffer.from([0x37, 0x7a, 0xbc, 0xaf, 0x27, 0x1c]) },
+  ];
+
+  for (const sig of DANGEROUS_BINARY_HEADERS) {
+    if (buffer.indexOf(sig.bytes) !== -1) {
+      throw new BadRequestException(
+        `File rejected: contains forbidden binary header or embedded archive (${sig.name})`,
+      );
+    }
+  }
+
+  // 2. Scan for forbidden script tags, shell scripts, or executable code signatures
   const textContent = buffer.toString("binary");
   const FORBIDDEN_PATTERNS = [
     /<\s*script[\s>]/i,
     /<\s*\?php/i,
+    /<\s*\?=/i,
     /<\s*html[\s>]/i,
     /<\s*svg[\s>]/i,
-    /javascript\s*:/i,
-    /<!ENTITY/i,
     /<\s*iframe[\s>]/i,
     /<\s*object[\s>]/i,
     /<\s*embed[\s>]/i,
+    /<\s*applet[\s>]/i,
+    /<%/i, // ASP / JSP
+    /<jsp:/i,
+    /<!DOCTYPE/i,
+    /<!ENTITY/i,
+    /<!--#exec/i, // SSI
+    /<!--#include/i,
+    /javascript\s*:/i,
+    /vbscript\s*:/i,
+    /^#!\/(bin|usr)/m, // Unix shell scripts
+    /@echo\s+off/i, // Windows batch
+    /\b(eval|passthru|shell_exec|base64_decode|proc_open|popen)\s*\(/i, // Web shell execution functions
+    /\bpowershell(\.exe)?\b/i,
+    /\bcmd(\.exe)?\s+\/c\b/i,
   ];
 
   for (const pattern of FORBIDDEN_PATTERNS) {
@@ -110,7 +143,8 @@ function sanitizeAndTruncateImageBuffer(buffer: Buffer, mimetype: string): Buffe
     }
   }
 
-  // 2. Truncate trailing polyglot payload data past official EOF markers
+
+  // 3. Truncate trailing polyglot payload data past official EOF markers
   if (mimetype === "image/jpeg") {
     // JPEG ends with FF D9 (EOI marker)
     const eoiIndex = buffer.lastIndexOf(Buffer.from([0xff, 0xd9]));
@@ -124,10 +158,17 @@ function sanitizeAndTruncateImageBuffer(buffer: Buffer, mimetype: string): Buffe
     if (iendIndex !== -1 && iendIndex + 8 < buffer.length) {
       return buffer.subarray(0, iendIndex + 8);
     }
+  } else if (mimetype === "image/gif") {
+    // GIF trailer byte is 0x3B
+    const trailerIndex = buffer.lastIndexOf(0x3b);
+    if (trailerIndex !== -1 && trailerIndex + 1 < buffer.length) {
+      return buffer.subarray(0, trailerIndex + 1);
+    }
   }
 
   return buffer;
 }
+
 
 const storage = memoryStorage();
 

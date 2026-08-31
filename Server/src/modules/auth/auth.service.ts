@@ -417,7 +417,7 @@ export class AuthService {
       await user.save();
 
       const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3003";
-      const resetLink = `${frontendUrl}/reset-password#token=${resetToken}&email=${encodeURIComponent(user.email)}`;
+      const resetLink = `${frontendUrl}/reset-password?token=${resetToken}&email=${encodeURIComponent(user.email)}`;
 
       // Build a human-readable label that matches the configured expiry
       const expiryLabel = this.formatExpiry(expiresIn);

@@ -10,6 +10,7 @@ import {
   Req,
   Res,
   UseGuards,
+  ForbiddenException,
 } from "@nestjs/common";
 import type { Request, Response } from "express";
 import {
@@ -156,6 +157,10 @@ export class UsersController {
     @Body() payload: ChangePasswordDto,
     @Req() req: AuthenticatedRequest,
   ): Promise<void> {
+    // Security: Strict IDOR check at the controller layer
+    if (id !== req.user?.userId) {
+      throw new ForbiddenException("You can only change your own password");
+    }
     await this.usersService.changePassword(id, req.user?.userId, payload);
     this.activityService
       .log({
@@ -169,6 +174,7 @@ export class UsersController {
       })
       .catch(() => {});
   }
+
 
   @Delete(":id")
   @HttpCode(204)

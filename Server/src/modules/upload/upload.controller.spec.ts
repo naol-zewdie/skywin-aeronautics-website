@@ -53,6 +53,26 @@ describe("UploadController Security & Validation", () => {
     );
   });
 
+  it("should reject image containing embedded binary executable header (PE/MZ or ELF)", async () => {
+    const jpegHeader = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0x00, 0x01]);
+    const elfHeader = Buffer.from([0x7f, 0x45, 0x4c, 0x46]);
+    const maliciousBuffer = Buffer.concat([jpegHeader, elfHeader, Buffer.from("data")]);
+
+    const fakeFile = {
+      fieldname: "file",
+      originalname: "malicious.jpg",
+      encoding: "7bit",
+      mimetype: "image/jpeg",
+      size: maliciousBuffer.length,
+      buffer: maliciousBuffer,
+    };
+
+    await expect(controller.uploadImage(fakeFile)).rejects.toThrow(
+      "File rejected: contains forbidden binary header",
+    );
+  });
+
+
   it("should successfully process and sanitize valid JPEG image", async () => {
     const jpegHeader = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0x00, 0x01]);
     const eoi = Buffer.from([0xff, 0xd9]);

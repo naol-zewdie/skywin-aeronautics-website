@@ -76,10 +76,10 @@ export class ActivityController {
   }
 
   @Get("stats")
-  @Roles(Role.ADMIN)
-  @ApiOperation({ summary: "Get dashboard statistics (Admin only)" })
-  async getStats(): Promise<DashboardStats> {
-    return this.activityService.getStats();
+  @Roles(Role.ADMIN, Role.OPERATOR)
+  @ApiOperation({ summary: "Get dashboard statistics" })
+  async getStats(@Req() req: AuthenticatedRequest): Promise<DashboardStats> {
+    return this.activityService.getStats(req.user?.role, req.user?.userId);
   }
 
   @Get("recent")

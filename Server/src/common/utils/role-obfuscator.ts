@@ -9,6 +9,14 @@ export const OPAQUE_MAP_TO_ROLE: Record<string, string> = {
 };
 
 /**
+ * Authoritative allowlist of valid internal role strings.
+ * Used by RolesGuard to reject any role that was injected directly into the
+ * database and was never issued through the normal user-creation flow.
+ * Update this set whenever a new role is officially added to the system.
+ */
+export const KNOWN_INTERNAL_ROLES = new Set<string>(["admin", "operator"]);
+
+/**
  * Converts internal/DB role ("admin") to opaque client token ("r_9a3f").
  * Prevents raw role string disclosure in HTTP response bodies / DevTools.
  */

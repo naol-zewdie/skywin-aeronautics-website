@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, Suspense } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,29 +10,58 @@ import { AlertCircle, CheckCircle2, Lock } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { authApi } from '@/lib/api';
 
-function getHashParams(): { token: string; email: string } {
+function extractResetCredentials(): { token: string; email: string } {
   if (typeof window === 'undefined') return { token: '', email: '' };
+
+  // Check search query parameters (?token=...&email=...) first, then fragment (#token=...&email=...)
+  const searchParams = new URLSearchParams(window.location.search);
   const hash = window.location.hash.replace(/^#/, '');
-  const params = new URLSearchParams(hash);
-  return {
-    token: params.get('token') || '',
-    email: params.get('email') || '',
-  };
+  const hashParams = new URLSearchParams(hash);
+
+  const token = searchParams.get('token') || hashParams.get('token') || '';
+  const email = searchParams.get('email') || hashParams.get('email') || '';
+
+  return { token, email };
 }
 
 function ResetPasswordForm() {
   const router = useRouter();
-  const { token, email } = getHashParams();
+  const [credentials, setCredentials] = useState<{ token: string; email: string }>({
+    token: '',
+    email: '',
+  });
+  const [initialized, setInitialized] = useState(false);
 
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [error, setError] = useState(!token || !email ? 'Invalid reset link. Please request a new password reset.' : '');
+  const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    const creds = extractResetCredentials();
+    setCredentials(creds);
+    setInitialized(true);
+
+    if (!creds.token || !creds.email) {
+      setError('Invalid reset link. Please request a new password reset.');
+    }
+
+    // Security: Immediately scrub the token and email from the browser address bar and history
+    // to prevent leakage via browser history, shoulder-surfing, browser extensions, or Referrer headers.
+    if (window.location.search || window.location.hash) {
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    if (!credentials.token || !credentials.email) {
+      setError('Invalid reset link. Please request a new password reset.');
+      return;
+    }
 
     if (password !== confirmPassword) {
       setError('Passwords do not match');
@@ -47,7 +76,7 @@ function ResetPasswordForm() {
     setIsLoading(true);
 
     try {
-      await authApi.resetPassword(email, token, password);
+      await authApi.resetPassword(credentials.email, credentials.token, password);
       setSuccess(true);
       setTimeout(() => router.push('/login'), 3000);
     } catch (err: unknown) {
@@ -62,7 +91,7 @@ function ResetPasswordForm() {
     }
   };
 
-  if (!token || !email) {
+  if (initialized && (!credentials.token || !credentials.email)) {
     return (
       <Card className="w-full max-w-md">
         <CardHeader>
@@ -74,7 +103,7 @@ function ResetPasswordForm() {
         <CardContent>
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
-            <AlertDescription>{error}</AlertDescription>
+            <AlertDescription>{error || 'Invalid reset link. Please request a new password reset.'}</AlertDescription>
           </Alert>
           <Button className="w-full mt-4" onClick={() => router.push('/forgot-password')}>
             Request new reset link
@@ -83,6 +112,7 @@ function ResetPasswordForm() {
       </Card>
     );
   }
+
 
   if (success) {
     return (
@@ -112,7 +142,7 @@ function ResetPasswordForm() {
         </div>
         <CardTitle className="text-2xl text-center">Reset your password</CardTitle>
         <CardDescription className="text-center">
-          Enter your new password for <strong>{email}</strong>
+          Enter your new password for <strong>{credentials.email}</strong>
         </CardDescription>
       </CardHeader>
       <CardContent>

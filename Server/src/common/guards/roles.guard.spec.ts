@@ -20,10 +20,16 @@ describe("RolesGuard", () => {
     guard = new RolesGuard(reflector);
   });
 
-  it("allows access when no roles are required", () => {
+  it("allows access when no roles are required and user is a known role (operator)", () => {
     jest.spyOn(reflector, "getAllAndOverride").mockReturnValue(undefined);
 
     expect(guard.canActivate(createContext({ role: "operator" }))).toBe(true);
+  });
+
+  it("allows access when no roles are required and user is a known role (admin)", () => {
+    jest.spyOn(reflector, "getAllAndOverride").mockReturnValue(undefined);
+
+    expect(guard.canActivate(createContext({ role: "admin" }))).toBe(true);
   });
 
   it("allows access when user has a required role", () => {
@@ -48,6 +54,34 @@ describe("RolesGuard", () => {
     jest.spyOn(reflector, "getAllAndOverride").mockReturnValue([Role.ADMIN]);
 
     expect(() => guard.canActivate(createContext())).toThrow(
+      ForbiddenException,
+    );
+  });
+
+  // ── BOLA Finding Fix: Viewer role must be denied on ALL routes ─────────────
+  it("denies a 'viewer' role even on routes with no @Roles() decorator (deny-by-default)", () => {
+    // No @Roles() on route → requiredRoles is undefined
+    jest.spyOn(reflector, "getAllAndOverride").mockReturnValue(undefined);
+
+    expect(() => guard.canActivate(createContext({ role: "viewer" }))).toThrow(
+      ForbiddenException,
+    );
+  });
+
+  it("denies a 'viewer' role when explicit @Roles(ADMIN, OPERATOR) is declared", () => {
+    jest
+      .spyOn(reflector, "getAllAndOverride")
+      .mockReturnValue([Role.ADMIN, Role.OPERATOR]);
+
+    expect(() => guard.canActivate(createContext({ role: "viewer" }))).toThrow(
+      ForbiddenException,
+    );
+  });
+
+  it("denies any unrecognized role string that is not in KNOWN_INTERNAL_ROLES", () => {
+    jest.spyOn(reflector, "getAllAndOverride").mockReturnValue(undefined);
+
+    expect(() => guard.canActivate(createContext({ role: "superuser" }))).toThrow(
       ForbiddenException,
     );
   });

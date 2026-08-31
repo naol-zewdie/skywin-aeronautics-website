@@ -11,6 +11,7 @@ import {
   UnauthorizedException,
   NotFoundException,
   Res,
+  Logger,
 } from "@nestjs/common";
 import {
   ApiOkResponse,
@@ -58,6 +59,8 @@ interface UserResponse {
 @ApiTags("Auth")
 @Controller("auth")
 export class AuthController {
+  private readonly logger = new Logger(AuthController.name);
+
   constructor(
     private readonly authService: AuthService,
     private readonly rateLimitGuard: RateLimitGuard,
@@ -68,9 +71,9 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: "Get a CSRF token (sets csrf-token cookie)" })
   /**
-   * Issues a CSRF token via an HttpOnly-false cookie so the browser
-   * JavaScript layer can read it and echo it back in the X-CSRF-Token header
-   * on all mutating requests.
+   * Issues a CSRF token via an HttpOnly-false cookie with sameSite: 'strict'
+   * so the browser JavaScript layer can read it and echo it back in the
+   * X-CSRF-Token header on all mutating requests.
    */
   getCsrfToken(@Res({ passthrough: true }) res: ExpressResponse): {
     token: string;
@@ -80,7 +83,7 @@ export class AuthController {
     res.cookie("csrf-token", token, {
       httpOnly: false,
       secure: cookieSecure,
-      sameSite: "lax",
+      sameSite: "strict",
       path: "/",
       maxAge: 60 * 60 * 1000, // 1 hour — regenerated on login
     });
@@ -142,13 +145,13 @@ export class AuthController {
         result.refreshToken,
         result.expiresAt,
       );
-      // H2 FIX: Regenerate CSRF token on login
+      // Regenerate CSRF token on login with strict sameSite protection
       const csrfToken = generateCsrfToken();
       const cookieSecure = this.areCookiesSecure();
       res.cookie("csrf-token", csrfToken, {
         httpOnly: false,
         secure: cookieSecure,
-        sameSite: "lax",
+        sameSite: "strict",
         path: "/",
         maxAge: 60 * 60 * 1000,
       });
@@ -305,7 +308,7 @@ export class AuthController {
         // Log unexpected errors (e.g. DB failures) but do not block cookie clearing,
         // which must always succeed so the client session is terminated.
         if (e instanceof Error) {
-          console.warn(`[AuthController] logout warning: ${e.message}`);
+          this.logger.warn(`[AuthController] logout warning: ${e.message}`);
         }
       }
     }
@@ -355,7 +358,7 @@ export class AuthController {
     const cookieOptions = {
       httpOnly: true,
       secure: cookieSecure,
-      sameSite: "lax" as const,
+      sameSite: "strict" as const,
       path: "/",
     };
 
@@ -383,7 +386,7 @@ export class AuthController {
     const cookieOpts = {
       httpOnly: true,
       secure: cookieSecure,
-      sameSite: "lax" as const,
+      sameSite: "strict" as const,
     };
     res.clearCookie("accessToken", { ...cookieOpts, path: "/" });
     res.clearCookie("refreshToken", { ...cookieOpts, path: "/" });

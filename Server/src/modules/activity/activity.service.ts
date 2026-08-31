@@ -87,7 +87,11 @@ export class ActivityService {
       .exec() as Promise<Activity[]>;
   }
 
-  async getStats(): Promise<DashboardStats> {
+  async getStats(userRole?: string, userId?: string): Promise<DashboardStats> {
+    const isOperator = userRole === "operator" || userRole === "r_4b7e";
+    const activityQuery: Record<string, unknown> =
+      isOperator && userId ? { userId } : {};
+
     const [
       totalUsers,
       totalProducts,
@@ -99,7 +103,12 @@ export class ActivityService {
       this.productModel.countDocuments().exec(),
       this.serviceModel.countDocuments().exec(),
       this.careerModel.countDocuments({ status: true }).exec(),
-      this.activityModel.find().sort({ createdAt: -1 }).limit(20).lean().exec(),
+      this.activityModel
+        .find(activityQuery)
+        .sort({ createdAt: -1 })
+        .limit(20)
+        .lean()
+        .exec(),
     ]);
 
     return {
@@ -120,6 +129,7 @@ export class ActivityService {
       })),
     };
   }
+
 
   async logUserCreated(
     userName: string,
