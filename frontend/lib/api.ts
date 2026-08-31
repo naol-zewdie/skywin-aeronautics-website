@@ -17,8 +17,9 @@ function getApiBaseUrl(): string {
   if (configured.startsWith('http')) return configured.replace(/\/$/, '');
   // Server-side fetches need an absolute URL; browser uses the Next.js proxy path.
   if (typeof window === 'undefined') {
-    return (process.env.BACKEND_URL || 'http://localhost:3001').replace(/\/$/, '');
+    return (process.env.BACKEND_URL || 'http://localhost:3005').replace(/\/$/, '');
   }
+
   return configured.replace(/\/$/, '');
 }
 

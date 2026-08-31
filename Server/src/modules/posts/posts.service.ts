@@ -133,7 +133,10 @@ export class PostsService {
     const idConditions: any[] = isObjId ? [{ _id: id }, { _id: new Types.ObjectId(id) }] : [{ _id: id }];
 
     let query: Record<string, unknown>;
-    if (role !== undefined && role !== "admin") {
+    if (role === "public") {
+      // Unauthenticated public access: only return published/active posts
+      query = { $and: [{ $or: idConditions }, { status: true }] };
+    } else if (role !== undefined && role !== "admin") {
       if (role !== "operator") {
         throw new ForbiddenException("Access denied: Insufficient permissions");
       }
@@ -149,8 +152,9 @@ export class PostsService {
     }
 
     // Increment view counter.
-    await this.postModel.findOneAndUpdate({ $or: idConditions }, { $inc: { views: 1 } }).exec();
+    await this.postModel.findOneAndUpdate(query, { $inc: { views: 1 } }).exec();
     post.views = (post.views || 0) + 1;
+
 
     return this.mapToDto(post);
   }

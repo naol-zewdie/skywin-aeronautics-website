@@ -140,6 +140,40 @@ describe("PostsService", () => {
     });
   });
 
+  describe("findOne", () => {
+    it("should allow public access to active post without 403 Forbidden", async () => {
+      mockPostModel.findOne.mockReturnValue(mockExec(mockPosts[0]));
+      mockPostModel.findOneAndUpdate.mockReturnValue(mockExec(mockPosts[0]));
+
+      const post = await service.findOne(
+        "507f1f77bcf86cd799439011",
+        "public",
+        "__public__",
+      );
+
+      expect(post.title).toBe("SkyWin Announces Partnership");
+      expect(mockPostModel.findOne).toHaveBeenCalledWith(
+        expect.objectContaining({
+          $and: expect.arrayContaining([{ status: true }]),
+        }),
+      );
+    });
+
+    it("should allow admin access to any post", async () => {
+      mockPostModel.findOne.mockReturnValue(mockExec(mockPosts[0]));
+      mockPostModel.findOneAndUpdate.mockReturnValue(mockExec(mockPosts[0]));
+
+      const post = await service.findOne(
+        "507f1f77bcf86cd799439011",
+        "admin",
+        "u_001",
+      );
+
+      expect(post.title).toBe("SkyWin Announces Partnership");
+    });
+  });
+
+
   describe("create", () => {
     it("should create a new post", async () => {
       const savedPost = {

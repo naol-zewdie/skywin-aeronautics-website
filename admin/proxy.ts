@@ -7,14 +7,15 @@ const PUBLIC_PATHS = ['/login', '/forgot-password', '/reset-password'];
 
 function buildCsp(nonce: string): string {
   const isDev = process.env.NODE_ENV !== 'production';
-  const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+  const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3005';
   let connectSrc = "'self'";
   try {
     const u = new URL(apiBase);
     connectSrc += ` ${u.origin}`;
   } catch {
-    connectSrc += ' http://localhost:3001';
+    connectSrc += ' http://localhost:3005';
   }
+
 
   const scriptSrc = isDev
     ? `script-src 'self' 'nonce-${nonce}' 'unsafe-eval'`

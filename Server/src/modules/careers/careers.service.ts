@@ -102,7 +102,9 @@ export class CareersService {
     const idConditions: any[] = isObjId ? [{ _id: id }, { _id: new Types.ObjectId(id) }] : [{ _id: id }];
 
     let query: Record<string, unknown>;
-    if (role !== undefined && role !== "admin") {
+    if (role === "public") {
+      query = { $and: [{ $or: idConditions }, { status: true }] };
+    } else if (role !== undefined && role !== "admin") {
       if (role !== "operator") {
         throw new ForbiddenException("Access denied: Insufficient permissions");
       }
@@ -111,6 +113,7 @@ export class CareersService {
     } else {
       query = { $or: idConditions };
     }
+
 
     const opening = await this.careerOpeningModel.findOne(query as any).exec();
     if (!opening) {

@@ -96,7 +96,9 @@ export class ServicesService {
     const idConditions: any[] = isObjId ? [{ _id: id }, { _id: new Types.ObjectId(id) }] : [{ _id: id }];
 
     let query: Record<string, unknown>;
-    if (role !== undefined && role !== "admin") {
+    if (role === "public") {
+      query = { $and: [{ $or: idConditions }, { status: true }] };
+    } else if (role !== undefined && role !== "admin") {
       if (role !== "operator") {
         throw new ForbiddenException("Access denied: Insufficient permissions");
       }
@@ -105,6 +107,7 @@ export class ServicesService {
     } else {
       query = { $or: idConditions };
     }
+
 
     const service = await this.serviceModel.findOne(query as any).exec();
     if (!service) {
