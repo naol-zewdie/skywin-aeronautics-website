@@ -68,6 +68,7 @@ export default async function proxy(request: NextRequest) {
   if (!isPublicPath) {
     const accessToken = request.cookies.get('accessToken')?.value;
     if (!accessToken) {
+      console.warn(`[middleware] No accessToken cookie for "${pathname}". Redirecting to /login`);
       const loginUrl = new URL('/login', request.url);
       loginUrl.searchParams.set('returnTo', pathname);
       return applySecurityHeaders(NextResponse.redirect(loginUrl), csp);
@@ -75,6 +76,7 @@ export default async function proxy(request: NextRequest) {
 
     // Role-based route enforcement requires JWT_SECRET (must match Server)
     if (!process.env.JWT_SECRET) {
+      console.error('[middleware] FATAL: JWT_SECRET environment variable is missing in admin environment!');
       return applySecurityHeaders(
         new NextResponse("Configuration Error: JWT_SECRET missing", { status: 500 }),
         csp
@@ -83,6 +85,7 @@ export default async function proxy(request: NextRequest) {
 
     const verified = await verifyAccessToken(accessToken);
     if (!verified) {
+      console.warn(`[middleware] AccessToken verification failed for "${pathname}". Deleting cookies and redirecting to /login`);
       const loginUrl = new URL('/login', request.url);
       loginUrl.searchParams.set('returnTo', pathname);
       const response = NextResponse.redirect(loginUrl);
@@ -93,7 +96,9 @@ export default async function proxy(request: NextRequest) {
 
     const requiredRoles = getRequiredRoles(pathname);
     if (!hasRequiredRole(verified.role, requiredRoles)) {
-      return applySecurityHeaders(NextResponse.redirect(new URL('/dashboard', request.url)), csp);
+      if (pathname !== '/dashboard') {
+        return applySecurityHeaders(NextResponse.redirect(new URL('/dashboard', request.url)), csp);
+      }
     }
   }
 

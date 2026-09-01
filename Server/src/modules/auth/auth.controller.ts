@@ -83,7 +83,7 @@ export class AuthController {
     res.cookie("csrf-token", token, {
       httpOnly: false,
       secure: cookieSecure,
-      sameSite: "strict",
+      sameSite: "lax",
       path: "/",
       maxAge: 60 * 60 * 1000, // 1 hour — regenerated on login
     });
@@ -145,13 +145,13 @@ export class AuthController {
         result.refreshToken,
         result.expiresAt,
       );
-      // Regenerate CSRF token on login with strict sameSite protection
+      // Regenerate CSRF token on login with lax sameSite protection
       const csrfToken = generateCsrfToken();
       const cookieSecure = this.areCookiesSecure();
       res.cookie("csrf-token", csrfToken, {
         httpOnly: false,
         secure: cookieSecure,
-        sameSite: "strict",
+        sameSite: "lax",
         path: "/",
         maxAge: 60 * 60 * 1000,
       });
@@ -358,7 +358,7 @@ export class AuthController {
     const cookieOptions = {
       httpOnly: true,
       secure: cookieSecure,
-      sameSite: "strict" as const,
+      sameSite: "lax" as const,
       path: "/",
     };
 
@@ -386,7 +386,7 @@ export class AuthController {
     const cookieOpts = {
       httpOnly: true,
       secure: cookieSecure,
-      sameSite: "strict" as const,
+      sameSite: "lax" as const,
     };
     res.clearCookie("accessToken", { ...cookieOpts, path: "/" });
     res.clearCookie("refreshToken", { ...cookieOpts, path: "/" });
