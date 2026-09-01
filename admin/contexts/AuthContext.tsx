@@ -112,7 +112,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         userData.role = tokenRole as any;
       }
       setUser(userData);
-      router.push('/dashboard');
+      // Hard navigation ensures middleware and next router receive cookies cleanly
+      window.location.href = '/dashboard';
     } finally {
       setIsLoading(false);
     }

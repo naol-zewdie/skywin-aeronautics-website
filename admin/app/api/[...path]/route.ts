@@ -57,28 +57,65 @@ async function proxy(request: NextRequest, params: { path: string[] }) {
     }
   }
 
-  const backendResponse = await fetch(targetUrl, init);
+  let backendResponse: Response;
+  try {
+    backendResponse = await fetch(targetUrl, init);
+  } catch (error: any) {
+    const isNetworkError =
+      error?.code === 'ECONNREFUSED' ||
+      error?.code === 'EPIPE' ||
+      error?.code === 'ECONNRESET' ||
+      error?.code === 'ETIMEDOUT' ||
+      error?.cause?.code === 'EPIPE' ||
+      error?.cause?.code === 'ECONNREFUSED';
+
+    const status = isNetworkError ? 502 : 500;
+    const message = isNetworkError
+      ? 'Backend service unreachable or connection closed. Please ensure the backend server is running.'
+      : 'Failed to proxy request to backend';
+
+    return NextResponse.json(
+      {
+        error: message,
+        code: error?.cause?.code || error?.code || 'FETCH_ERROR',
+      },
+      { status },
+    );
+  }
 
   const proxyResponse = new NextResponse(backendResponse.body, {
     status: backendResponse.status,
     statusText: backendResponse.statusText,
   });
 
-  const setCookies = typeof backendResponse.headers.getSetCookie === 'function'
-    ? backendResponse.headers.getSetCookie()
-    : null;
+  // Extract all set-cookie headers reliably across different Node.js / Fetch runtime versions
+  let cookieHeaders: string[] = [];
+  if (typeof backendResponse.headers.getSetCookie === 'function') {
+    cookieHeaders = backendResponse.headers.getSetCookie();
+  }
+  if (!cookieHeaders || cookieHeaders.length === 0) {
+    const rawSetCookie = backendResponse.headers.get('set-cookie');
+    if (rawSetCookie) {
+      cookieHeaders = [rawSetCookie];
+    }
+  }
+
+  const isHttps =
+    request.nextUrl.protocol === 'https:' ||
+    request.headers.get('x-forwarded-proto') === 'https';
 
   backendResponse.headers.forEach((value, key) => {
-    if (setCookies && key.toLowerCase() === 'set-cookie') {
-      return;
+    if (key.toLowerCase() === 'set-cookie') {
+      return; // Handled separately below to preserve multiple cookies
     }
     proxyResponse.headers.set(key, value);
   });
 
-  if (setCookies) {
-    for (const sc of setCookies) {
-      proxyResponse.headers.append('set-cookie', sc);
-    }
+  for (const sc of cookieHeaders) {
+    // If client connects over plain HTTP, strip the 'Secure' directive so the
+    // browser does not discard the cookie (RFC 6265 Section 4.1.2.5).
+    const cookieStr = isHttps ? sc : sc.replace(/;\s*Secure\b/gi, '');
+    proxyResponse.headers.append('set-cookie', cookieStr);
   }
 
   return proxyResponse;
