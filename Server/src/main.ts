@@ -73,10 +73,8 @@ async function bootstrap() {
     next();
   });
 
-  // Security: Trust first proxy when behind reverse proxy or dev proxy (enables correct client IP)
-  if (process.env.TRUST_PROXY === "true" || process.env.NODE_ENV !== "production") {
-    app.set("trust proxy", 1);
-  }
+  // Security: Trust first proxy (enables correct client IP in Docker, Nginx, or Next.js proxy)
+  app.set("trust proxy", 1);
 
   // Rate limiting is active in production OR when RATE_LIMIT_ENABLED=true,
   // allowing staging servers to be protected independently of NODE_ENV.
