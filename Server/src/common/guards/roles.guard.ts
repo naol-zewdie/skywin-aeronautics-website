@@ -7,6 +7,7 @@ import {
 } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
 import { toInternalRole, KNOWN_INTERNAL_ROLES } from "../utils/role-obfuscator";
+import { IS_PUBLIC_KEY } from "./public.decorator";
 
 /** Enum of all valid user roles in the system. Add a new value here ONLY if
  *  it also exists in KNOWN_INTERNAL_ROLES (role-obfuscator.ts). Roles absent
@@ -46,6 +47,17 @@ export class RolesGuard implements CanActivate {
   constructor(private reflector: Reflector) {}
 
   canActivate(context: ExecutionContext): boolean {
+    // Skip role enforcement for routes decorated with @Public().
+    // These are unauthenticated endpoints (e.g. /v1/public/*) — JwtAuthGuard
+    // already bypasses auth for them, so RolesGuard must do the same.
+    const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
+    if (isPublic === true) {
+      return true;
+    }
+
     const requiredRoles = this.reflector.getAllAndOverride<Role[]>(ROLES_KEY, [
       context.getHandler(),
       context.getClass(),

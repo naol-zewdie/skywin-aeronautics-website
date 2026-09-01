@@ -1,4 +1,4 @@
-import { Controller, Get, Query, UseGuards, Req } from "@nestjs/common";
+import { Controller, Get, Query, Req } from "@nestjs/common";
 import {
   ApiTags,
   ApiOperation,
@@ -7,8 +7,7 @@ import {
 } from "@nestjs/swagger";
 import { ActivityService, DashboardStats } from "./activity.service";
 import { Activity } from "./schemas/activity.schema";
-import { JwtAuthGuard } from "../auth/jwt-auth.guard";
-import { RolesGuard, Roles, Role } from "../../common/guards/roles.guard";
+import { Roles, Role } from "../../common/guards/roles.guard";
 
 /** Typed request shape after JWT validation has populated req.user. */
 interface AuthenticatedRequest {
@@ -21,7 +20,6 @@ interface AuthenticatedRequest {
 
 @ApiTags("activity")
 @Controller("activity")
-@UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()
 export class ActivityController {
   constructor(private readonly activityService: ActivityService) {}

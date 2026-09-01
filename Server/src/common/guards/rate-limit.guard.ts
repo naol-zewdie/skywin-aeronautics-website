@@ -22,7 +22,13 @@ export class RateLimitGuard implements CanActivate {
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    if (process.env.NODE_ENV !== "production") {
+    // Rate limiting is active in production OR when RATE_LIMIT_ENABLED=true.
+    // This allows staging environments to enable brute-force protection
+    // independently of NODE_ENV.
+    const isEnabled =
+      process.env.NODE_ENV === "production" ||
+      process.env.RATE_LIMIT_ENABLED === "true";
+    if (!isEnabled) {
       return true;
     }
 
@@ -46,7 +52,10 @@ export class RateLimitGuard implements CanActivate {
   }
 
   async recordFailedAttempt(request: Request): Promise<void> {
-    if (process.env.NODE_ENV !== "production") {
+    const isEnabled =
+      process.env.NODE_ENV === "production" ||
+      process.env.RATE_LIMIT_ENABLED === "true";
+    if (!isEnabled) {
       return;
     }
 

@@ -3,7 +3,6 @@ import {
   Post,
   UseInterceptors,
   UploadedFile,
-  UseGuards,
   BadRequestException,
 } from "@nestjs/common";
 import { FileInterceptor } from "@nestjs/platform-express";
@@ -17,8 +16,7 @@ import { memoryStorage } from "multer";
 import { join } from "path";
 import * as crypto from "crypto";
 import { promises as fs } from "fs";
-import { JwtAuthGuard } from "../auth/jwt-auth.guard";
-import { RolesGuard, Roles, Role } from "../../common/guards/roles.guard";
+import { Roles, Role } from "../../common/guards/roles.guard";
 
 const UPLOAD_DIR = join(process.cwd(), "uploads");
 
@@ -189,7 +187,6 @@ interface MulterFile {
  */
 @ApiTags("upload")
 @Controller("upload")
-@UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()
 export class UploadController {
   @Post("image")

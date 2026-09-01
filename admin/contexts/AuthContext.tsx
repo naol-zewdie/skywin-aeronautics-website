@@ -98,7 +98,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(true);
     try {
       const authRes = await authApi.login(credentials);
-      const userData = await authApi.getMe();
+      // getMe() may fail transiently (network glitch, cookie timing) even
+      // though login succeeded. Fall back to the user from the login response
+      // so the user isn't shown a false "Invalid credentials" error.
+      let userData: User;
+      try {
+        userData = await authApi.getMe();
+      } catch {
+        userData = authRes.user;
+      }
       const tokenRole = getRoleFromJwt(authRes.token || getAccessToken());
       if (tokenRole) {
         userData.role = tokenRole as any;

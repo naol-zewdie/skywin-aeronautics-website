@@ -8,7 +8,6 @@ import {
   Patch,
   Post,
   Res,
-  UseGuards,
   Req,
 } from "@nestjs/common";
 import type { Response } from "express";
@@ -25,8 +24,7 @@ import { CreateCareerOpeningDto } from "./dto/create-career-opening.dto";
 import { CareerOpeningDto } from "./dto/career-opening.dto";
 import { UpdateCareerOpeningDto } from "./dto/update-career-opening.dto";
 import { CareersService } from "./careers.service";
-import { JwtAuthGuard } from "../auth/jwt-auth.guard";
-import { RolesGuard, Roles, Role } from "../../common/guards/roles.guard";
+import { Roles, Role } from "../../common/guards/roles.guard";
 
 const MAX_EXPORT_RECORDS = 10000;
 
@@ -41,7 +39,6 @@ interface AuthenticatedRequest {
 
 @ApiTags("Careers")
 @Controller("careers")
-@UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth("JWT-auth")
 export class CareersController {
   constructor(private readonly careersService: CareersService) {}

@@ -9,7 +9,6 @@ import {
   Post,
   Query,
   Res,
-  UseGuards,
   Req,
 } from "@nestjs/common";
 import {
@@ -28,8 +27,7 @@ import { PostDto } from "./dto/post.dto";
 import { UpdatePostDto } from "./dto/update-post.dto";
 import { PostsService } from "./posts.service";
 import { ContentType } from "./schemas/post.schema";
-import { JwtAuthGuard } from "../auth/jwt-auth.guard";
-import { RolesGuard, Roles, Role } from "../../common/guards/roles.guard";
+import { Roles, Role } from "../../common/guards/roles.guard";
 
 const MAX_EXPORT_RECORDS = 10000;
 
@@ -44,7 +42,6 @@ interface AuthenticatedRequest {
 
 @ApiTags("Posts")
 @Controller("posts")
-@UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth("JWT-auth")
 export class PostsController {
   constructor(private readonly postsService: PostsService) {}

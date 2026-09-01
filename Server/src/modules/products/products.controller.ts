@@ -9,7 +9,6 @@ import {
   Post,
   Query,
   Res,
-  UseGuards,
   Req,
 } from "@nestjs/common";
 import {
@@ -27,8 +26,7 @@ import { CreateProductDto } from "./dto/create-product.dto";
 import { ProductDto } from "./dto/product.dto";
 import { UpdateProductDto } from "./dto/update-product.dto";
 import { ProductsService } from "./products.service";
-import { JwtAuthGuard } from "../auth/jwt-auth.guard";
-import { RolesGuard, Roles, Role } from "../../common/guards/roles.guard";
+import { Roles, Role } from "../../common/guards/roles.guard";
 
 const MAX_EXPORT_RECORDS = 10000;
 
@@ -43,7 +41,6 @@ interface AuthenticatedRequest {
 
 @ApiTags("Products")
 @Controller("products")
-@UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth("JWT-auth")
 export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}

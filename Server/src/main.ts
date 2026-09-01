@@ -78,7 +78,11 @@ async function bootstrap() {
     app.set("trust proxy", 1);
   }
 
-  const isProductionMode = process.env.NODE_ENV === "production";
+  // Rate limiting is active in production OR when RATE_LIMIT_ENABLED=true,
+  // allowing staging servers to be protected independently of NODE_ENV.
+  const isRateLimitEnabled =
+    process.env.NODE_ENV === "production" ||
+    process.env.RATE_LIMIT_ENABLED === "true";
 
   // Security: Global rate limiting to prevent brute-force and DoS
   const limiter = rateLimit({
@@ -86,7 +90,7 @@ async function bootstrap() {
     max: 100,
     standardHeaders: true,
     legacyHeaders: false,
-    skip: () => !isProductionMode,
+    skip: () => !isRateLimitEnabled,
     message: {
       statusCode: 429,
       message: "Too many requests, please try again later",
@@ -100,7 +104,7 @@ async function bootstrap() {
     max: 20,
     standardHeaders: true,
     legacyHeaders: false,
-    skip: () => !isProductionMode,
+    skip: () => !isRateLimitEnabled,
     message: {
       statusCode: 429,
       message: "Too many login attempts, please try again later",
@@ -115,7 +119,7 @@ async function bootstrap() {
     max: 30,
     standardHeaders: true,
     legacyHeaders: false,
-    skip: () => !isProductionMode,
+    skip: () => !isRateLimitEnabled,
     message: {
       statusCode: 429,
       message: "Too many token refresh attempts, please try again later",
@@ -129,7 +133,7 @@ async function bootstrap() {
     max: 5,
     standardHeaders: true,
     legacyHeaders: false,
-    skip: () => !isProductionMode,
+    skip: () => !isRateLimitEnabled,
     message: {
       statusCode: 429,
       message: "Too many password reset requests, please try again later",
@@ -143,7 +147,7 @@ async function bootstrap() {
     max: 5,
     standardHeaders: true,
     legacyHeaders: false,
-    skip: () => !isProductionMode,
+    skip: () => !isRateLimitEnabled,
     message: {
       statusCode: 429,
       message: "Too many password reset attempts, please try again later",
@@ -157,7 +161,7 @@ async function bootstrap() {
     max: 20,
     standardHeaders: true,
     legacyHeaders: false,
-    skip: () => !isProductionMode,
+    skip: () => !isRateLimitEnabled,
     message: {
       statusCode: 429,
       message: "Too many upload attempts, please try again later",

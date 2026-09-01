@@ -10,22 +10,29 @@ async function bootstrap() {
 
   const userModel = app.get<Model<User>>(getModelToken(User.name));
 
-  // Hash passwords
+  // Security: Read seed credentials from environment variables — never hardcode emails.
   const SEED_PASSWORD = process.env.SEED_PASSWORD;
   if (!SEED_PASSWORD) {
     throw new Error("SEED_PASSWORD environment variable is required");
   }
+  const SEED_ADMIN_EMAIL = process.env.SEED_ADMIN_EMAIL;
+  const SEED_OPERATOR_EMAIL = process.env.SEED_OPERATOR_EMAIL;
+  if (!SEED_ADMIN_EMAIL || !SEED_OPERATOR_EMAIL) {
+    throw new Error(
+      "SEED_ADMIN_EMAIL and SEED_OPERATOR_EMAIL environment variables are required",
+    );
+  }
+
   const adminPassword = await bcrypt.hash(SEED_PASSWORD, 12);
   const operatorPassword = await bcrypt.hash(SEED_PASSWORD, 12);
 
-  // Check and create admin user
   const existingAdmin = await userModel
-    .findOne({ email: "amelia@skywin.aero" })
+    .findOne({ email: SEED_ADMIN_EMAIL })
     .exec();
   if (!existingAdmin) {
     const admin = new userModel({
-      fullName: "Amelia Hart",
-      email: "amelia@skywin.aero",
+      fullName: process.env.SEED_ADMIN_NAME || "Admin User",
+      email: SEED_ADMIN_EMAIL,
       password: adminPassword,
       role: "admin",
       status: true,
@@ -38,21 +45,22 @@ async function bootstrap() {
     await admin.save();
     if (process.env.NODE_ENV !== "production") {
       console.log(
-        "Admin user created successfully (email: amelia@skywin.aero)",
+        `Admin user created successfully (email: ${SEED_ADMIN_EMAIL})`,
       );
     }
   } else {
-    console.log("Admin user already exists");
+    if (process.env.NODE_ENV !== "production") {
+      console.log("Admin user already exists");
+    }
   }
 
-  // Check and create operator user
   const existingOperator = await userModel
-    .findOne({ email: "operator@skywin.aero" })
+    .findOne({ email: SEED_OPERATOR_EMAIL })
     .exec();
   if (!existingOperator) {
     const operator = new userModel({
-      fullName: "Operator User",
-      email: "operator@skywin.aero",
+      fullName: process.env.SEED_OPERATOR_NAME || "Operator User",
+      email: SEED_OPERATOR_EMAIL,
       password: operatorPassword,
       role: "operator",
       status: true,
@@ -65,11 +73,13 @@ async function bootstrap() {
     await operator.save();
     if (process.env.NODE_ENV !== "production") {
       console.log(
-        "Operator user created successfully (email: operator@skywin.aero)",
+        `Operator user created successfully (email: ${SEED_OPERATOR_EMAIL})`,
       );
     }
   } else {
-    console.log("Operator user already exists");
+    if (process.env.NODE_ENV !== "production") {
+      console.log("Operator user already exists");
+    }
   }
 
   await app.close();

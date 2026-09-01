@@ -9,7 +9,6 @@ import {
   Post,
   Req,
   Res,
-  UseGuards,
   ForbiddenException,
 } from "@nestjs/common";
 import type { Request, Response } from "express";
@@ -27,8 +26,7 @@ import { UpdateUserDto } from "./dto/update-user.dto";
 import { UserDto } from "./dto/user.dto";
 import { ChangePasswordDto } from "./dto/change-password.dto";
 import { UsersService } from "./users.service";
-import { JwtAuthGuard } from "../auth/jwt-auth.guard";
-import { RolesGuard, Roles, Role } from "../../common/guards/roles.guard";
+import { Roles, Role } from "../../common/guards/roles.guard";
 import { ActivityService } from "../activity/activity.service";
 
 const MAX_EXPORT_RECORDS = 10000;
@@ -44,7 +42,6 @@ interface AuthenticatedRequest extends Request {
 
 @ApiTags("Users")
 @Controller("users")
-@UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth("JWT-auth")
 export class UsersController {
   constructor(

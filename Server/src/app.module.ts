@@ -4,6 +4,7 @@ import { MongooseModule } from "@nestjs/mongoose";
 import { ConfigModule } from "@nestjs/config";
 import { CsrfGuard } from "./common/guards/csrf.guard";
 import { JwtAuthGuard } from "./modules/auth/jwt-auth.guard";
+import { RolesGuard } from "./common/guards/roles.guard";
 import { AuthModule } from "./modules/auth/auth.module";
 import { UsersModule } from "./modules/users/users.module";
 import { ServicesModule } from "./modules/services/services.module";
@@ -51,6 +52,13 @@ function getDatabaseUrl(): string {
     {
       provide: APP_GUARD,
       useClass: JwtAuthGuard,
+    },
+    // Security: RolesGuard is registered globally so every controller is
+    // covered by RBAC without requiring per-controller @UseGuards(RolesGuard).
+    // The guard respects @Public() to allow unauthenticated endpoints through.
+    {
+      provide: APP_GUARD,
+      useClass: RolesGuard,
     },
     {
       provide: APP_GUARD,

@@ -4,19 +4,16 @@ import {
   Post,
   Param,
   Query,
-  UseGuards,
   Req,
 } from "@nestjs/common";
 import { ApiTags, ApiOperation, ApiBearerAuth } from "@nestjs/swagger";
 import { NotificationsService } from "./notifications.service";
 import { Notification } from "./schemas/notification.schema";
-import { JwtAuthGuard } from "../auth/jwt-auth.guard";
-import { RolesGuard, Roles, Role } from "../../common/guards/roles.guard";
+import { Roles, Role } from "../../common/guards/roles.guard";
 import type { Request } from "express";
 
 @ApiTags("notifications")
 @Controller("notifications")
-@UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()
 export class NotificationsController {
   constructor(private readonly notificationsService: NotificationsService) {}
