@@ -6,6 +6,11 @@ import Button from "./components/Button";
 import Container from "./components/Container";
 import Section from "./components/Section";
 import ProductsSection from "./components/ProductsSection";
+import ScrollReveal from "./components/ScrollReveal";
+import ThreeDCard from "./components/ThreeDCard";
+import SectionTag from "./components/SectionTag";
+import { DroneGlobe } from "./components/ClientComponents";
+import { PrimaryPill, GhostPill } from "./components/HeroCTAs";
 
 const services = [
   {
@@ -48,166 +53,192 @@ const services = [
 
 export default function Home() {
   return (
-    <main className="bg-[color:var(--background)] text-[color:var(--foreground)]">
-      <Container>
-        {/* Hero Section */}
-        <Section className="pt-12">
-          <div className="relative overflow-hidden rounded-[2rem] min-h-[520px] flex items-center">
-            {/* Mesh gradient background */}
-            <div className="absolute inset-0" style={{background: 'var(--gradient-mesh)'}} />
-            
-            {/* Animated gradient orbs */}
-            <div className="absolute -top-40 -right-40 w-96 h-96 rounded-full opacity-20 animate-mesh-flow" style={{background: 'radial-gradient(circle, rgba(35,54,79,0.3) 0%, transparent 70%)'}} />
-            <div className="absolute -bottom-32 -left-32 w-80 h-80 rounded-full opacity-15 animate-mesh-flow" style={{background: 'radial-gradient(circle, rgba(69,87,109,0.25) 0%, transparent 70%)', animationDelay: '-3s'}} />
-            
-            {/* Tech grid overlay */}
-            <div className="absolute inset-0 tech-grid opacity-30" />
-            
-            {/* Image background with dark overlay */}
-            <div
-              className="absolute inset-0"
-              style={{
-                backgroundImage: "url('/hero_background.jpg')",
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-                backgroundRepeat: 'no-repeat'
-              }}
-            />
-            <div className="absolute inset-0 bg-gradient-to-r from-[#23364F]/95 via-[#23364F]/75 to-[#23364F]/40" />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#23364F]/40 via-transparent to-transparent" />
-            
-            {/* Content */}
-            <div className="relative max-w-3xl space-y-8 px-10 py-20 text-white">
-              <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 backdrop-blur-md px-4 py-1.5 text-xs font-medium uppercase tracking-widest text-white/80">
-                <span className="inline-block w-1.5 h-1.5 rounded-full bg-white animate-pulse-glow" />
-                Precision Aerospace Engineering
-              </div>
-              <h1 className="text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl leading-tight">
-                Advancing Aerospace Innovation<br />
-                <span className="bg-gradient-to-r from-white via-white/90 to-white/70 bg-clip-text text-transparent">Through Precision Engineering</span>
-              </h1>
-              <p className="max-w-2xl text-lg leading-8 text-white/80">
-                Skywin Aeronautics delivers cutting-edge aerospace solutions with advanced engineering, modern design, and proven performance for the most demanding applications.
-              </p>
-              <div className="flex flex-col items-start gap-4 sm:flex-row">
-                <Button href="/services" className="relative animate-ripple-glow dark:text-white">
-                  <span className="relative z-10">Explore Services</span>
-                </Button>
-              </div>
-            </div>
+    <main className="bg-transparent text-[color:var(--foreground)]">
+
+      {/* ═══ HERO — Full screen, globe center, massive headline below ═══ */}
+      <section
+        className="relative flex flex-col items-center justify-center overflow-hidden"
+        style={{ minHeight: "100vh", paddingTop: "100px" }}
+      >
+        {/* Globe — centerpiece */}
+        <div className="relative w-full max-w-2xl mx-auto" style={{ height: "480px" }}>
+          <DroneGlobe />
+        </div>
+
+        {/* Hero text — below the globe */}
+        <div className="relative z-10 w-full max-w-6xl mx-auto px-6 pb-20 -mt-8">
+          <SectionTag>Skywin Aeronautics</SectionTag>
+
+          <h1
+            className="mt-4 text-[clamp(3rem,9vw,7rem)] font-bold leading-[0.92] tracking-tight text-white"
+            style={{ fontFamily: "var(--font-display)" }}
+          >
+            Precision UAV<br />
+            <span
+              className="bg-clip-text text-transparent"
+              style={{ backgroundImage: "linear-gradient(135deg, #38bdf8 0%, #7dd3fc 50%, #ffffff 100%)" }}
+            >
+              Manufacturing.
+            </span>
+          </h1>
+
+          <div className="mt-8 flex flex-col sm:flex-row items-start gap-4">
+            <PrimaryPill href="/products">View Products →</PrimaryPill>
+            <GhostPill href="/about">Our Story</GhostPill>
           </div>
+        </div>
+      </section>
 
-          {/* Services Section - Aesthetic Cards */}
-          <div className="mt-6 relative">
-            {/* Section header */}
-            <div className="text-center mb-10">
-              <p className="text-xs uppercase tracking-[0.3em] text-[color:var(--accent)] font-medium">What We Offer</p>
-              <h2 className="text-3xl font-bold mt-3 text-[color:var(--primary)]">Company Overview</h2>
-              <p className="mt-3 max-w-2xl mx-auto text-base leading-7 text-[color:var(--muted)]">
-                We help aerospace organizations accelerate development with services for engineering, design, validation, manufacturing, and operational consulting.
-              </p>
-            </div>
-            
-            {/* Service cards grid */}
-            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-              {services.slice(0, 4).map((service, i) => (
-                <Link
-                  key={service.title}
-                  href="/services"
-                  className="group relative block overflow-hidden rounded-2xl bg-[color:var(--background-alt)] border border-[color:var(--border)] p-6 transition-all duration-500 hover:-translate-y-2 hover:shadow-xl"
-                  style={{
-                    boxShadow: 'var(--shadow-glass)',
-                    animation: `fade-in-up 0.6s ease-out ${i * 0.1}s both`
-                  }}
+      <Container>
+
+        {/* ─── Services Cards ─── */}
+        <Section>
+          <div className="relative">
+            <ScrollReveal>
+              <div className="mb-12">
+                <SectionTag>What We Offer</SectionTag>
+                <h2
+                  className="mt-4 text-[clamp(2rem,5vw,3.5rem)] font-bold leading-tight text-white"
+                  style={{ fontFamily: "var(--font-display)" }}
                 >
-                  {/* Glow on hover */}
-                  <div className="absolute -inset-1 bg-gradient-to-br from-[#23364F]/0 via-[#45576D]/0 to-[#23364F]/0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-xl" />
-                  
-                  {/* Image */}
-                  <div className="relative overflow-hidden rounded-xl bg-[color:var(--border)] mb-5 aspect-[4/3]">
-                    <Image
-                      src={service.image}
-                      alt={service.title}
-                      width={320}
-                      height={240}
-                      className="h-full w-full object-cover transition-all duration-500 group-hover:scale-110 group-hover:brightness-110"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#23364F]/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                  </div>
-                  
-                  {/* Content */}
-                  <div className="space-y-3">
-                    <h3 className="text-base font-semibold text-[color:var(--primary)] group-hover:text-[#23364F] transition-colors">
-                      {service.title}
-                    </h3>
-                    <p className="text-sm leading-6 text-[color:var(--muted)] line-clamp-3">
-                      {service.description}
-                    </p>
-                  </div>
+                  Company Overview.
+                </h2>
+                <p className="mt-4 max-w-xl text-base leading-7" style={{ fontFamily: "var(--font-mono)", color: "rgba(240,244,255,0.40)", fontSize: "13px", letterSpacing: "0.04em" }}>
+                  Engineering, design, validation, manufacturing,<br />and operational consulting for aerospace.
+                </p>
+              </div>
+            </ScrollReveal>
 
-                  {/* Bottom accent line */}
-                  <div className="mt-4 h-0.5 w-0 group-hover:w-full bg-gradient-to-r from-[#23364F] to-[#45576D] transition-all duration-500 rounded-full" />
-                </Link>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {services.slice(0, 4).map((service, i) => (
+                <ScrollReveal key={service.title} delay={i * 120}>
+                  <ThreeDCard className="h-full">
+                    <Link
+                      href="/services"
+                      className="group relative block overflow-hidden rounded-2xl p-5 transition-all duration-500 hover:-translate-y-1 h-full"
+                      style={{
+                        background: "rgba(255,255,255,0.03)",
+                        border: "1px solid rgba(56,189,248,0.10)",
+                        boxShadow: "0 4px 24px rgba(0,0,0,0.4)",
+                      }}
+                    >
+                      <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                        style={{ boxShadow: "inset 0 0 0 1px rgba(56,189,248,0.35), 0 0 24px rgba(14,165,233,0.10)" }}
+                      />
+                      {/* Number */}
+                      <span
+                        className="block text-xs mb-4"
+                        style={{ fontFamily: "var(--font-mono)", color: "rgba(56,189,248,0.50)", letterSpacing: "0.12em" }}
+                      >
+                        {String(i + 1).padStart(2, "0")}
+                      </span>
+                      {/* Image */}
+                      <div className="relative overflow-hidden rounded-xl mb-4 aspect-[4/3]">
+                        <Image src={service.image} alt={service.title} width={320} height={240}
+                          className="h-full w-full object-cover transition-all duration-500 group-hover:scale-110"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+                      </div>
+                      {/* Content */}
+                      <h3
+                        className="text-sm font-bold text-white group-hover:text-[#38bdf8] transition-colors duration-300 mb-1"
+                        style={{ fontFamily: "var(--font-display)", letterSpacing: "0.02em" }}
+                      >
+                        {service.title}
+                      </h3>
+                      <p className="text-xs leading-5" style={{ fontFamily: "var(--font-mono)", color: "rgba(240,244,255,0.35)", letterSpacing: "0.03em" }}>
+                        {service.description.slice(0, 80)}…
+                      </p>
+                      <div className="mt-4 h-px w-0 group-hover:w-full bg-gradient-to-r from-[#0ea5e9] to-[#38bdf8] transition-all duration-500 rounded-full" />
+                    </Link>
+                  </ThreeDCard>
+                </ScrollReveal>
               ))}
             </div>
           </div>
         </Section>
 
-        {/* Featured Products Section */}
-        <Section className="relative overflow-hidden rounded-[2rem] px-6 py-16 sm:px-10 sm:py-20" backgroundImage="/website_images/background.jpg">
-          
-          <div className="relative space-y-10">
-            <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-              <div>
-                <p className="text-xs uppercase tracking-[0.3em] text-[color:var(--foreground)] font-medium">Featured Products</p>
-                <h2 className="text-3xl font-bold mt-2 text-[color:var(--foreground)]">Selected Products</h2>
+        {/* ═══ PRODUCTS — solid dark panel ═══ */}
+        <ScrollReveal>
+          <Section>
+            <div
+              className="relative overflow-hidden rounded-[2rem] px-6 py-16 sm:px-10 sm:py-20"
+              style={{
+                background: 'linear-gradient(135deg, #000000 0%, #050d1a 50%, #0a0f1a 100%)',
+                border: '1px solid rgba(56,189,248,0.12)',
+                boxShadow: '0 0 60px rgba(14,165,233,0.08)',
+              }}
+            >
+              {/* Grid overlay */}
+              <div className="absolute inset-0 tech-grid opacity-15 rounded-[2rem]" />
+              {/* Top electric line */}
+              <div className="absolute top-0 left-0 right-0 h-px"
+                style={{ background: 'linear-gradient(90deg, transparent, rgba(56,189,248,0.5), transparent)' }}
+              />
+
+              <div className="relative space-y-10">
+                <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+                  <div>
+                    <SectionTag>Featured Products</SectionTag>
+                    <h2 className="mt-4 text-[clamp(2rem,4vw,3rem)] font-bold text-white" style={{ fontFamily: "var(--font-display)" }}>Selected Products.</h2>
+                  </div>
+                  <Button
+                    href="/products"
+                    variant="primary"
+                    className="!bg-[#0ea5e9] hover:!bg-[#38bdf8] !text-black !font-bold hover:!shadow-[0_0_20px_rgba(14,165,233,0.5)]"
+                  >
+                    View all products
+                  </Button>
+                </div>
+                <ProductsSection />
               </div>
-              <div>
+            </div>
+          </Section>
+        </ScrollReveal>
+
+        {/* ═══ CTA — electric gradient ═══ */}
+        <ScrollReveal delay={100}>
+          <Section>
+            <div className="relative overflow-hidden rounded-[2rem] p-12 sm:p-16"
+              style={{
+                background: 'linear-gradient(135deg, #000000 0%, #0a1628 40%, #0f1f3d 70%, #23364F 100%)',
+                border: '1px solid rgba(56,189,248,0.18)',
+              }}
+            >
+              {/* Electric top border */}
+              <div className="absolute top-0 left-0 right-0 h-px"
+                style={{ background: 'linear-gradient(90deg, transparent, #38bdf8, transparent)' }}
+              />
+              {/* Background glow spots */}
+              <div className="absolute -top-20 -right-20 w-72 h-72 rounded-full opacity-25 animate-mesh-flow"
+                style={{ background: 'radial-gradient(circle, rgba(14,165,233,0.4) 0%, transparent 70%)' }}
+              />
+              <div className="absolute -bottom-20 -left-20 w-72 h-72 rounded-full opacity-15 animate-mesh-flow"
+                style={{ background: 'radial-gradient(circle, rgba(35,54,79,0.5) 0%, transparent 70%)', animationDelay: '-4s' }}
+              />
+              <div className="absolute inset-0 tech-grid opacity-15" />
+
+              <div className="relative flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
+                <div className="max-w-2xl">
+                  <SectionTag>Get In Touch</SectionTag>
+                  <h2 className="mt-4 text-[clamp(2rem,5vw,3.5rem)] font-bold text-white" style={{ fontFamily: "var(--font-display)" }}>
+                    Ready to work<br />with Skywin?
+                  </h2>
+                  <p className="mt-4 text-lg leading-8 text-white/65">
+                    Contact our team for aerospace engineering, consulting, or collaboration inquiries.
+                  </p>
+                </div>
                 <Button
-                  href="/products"
-                  variant="primary"
-                  className="dark:text-white"
+                  href="/contact"
+                  className="!bg-[#0ea5e9] hover:!bg-[#38bdf8] !text-black !font-bold hover:!shadow-[0_0_40px_rgba(14,165,233,0.7)] transition-all duration-300 whitespace-nowrap"
                 >
-                  View all products
+                  Start a conversation
                 </Button>
               </div>
             </div>
-            <ProductsSection />
-          </div>
-        </Section>
+          </Section>
+        </ScrollReveal>
 
-        {/* CTA Section */}
-        <Section>
-          <div className="relative overflow-hidden rounded-[2rem] p-12 sm:p-16">
-            {/* Animated gradient background */}
-            <div className="absolute inset-0" style={{background: 'var(--gradient-primary)'}} />
-            <div className="absolute inset-0 opacity-30" style={{
-              background: 'radial-gradient(circle at 30% 50%, rgba(255,255,255,0.15) 0%, transparent 50%), radial-gradient(circle at 70% 50%, rgba(255,255,255,0.1) 0%, transparent 50%)'
-            }} />
-            <div className="absolute inset-0 tech-grid opacity-20" />
-            
-            {/* Glowing orbs */}
-            <div className="absolute -top-20 -right-20 w-60 h-60 rounded-full opacity-20 animate-mesh-flow" style={{background: 'radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%)'}} />
-            <div className="absolute -bottom-20 -left-20 w-60 h-60 rounded-full opacity-15 animate-mesh-flow" style={{background: 'radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%)', animationDelay: '-4s'}} />
-            
-            <div className="relative flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
-              <div className="max-w-2xl">
-                <h2 className="text-3xl font-bold text-white sm:text-4xl">
-                  Ready to work with Skywin?
-                </h2>
-                <p className="mt-4 text-lg leading-8 text-white/80">
-                  Contact our team for aerospace engineering, consulting, or collaboration inquiries.
-                </p>
-              </div>
-              <Button
-                href="/contact"
-                className="!bg-white dark:!bg-[#23364F] !text-[#23364F] dark:!text-white hover:!bg-white/90 dark:hover:!bg-[#2c4463] hover:!shadow-xl hover:!shadow-white/25 !ring-white/30 dark:!ring-[#45576D]/30"
-              >
-                Start a conversation
-              </Button>
-            </div>
-          </div>
-        </Section>
       </Container>
     </main>
   );

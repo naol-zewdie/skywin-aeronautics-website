@@ -1,20 +1,40 @@
 import type { Metadata, Viewport } from "next";
 import { headers } from "next/headers";
+import Script from "next/script";
 import Link from "next/link";
+import { JetBrains_Mono, Syne } from "next/font/google";
 import Navbar from "./components/Navbar";
 import Container from "./components/Container";
+import {
+  FluidBackground,
+  LoadingScreen,
+  ScrollProgress,
+  StatsTicker,
+} from "./components/ClientComponents";
 import "./globals.css";
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-mono",
+  display: "swap",
+});
+
+const syne = Syne({
+  subsets: ["latin"],
+  variable: "--font-display",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "Skywin Aeronautics",
   description:
-    "Skywin Aeronautics corporate website for aerospace engineering, design, manufacturing, and consulting services.",
+    "Skywin Aeronautics — Precision UAV manufacturing, aerospace engineering, design, and consulting from Addis Ababa.",
   icons: {
     icon: "/skywin_logo.png",
   },
   openGraph: {
     title: "Skywin Aeronautics",
-    description: "Aerospace engineering, design, manufacturing, and consulting services.",
+    description: "Precision UAV manufacturing and aerospace engineering from Ethiopia.",
     siteName: "Skywin Aeronautics",
     type: "website",
   },
@@ -23,7 +43,7 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#23364F",
+  themeColor: "#000000",
 };
 
 export default async function RootLayout({
@@ -36,67 +56,103 @@ export default async function RootLayout({
   return (
     <html
       lang="en"
-      className="h-full antialiased"
+      className={`${jetbrainsMono.variable} ${syne.variable} h-full antialiased`}
       suppressHydrationWarning
     >
-      <head>
-        <script
+      <body className="min-h-full text-[color:var(--foreground)]">
+        {/* Dark mode detection — must run before hydration */}
+        <Script
+          id="dark-mode-init"
+          strategy="beforeInteractive"
           nonce={nonce}
-          suppressHydrationWarning
           dangerouslySetInnerHTML={{
             __html: `(function(){try{var t=localStorage.getItem('theme');if(t!=='light')document.documentElement.classList.add('dark')}catch(e){document.documentElement.classList.add('dark')}})()`,
           }}
         />
-      </head>
-      <body className="min-h-full bg-[color:var(--background)] text-[color:var(--foreground)]">
+        {/* ── WebGL + Loading ── */}
+        <LoadingScreen />
+        <FluidBackground />
+
+        {/* ── Floating Pill Navbar ── */}
         <Navbar />
-        <div className="flex min-h-[calc(100vh-72px)] flex-col">{children}</div>
-          <footer className="relative overflow-hidden border-t border-[color:var(--border)] bg-[color:var(--primary)]">
-            {/* Decorative background inspired by the illustration (no direct image use) */}
-            <div className="absolute inset-0 pointer-events-none">
-              <div className="absolute inset-0" style={{ background: 'var(--gradient-mesh)' }} />
-              <div
-                className="absolute -top-16 left-0 w-full h-64 opacity-30"
-                style={{
-                  background:
-                    'radial-gradient(circle at 10% 20%, rgba(35,54,79,0.18), transparent 25%), radial-gradient(circle at 90% 80%, rgba(69,87,109,0.12), transparent 25%)',
-                  mixBlendMode: 'overlay',
-                }}
-              />
-              <svg
-                className="absolute bottom-0 left-0 w-full h-28"
-                viewBox="0 0 1440 120"
-                preserveAspectRatio="none"
-                aria-hidden
-              >
-                <defs>
-                  <linearGradient id="g1" x1="0" x2="1">
-                    <stop offset="0" stopColor="#23364F" />
-                    <stop offset="1" stopColor="#45576D" />
-                  </linearGradient>
-                </defs>
-                <path d="M0,40 C360,120 1080,0 1440,60 L1440,120 L0,120 Z" fill="url(#g1)" opacity="0.45" />
-              </svg>
-              <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(35,54,79,0.9), rgba(69,87,109,0.35), transparent)' }} />
-            </div>
-          <Container>
-            <div className="relative z-10 mx-auto w-full max-w-7xl px-6 text-sm py-8 dark:pt-4 dark:pb-8 footer-text">
-              <div className="flex items-center justify-between">
-                <div className="flex flex-col">
-                  <span className="text-sm">© 2026 Skywin Aeronautics. All rights reserved.</span>
-                  <span className="text-xs">Designed for aerospace organizations seeking precision and reliability.</span>
+
+        {/* ── Scroll progress (right edge) ── */}
+        <ScrollProgress />
+
+        {/* ── Page content ── */}
+        <div className="relative z-10 flex min-h-screen flex-col">
+          {children}
+
+          {/* ── Stats ticker ── */}
+          <StatsTicker />
+
+          {/* ── Footer ── */}
+          <footer
+            className="relative overflow-hidden border-t"
+            style={{ borderColor: "rgba(56,189,248,0.10)", background: "#000000" }}
+          >
+            {/* Electric top border */}
+            <div
+              className="absolute top-0 left-0 right-0 h-px"
+              style={{ background: "linear-gradient(90deg, transparent, #38bdf8, transparent)" }}
+            />
+
+            <Container>
+              <div className="relative z-10 mx-auto w-full max-w-7xl px-6 py-10">
+                {/* Top row: logo + nav */}
+                <div className="flex flex-col gap-8 sm:flex-row sm:items-center sm:justify-between mb-8">
+                  <div>
+                    <p
+                      className="text-white font-bold text-lg tracking-wider"
+                      style={{ fontFamily: "var(--font-display)" }}
+                    >
+                      SKYWIN
+                    </p>
+                    <p
+                      style={{
+                        fontFamily: "var(--font-mono)",
+                        fontSize: "11px",
+                        color: "rgba(240,244,255,0.30)",
+                        letterSpacing: "0.15em",
+                        marginTop: "4px",
+                      }}
+                    >
+                      [ AERONAUTICS ]
+                    </p>
+                  </div>
+
+                  <nav className="flex gap-8" style={{ fontFamily: "var(--font-mono)", fontSize: "12px", letterSpacing: "0.12em" }}>
+                    {["About", "Services", "Products", "Careers", "Contact"].map((l) => (
+                      <Link
+                        key={l}
+                        href={`/${l.toLowerCase()}`}
+                        className="uppercase transition-colors duration-200 hover:text-[#38bdf8]"
+                        style={{ color: "rgba(240,244,255,0.35)" }}
+                      >
+                        {l}
+                      </Link>
+                    ))}
+                  </nav>
                 </div>
 
-                <nav className="hidden sm:flex gap-6 text-sm footer-text">
-                  <Link href="/about" className="hover:underline">About</Link>
-                  <Link href="/services" className="hover:underline">Services</Link>
-                  <Link href="/careers" className="hover:underline">Careers</Link>
-                  <Link href="/contact" className="hover:underline">Contact</Link>
-                </nav>
+                {/* Bottom row: copyright */}
+                <div
+                  className="pt-6 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between"
+                  style={{
+                    borderTop: "1px solid rgba(255,255,255,0.06)",
+                    fontFamily: "var(--font-mono)",
+                    fontSize: "11px",
+                    color: "rgba(240,244,255,0.25)",
+                    letterSpacing: "0.10em",
+                  }}
+                >
+                  <span>© 2025 Skywin Aeronautics Industry. All rights reserved.</span>
+                  <span>Addis Ababa, Ethiopia</span>
+                </div>
               </div>
-            </div>
-          </Container>
-        </footer>
+            </Container>
+          </footer>
+        </div>
       </body>
     </html>
   );

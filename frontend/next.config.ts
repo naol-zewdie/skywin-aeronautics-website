@@ -11,6 +11,7 @@ const apiProtocol = process.env.BACKEND_URL
   : 'http';
 
 const nextConfig: NextConfig = {
+  transpilePackages: ['three', '@react-three/fiber', '@react-three/drei'],
   reactStrictMode: true,
   poweredByHeader: false,
   allowedDevOrigins: ['127.0.0.1'],
