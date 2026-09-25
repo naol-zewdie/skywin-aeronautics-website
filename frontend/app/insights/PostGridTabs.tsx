@@ -108,12 +108,12 @@ export default function PostGridTabs({ allPosts, news, blogs, events }: Props) {
               
               <div className="p-6">
                 <div className="mb-3">
-                  <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                  <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium font-mono ${
                     post.type === ContentType.NEWS
-                      ? 'bg-blue-100 text-blue-800'
+                      ? 'bg-[#23364F]/50 text-[#8fa3bf] border border-[#45576D]/40'
                       : post.type === ContentType.BLOG
-                      ? 'bg-green-100 text-green-800'
-                      : 'bg-purple-100 text-purple-800'
+                      ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                      : 'bg-white/10 text-white/90 border border-white/20'
                   }`}>
                     {post.type.toUpperCase()}
                   </span>

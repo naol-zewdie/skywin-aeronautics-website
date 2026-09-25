@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 // Horizontal auto-scrolling marquee with Skywin stats
 // Matches the ticker/marquee strips on premium agency sites
@@ -21,7 +21,7 @@ export default function StatsTicker() {
   return (
     <div
       className="relative overflow-hidden border-y py-3"
-      style={{ borderColor: "rgba(56,189,248,0.12)" }}
+      style={{ borderColor: "rgba(69, 87, 109,0.12)" }}
     >
       {/* Left & right fade masks */}
       <div className="absolute left-0 top-0 bottom-0 w-20 z-10 pointer-events-none"
@@ -45,10 +45,11 @@ export default function StatsTicker() {
           >
             {item}
             {/* Diamond separator */}
-            <span style={{ color: "#38bdf8", fontSize: "8px" }}>◆</span>
+            <span style={{ color: "#45576D", fontSize: "8px" }}>◆</span>
           </span>
         ))}
       </div>
     </div>
   );
 }
+

@@ -28,6 +28,15 @@ const stripHtml = (html: string): string => {
   return html.replace(/<[^>]*>?/gm, '');
 };
 
+export const slugify = (text: string): string => {
+  return text
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, '')
+    .replace(/[\s_-]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+};
+
 class ApiClient {
   private defaultHeaders: Record<string, string>;
 
@@ -124,6 +133,20 @@ class ApiClient {
     if (trimmed.startsWith('https://') || trimmed.startsWith('http://')) {
       return trimmed;
     }
+    // Local static assets in public/
+    if (
+      trimmed.startsWith('/assets/') ||
+      trimmed.startsWith('/website_images/') ||
+      trimmed.startsWith('/coding assets/') ||
+      trimmed === '/drone.jpg' ||
+      trimmed === '/consulting.jpg' ||
+      trimmed === '/simulation.jpg' ||
+      trimmed === '/hero_background.jpg' ||
+      trimmed === '/theme.png' ||
+      trimmed.startsWith('/fonts/')
+    ) {
+      return trimmed;
+    }
     if (/^[a-zA-Z0-9_\-\./]+$/.test(trimmed)) {
       const baseUrl = getApiBaseUrl();
       const path = trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
@@ -200,25 +223,80 @@ class ApiClient {
       return this.mapBackendToFrontendPost(post);
     } catch (error) {
       console.error('Failed to fetch post:', error);
-      return null;
+      const fallback = this.getFallbackPosts().find(
+        (p) => p._id === id || slugify(p.title) === id
+      );
+      return fallback || null;
     }
   }
 
+  private inferServiceCategory(title: string, description: string = ''): string {
+    const text = `${title} ${description}`.toLowerCase();
+    if (text.includes('train') || text.includes('pilot') || text.includes('technician') || text.includes('academy')) {
+      return 'Training & Simulation';
+    }
+    if (text.includes('map') || text.includes('survey') || text.includes('geospatial') || text.includes('gis')) {
+      return 'Survey & Mapping';
+    }
+    if (text.includes('consult') || text.includes('advis') || text.includes('strategy') || text.includes('research')) {
+      return 'Consulting & R&D';
+    }
+    return 'Operations & Defense';
+  }
+
   private mapBackendToFrontendService(backend: BackendService): FrontendService {
+    const id = backend.id || (backend as unknown as { _id?: string })._id || '';
+    const title = backend.name || '';
+    const cleanDesc = stripHtml(backend.description || '');
     return {
-      title: backend.name,
-      description: backend.description,
+      id,
+      slug: slugify(title) || id,
+      title,
+      description: cleanDesc || backend.description || '',
       image: this.getImageUrl(backend.image),
+      category: this.inferServiceCategory(title, cleanDesc),
     };
   }
 
+  private inferProductCategory(backendCategory?: string, title: string = '', description: string = ''): string {
+    const rawCat = (backendCategory || '').trim();
+    if (rawCat && rawCat.toUpperCase() !== 'UAV') {
+      return rawCat;
+    }
+    const text = `${rawCat} ${title} ${description}`.toLowerCase();
+    if (text.includes('fpv') || text.includes('tew') || text.includes('strike') || text.includes('attack')) {
+      return 'Tactical FPV';
+    }
+    if (text.includes('vtol') || text.includes('sw-01') || text.includes('hybrid')) {
+      return 'Long-Range VTOL';
+    }
+    if (text.includes('survey') || text.includes('mapping') || text.includes('sr') || text.includes('recon') || text.includes('camera')) {
+      return 'Surveillance & Recon';
+    }
+    if (text.includes('heavy') || text.includes('mebrek') || text.includes('multipurpose') || text.includes('lift') || text.includes('cargo')) {
+      return 'Heavy Payload';
+    }
+    if (text.includes('battery') || text.includes('power') || text.includes('pack')) {
+      return 'Power & Avionics';
+    }
+    return rawCat || 'Aerospace Systems';
+  }
+
   private mapBackendToFrontendProduct(backend: BackendProduct): FrontendProduct {
+    const id = backend.id || (backend as unknown as { _id?: string })._id || '';
+    const title = backend.name || '';
     const plainText = stripHtml(backend.description || '');
+    const category = this.inferProductCategory(backend.category, title, plainText);
     return {
-      title: backend.name,
+      id,
+      slug: slugify(title) || id,
+      title,
       shortDescription: plainText.substring(0, 150) + (plainText.length > 150 ? '...' : ''),
       description: backend.description || '',
       images: [this.getImageUrl(backend.image)],
+      category,
+      price: backend.price,
+      stock: backend.stock,
     };
   }
 
@@ -230,29 +308,36 @@ class ApiClient {
   }
 
   private mapBackendToFrontendCareer(backend: BackendCareer): FrontendCareer {
+    const id = backend.id || (backend as unknown as { _id?: string })._id || '';
+    const slug = slugify(backend.title) || id;
     return {
+      id,
+      slug,
       title: backend.title,
       description: backend.description,
       requirements: [],
-      location: backend.location,
+      location: backend.location || 'Addis Ababa, Ethiopia',
       type: this.normalizeEmploymentType(backend.employmentType),
-      image: '/consulting.jpg',
+      image: (backend as unknown as { image?: string }).image
+        ? this.getImageUrl((backend as unknown as { image?: string }).image)
+        : '/consulting.jpg',
     };
   }
 
   private mapBackendToFrontendPost(backend: BackendPost): FrontendPost {
+    const id = backend.id || (backend as unknown as { _id?: string })._id || '';
     return {
-      _id: backend.id,
-      title: backend.title,
-      content: backend.content,
-      type: backend.type,
-      author: backend.author,
-      excerpt: backend.excerpt,
+      _id: id,
+      title: backend.title || '',
+      content: backend.content || '',
+      type: backend.type || ContentType.BLOG,
+      author: backend.author || 'Skywin Aeronautics',
+      excerpt: backend.excerpt || '',
       coverImage: this.getImageUrl(backend.coverImage),
       tags: backend.tags || [],
       eventDate: backend.eventDate,
       eventLocation: backend.eventLocation,
-      status: backend.status,
+      status: backend.status !== false,
       views: backend.views || 0,
       createdAt: backend.createdAt || new Date().toISOString(),
       updatedAt: backend.updatedAt || backend.createdAt || new Date().toISOString(),
@@ -262,39 +347,60 @@ class ApiClient {
   private getFallbackServices(): FrontendService[] {
     return [
       {
+        id: "aerial-mapping-and-surveying",
+        slug: "aerial-mapping-and-surveying",
         title: "Aerial Mapping and Surveying",
+        category: "Survey & Mapping",
         description: "We provide accurate aerial mapping and surveying solutions using advanced drone technology. Our services support land assessment, construction planning, and geospatial data collection. We ensure high-resolution outputs that help clients make informed decisions efficiently.",
-        image: "/drone.jpg",
+        image: "/assets/surveying.JPG",
       },
       {
+        id: "drone-piloting-training",
+        slug: "drone-piloting-training",
         title: "Drone Piloting Training",
+        category: "Training & Simulation",
         description: "Our drone piloting training equips individuals with practical flying skills and industry knowledge. Trainees learn safety procedures, flight control, and mission planning. The program is designed for both beginners and those looking to enhance their expertise.",
-        image: "/simulation.jpg",
+        image: "/assets/training.JPG",
       },
       {
+        id: "technician-training",
+        slug: "technician-training",
         title: "Technician Training",
+        category: "Training & Simulation",
         description: "We offer technician training focused on drone maintenance, troubleshooting, and system management. Participants gain hands-on experience with real equipment and tools. This training prepares technicians to ensure reliable and safe drone operations.",
-        image: "/consulting.jpg",
+        image: "/assets/dronetechnician.jpg",
       },
       {
+        id: "drone-engineering-training",
+        slug: "drone-engineering-training",
         title: "Drone Engineering Training",
+        category: "Training & Simulation",
         description: "Our drone engineering training covers design, assembly, and system integration. Students learn technical foundations behind drone technology and innovation. The course is ideal for those interested in building and improving drone systems.",
-        image: "/drone.jpg",
+        image: "/assets/vtolservice.JPG",
       },
       {
+        id: "consultancy",
+        slug: "consultancy",
         title: "Consultancy",
+        category: "Consulting & R&D",
         description: "We provide expert consultancy services tailored to your drone-related needs. Our team supports project planning, technology selection, and operational strategy. We help organizations adopt drone solutions effectively and responsibly.",
-        image: "/simulation.jpg",
-      },
-      {
-        title: "Agricultural and Infrastructure Inspection",
-        description: "Our drones enable efficient inspection of agricultural fields and infrastructure assets. We help identify issues such as crop health concerns, structural damage, or maintenance needs. This approach saves time while improving accuracy and safety.",
         image: "/consulting.jpg",
       },
       {
-        title: "Customized Missions",
-        description: "We design and execute customized drone missions based on specific client requirements. Whether for research, monitoring, or specialized operations, we adapt our solutions accordingly. Our team ensures precision, flexibility, and reliable results in every project.",
+        id: "agricultural-and-infrastructure-inspection",
+        slug: "agricultural-and-infrastructure-inspection",
+        title: "Agricultural and Infrastructure Inspection",
+        category: "Operations & Defense",
+        description: "Our drones enable efficient inspection of agricultural fields and infrastructure assets. We help identify issues such as crop health concerns, structural damage, or maintenance needs. This approach saves time while improving accuracy and safety.",
         image: "/drone.jpg",
+      },
+      {
+        id: "customized-missions",
+        slug: "customized-missions",
+        title: "Customized Missions",
+        category: "Operations & Defense",
+        description: "We design and execute customized drone missions based on specific client requirements. Whether for research, monitoring, or specialized operations, we adapt our solutions accordingly. Our team ensures precision, flexibility, and reliable results in every project.",
+        image: "/assets/droneinhangar.jpg",
       },
     ];
   }
@@ -302,7 +408,10 @@ class ApiClient {
   private getFallbackProducts(): FrontendProduct[] {
     return [
       {
+        id: "tew-k-01",
+        slug: "tew-k-01",
         title: "Tew-k 01",
+        category: "Tactical FPV",
         shortDescription: "Advanced FPV drone with 3kg payload capacity and 15km range",
         description: `
           <h2 class="text-2xl font-semibold text-[color:var(--primary)] mb-4">Description</h2>
@@ -325,10 +434,15 @@ class ApiClient {
             Defense and security
           </p>
         `,
-        images: ["/website_images/10 inch Tew-k 01.jpg", "/website_images/10 inch Tew-k 01.jpg", "/website_images/10 inch Tew-k 01.jpg", "/website_images/10 inch Tew-k 01.jpg"],
+        images: ["/website_images/10 inch Tew-k 01.jpg"],
+        price: 1500,
+        stock: 10,
       },
       {
+        id: "tew-k-02",
+        slug: "tew-k-02",
         title: "Tew-k 02",
+        category: "Tactical FPV",
         shortDescription: "Enhanced FPV drone with 4kg payload capacity and 20km range",
         description: `
           <h2 class="text-2xl font-semibold text-[color:var(--primary)] mb-4">Description</h2>
@@ -351,10 +465,15 @@ class ApiClient {
             Defense and security
           </p>
         `,
-        images: ["/website_images/10 inch Tew-k 02.jpg", "/website_images/10 inch Tew-k 02.jpg", "/website_images/10 inch Tew-k 02.jpg", "/website_images/10 inch Tew-k 02.jpg"],
+        images: ["/website_images/10 inch Tew-k 02.jpg"],
+        price: 2200,
+        stock: 8,
       },
       {
+        id: "sr-surveillance",
+        slug: "sr-surveillance",
         title: "SR (Surveillance)",
+        category: "Surveillance & Recon",
         shortDescription: "High-altitude surveillance drone with 40x optical zoom and thermal imaging",
         description: `
           <h2 class="text-2xl font-semibold text-[color:var(--primary)] mb-4">Description</h2>
@@ -383,10 +502,15 @@ class ApiClient {
             <p>Support for other drones</p>
           </div>
         `,
-        images: ["/website_images/Survaillance.jpg", "/website_images/Survaillance(2).jpg", "/website_images/Survaillance.jpg", "/website_images/Survaillance(2).jpg"],
+        images: ["/website_images/Survaillance.jpg"],
+        price: 18000,
+        stock: 4,
       },
       {
+        id: "mebrek",
+        slug: "mebrek",
         title: "Mebrek",
+        category: "Heavy Payload",
         shortDescription: "Heavy lift quadcopter with 20kg payload capacity and advanced surveillance systems",
         description: `
           <h2 class="text-2xl font-semibold text-[color:var(--primary)] mb-4">Description</h2>
@@ -416,10 +540,15 @@ class ApiClient {
             <p>Firefighting payload and reconnaissance</p>
           </div>
         `,
-        images: ["/website_images/Heavy lift quadcopter.jpg", "/website_images/Heavy lift quadcopter (2).jpg", "/website_images/Heavy lift quadcopter.jpg", "/website_images/Heavy lift quadcopter (2).jpg"],
+        images: ["/website_images/Heavy lift quadcopter.jpg"],
+        price: 24000,
+        stock: 3,
       },
       {
+        id: "battery-packs",
+        slug: "battery-packs",
         title: "Battery Packs",
+        category: "Power & Avionics",
         shortDescription: "Custom engineered battery packs for any specification from low-energy to high-power applications",
         description: `
           <h2 class="text-2xl font-semibold text-[color:var(--primary)] mb-4">Description</h2>
@@ -427,10 +556,15 @@ class ApiClient {
             Here at Skywin Aeronautics, we don't just build drones, we engineer custom battery packs in any specification you demand. From low-energy applications to most power-devouring machines. Every cell we use is tested, fully certified, and renowned for an exceptional energy density delivering maximum power without the penalty of bulk. Whether you need a compact, lightweight pack or a massive energy beast, we tailor each battery precisely to your specifications, from smallest to largest.
           </p>
         `,
-        images: ["/drone.jpg", "/drone.jpg", "/drone.jpg", "/drone.jpg"],
+        images: ["/drone.jpg"],
+        price: 850,
+        stock: 25,
       },
       {
+        id: "vtol-sw-01",
+        slug: "vtol-sw-01",
         title: "Vtol SW-01",
+        category: "Long-Range VTOL",
         shortDescription: "Largest VTOL vehicle with AI-integrated system and 30kg payload capacity",
         description: `
           <h2 class="text-2xl font-semibold text-[color:var(--primary)] mb-4">Description</h2>
@@ -457,7 +591,9 @@ class ApiClient {
             <p>Defense and Security</p>
           </div>
         `,
-        images: ["/website_images/vtol3.png", "/website_images/vtol1.png", "/website_images/vtol2.png", "/website_images/vtol3.png"],
+        images: ["/website_images/vtol3.png"],
+        price: 45000,
+        stock: 2,
       },
     ];
   }
@@ -465,6 +601,8 @@ class ApiClient {
   private getFallbackCareers(): FrontendCareer[] {
     return [
       {
+        id: "senior-drone-pilot",
+        slug: "senior-drone-pilot",
         title: "Senior Drone Pilot",
         description: "We are seeking an experienced drone pilot to join our operations team. The ideal candidate will have extensive experience in commercial drone operations and hold relevant certifications.",
         requirements: [
@@ -476,9 +614,11 @@ class ApiClient {
         ],
         location: "Addis Ababa, Ethiopia",
         type: "full-time",
-        image: "/consulting.jpg",
+        image: "/assets/training.JPG",
       },
       {
+        id: "drone-engineer",
+        slug: "drone-engineer",
         title: "Drone Engineer",
         description: "Join our engineering team to design and develop cutting-edge drone systems. You will work on both hardware and software aspects of drone development.",
         requirements: [
@@ -490,9 +630,11 @@ class ApiClient {
         ],
         location: "Addis Ababa, Ethiopia",
         type: "full-time",
-        image: "/drone.jpg",
+        image: "/assets/vtolservice.JPG",
       },
       {
+        id: "aerial-survey-specialist",
+        slug: "aerial-survey-specialist",
         title: "Aerial Survey Specialist",
         description: "We are looking for a specialist in aerial surveying and mapping to support our data collection services. Experience with photogrammetry and GIS is essential.",
         requirements: [
@@ -504,7 +646,7 @@ class ApiClient {
         ],
         location: "Addis Ababa, Ethiopia",
         type: "full-time",
-        image: "/simulation.jpg",
+        image: "/assets/surveying.JPG",
       },
     ];
   }
@@ -573,5 +715,44 @@ export const getPosts = (options?: {
 }) => apiClient.getPosts(options);
 export const getPostsByType = (type: ContentType) => apiClient.getPostsByType(type);
 export const getPost = (id: string) => apiClient.getPost(id);
+
+export async function getServiceBySlug(slug: string): Promise<FrontendService | null> {
+  const services = await apiClient.getServices();
+  const normalized = decodeURIComponent(slug).toLowerCase().trim();
+  return (
+    services.find(
+      (s) =>
+        (s.slug && s.slug.toLowerCase() === normalized) ||
+        (s.id && s.id.toLowerCase() === normalized) ||
+        slugify(s.title) === normalized
+    ) || null
+  );
+}
+
+export async function getProductBySlug(slug: string): Promise<FrontendProduct | null> {
+  const products = await apiClient.getProducts();
+  const normalized = decodeURIComponent(slug).toLowerCase().trim();
+  return (
+    products.find(
+      (p) =>
+        (p.slug && p.slug.toLowerCase() === normalized) ||
+        (p.id && p.id.toLowerCase() === normalized) ||
+        slugify(p.title) === normalized
+    ) || null
+  );
+}
+
+export async function getCareerBySlug(slug: string): Promise<FrontendCareer | null> {
+  const careers = await apiClient.getCareers();
+  const normalized = decodeURIComponent(slug).toLowerCase().trim();
+  return (
+    careers.find(
+      (c) =>
+        (c.slug && c.slug.toLowerCase() === normalized) ||
+        (c.id && c.id.toLowerCase() === normalized) ||
+        slugify(c.title) === normalized
+    ) || null
+  );
+}
 
 export type { FrontendService, FrontendProduct, FrontendCareer, FrontendPost, ContentType };

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 
@@ -24,10 +24,15 @@ export default function ScrollProgress() {
       {/* Track */}
       <div className="relative w-px h-28 bg-white/10 rounded-full overflow-hidden">
         <div
-          className="absolute bottom-0 left-0 w-full bg-[#38bdf8] rounded-full transition-all duration-150"
+          className="absolute bottom-0 left-0 w-full scroll-bar-gradient rounded-full transition-all duration-150"
           style={{ height: `${pct}%` }}
         />
       </div>
+      {/* Glowing dot */}
+      <div
+        className="w-1.5 h-1.5 rounded-full breathe-glow"
+        style={{ background: '#45576D', boxShadow: '0 0 6px 2px rgba(59,130,246,0.6)' }}
+      />
       {/* Percentage */}
       <span
         style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', letterSpacing: '0.05em' }}
@@ -38,3 +43,4 @@ export default function ScrollProgress() {
     </div>
   );
 }
+

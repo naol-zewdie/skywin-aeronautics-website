@@ -28,3 +28,38 @@ export const StatsTicker = dynamic(
   () => import("./StatsTicker"),
   { ssr: false }
 );
+
+export const HeroInteractive = dynamic(
+  () => import("./HeroInteractive"),
+  { ssr: false }
+);
+
+export const AboutScene = dynamic(
+  () => import("./AboutScene"),
+  { ssr: false }
+);
+
+export const ServicesScene = dynamic(
+  () => import("./ServicesScene"),
+  { ssr: false }
+);
+
+export const ProductsScene = dynamic(
+  () => import("./ProductsScene"),
+  { ssr: false }
+);
+
+export const ContactScene = dynamic(
+  () => import("./ContactScene"),
+  { ssr: false }
+);
+
+export const CareersScene = dynamic(
+  () => import("./CareersScene"),
+  { ssr: false }
+);
+
+export const InsightsScene = dynamic(
+  () => import("./InsightsScene"),
+  { ssr: false }
+);

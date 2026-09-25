@@ -5,8 +5,13 @@ import { Canvas, useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 
 /* ═══════════════════════════════════════════════════════════════
-   TECHY PLASMA RIVERS — Navy · Black · Electric Blue · White
-   Full-screen GLSL shader: flowing neon energy streams on dark bg
+   SKYWIN — LIVING NAVY AURORA BACKGROUND
+   Full-screen GLSL shader:
+   • Slow-breathing navy aurora / nebula clouds
+   • Floating particle field (rendered via CSS on top)
+   • Subtle dot-grid circuit overlay
+   • Vignette to keep edges dark
+   Dark and moody — alive but never distracting.
 ═══════════════════════════════════════════════════════════════ */
 
 const vertexShader = /* glsl */ `
@@ -26,155 +31,157 @@ const fragmentShader = /* glsl */ `
 
   varying vec2 vUv;
 
-  /* ── Glow function: tight glowing line ──────────── */
-  float glow(float dist, float radius) {
-    return clamp(radius / (dist * dist + 0.0001), 0.0, 1.0);
+  /* ── Value noise ──────────────────────────────────── */
+  float hash(vec2 p) {
+    return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
   }
-
-  /* ── Hash for pseudo-random variation ───────────── */
-  float hash(float n) { return fract(sin(n) * 43758.5453); }
-
-  /* ── Smooth noise ────────────────────────────────── */
-  float snoise(vec2 p) {
+  float noise(vec2 p) {
     vec2 i = floor(p);
     vec2 f = fract(p);
     f = f * f * (3.0 - 2.0 * f);
-    float a = fract(sin(dot(i,              vec2(127.1, 311.7))) * 43758.5453);
-    float b = fract(sin(dot(i + vec2(1, 0), vec2(127.1, 311.7))) * 43758.5453);
-    float c = fract(sin(dot(i + vec2(0, 1), vec2(127.1, 311.7))) * 43758.5453);
-    float d = fract(sin(dot(i + vec2(1, 1), vec2(127.1, 311.7))) * 43758.5453);
-    return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
+    float a = hash(i);
+    float b = hash(i + vec2(1,0));
+    float c = hash(i + vec2(0,1));
+    float d = hash(i + vec2(1,1));
+    return mix(mix(a,b,f.x), mix(c,d,f.x), f.y);
+  }
+
+  /* ── Fractal Brownian Motion (fbm) ───────────────── */
+  float fbm(vec2 p) {
+    float v = 0.0;
+    float a = 0.5;
+    vec2  shift = vec2(100.0);
+    mat2  rot = mat2(cos(0.5), sin(0.5), -sin(0.5), cos(0.5));
+    for (int i = 0; i < 5; i++) {
+      v += a * noise(p);
+      p  = rot * p * 2.1 + shift;
+      a *= 0.5;
+    }
+    return v;
   }
 
   void main() {
     vec2 uv = vUv;
     float aspect = uResolution.x / uResolution.y;
-    /* center-origin UV, aspect-correct */
     vec2 p = (uv * 2.0 - 1.0) * vec2(aspect, 1.0);
 
-    float t = uTime * 0.55;   /* speed — clearly visible */
+    float t = uTime * 0.12;   /* very slow drift */
 
-    /* ── Base: near-black with subtle navy tint ──── */
-    vec3 col = mix(
-      vec3(0.004, 0.008, 0.020),  /* light mode: very dark navy */
-      vec3(0.004, 0.008, 0.020),  /* dark mode: same */
-      uDark
+    /* ── Near-black deep space base (subtle depth close to footer #000000) ── */
+    vec3 col = vec3(0.003, 0.005, 0.008);
+
+    /* ── Company Theme Colors ─────────────────────── */
+    /* Primary: #23364F -> (0.137, 0.212, 0.310)      */
+    /* Secondary: #45576D -> (0.271, 0.341, 0.427)    */
+    vec3 cPrimary   = vec3(0.137, 0.212, 0.310);
+    vec3 cSecondary = vec3(0.271, 0.341, 0.427);
+    vec3 cDeep      = vec3(0.004, 0.007, 0.011);
+
+    /* ── Aurora / nebula clouds ──────────────────── */
+    vec2 q = vec2(fbm(p * 0.9 + t * vec2(0.6, 0.4)),
+                  fbm(p * 0.9 + t * vec2(-0.5, 0.7)));
+    vec2 r = vec2(fbm(p * 0.8 + 4.0 * q + vec2(1.7, 9.2) + t * 0.15),
+                  fbm(p * 0.8 + 4.0 * q + vec2(8.3, 2.8) + t * 0.13));
+
+    float f = fbm(p * 0.7 + 4.0 * r);
+
+    /* Deep subtle near-black primary/secondary nebula glow */
+    vec3 aurora = mix(
+      cDeep,
+      cPrimary * 0.25,
+      clamp(f * f * 3.5, 0.0, 1.0)
+    );
+    aurora = mix(aurora,
+      cSecondary * 0.18,
+      clamp(length(q) * 0.7, 0.0, 1.0)
+    );
+    aurora = mix(aurora,
+      cPrimary * 0.28,
+      clamp(r.x * r.y * 1.8, 0.0, 1.0)
     );
 
-    /* ══ PLASMA RIVERS ═══════════════════════════════
-       7 glowing neon streams flowing across the screen.
-       Each has a unique sinusoidal path driven by time.
-    ═══════════════════════════════════════════════ */
-    float totalGlow = 0.0;
-    vec3 totalColor = vec3(0.0);
+    col += aurora * 0.40;
 
-    for (int i = 0; i < 7; i++) {
+    /* ── Secondary accent pulse: subtle secondary #45576D highlight ── */
+    float pulse = sin(t * 3.2 + p.x * 1.4) * 0.5 + 0.5;
+    pulse *= sin(t * 2.1 - p.y * 1.8) * 0.5 + 0.5;
+    float accent = fbm(p * 1.4 + t * vec2(0.3, -0.4));
+    col += cSecondary * 0.08 * accent * pulse;
+
+    /* ── Plasma rivers: 5 subtle #23364F / #45576D energy streams ── */
+    for (int i = 0; i < 5; i++) {
       float fi = float(i);
+      float phase  = fi * 1.256;
+      float freq   = 0.8 + fi * 0.30;
+      float speed  = 0.35 + fi * 0.12;
+      float amp    = 0.20 + fi * 0.03;
 
-      /* unique phase and frequency per river */
-      float phase  = fi * 0.897;                  /* ~golden angle spread */
-      float freq   = 1.1 + fi * 0.35;
-      float speed  = 0.5 + fi * 0.18;
-      float amp    = 0.28 + fi * 0.04;
-
-      /* The river's Y position: layered sines for organic movement */
       float riverY =
-          amp * sin(p.x * freq       + t * speed        + phase)
-        + amp * 0.45 * sin(p.x * freq * 2.1 - t * speed * 0.7 + phase * 1.5)
-        + amp * 0.25 * sin(p.x * freq * 0.5  + t * speed * 0.3 + phase * 0.8);
+          amp * sin(p.x * freq + t * speed * 8.0 + phase)
+        + amp * 0.4 * sin(p.x * freq * 2.0 - t * speed * 6.0 + phase * 1.3)
+        + amp * 0.2 * sin(p.x * freq * 0.5 + t * speed * 4.0 + phase * 0.7);
 
-      /* Spread rivers across the vertical range */
-      float spreadY = (fi / 6.0) * 2.2 - 1.1;
+      float spreadY = (fi / 4.0) * 2.4 - 1.2;
       float dist = abs(p.y - riverY - spreadY);
 
-      /* Glow layers: subtle, dimmer core + soft glow */
-      float core  = glow(dist, 0.00008);    /* very fine core */
-      float bloom = glow(dist, 0.0015);     /* gentle soft glow */
-      float halo  = glow(dist, 0.008);      /* subtle ambient halo */
+      /* Extremely subtle — just a faint glow line */
+      float bloom = clamp(0.0008 / (dist * dist + 0.0002), 0.0, 1.0);
+      float halo  = clamp(0.004  / (dist * dist + 0.002),  0.0, 1.0);
 
-      float riverGlow = core * 0.50 + bloom * 0.20 + halo * 0.05;
-
-      /* Color per river: deep electric-blue → muted cyan */
-      float blend = fi / 6.0;
+      float blend = fi / 4.0;
       vec3 riverCol = mix(
-        vec3(0.03, 0.16, 0.58),   /* deep subdued navy/blue */
-        vec3(0.12, 0.40, 0.68),   /* subdued cyan */
+        cPrimary * 0.35,
+        cSecondary * 0.40,
         blend
       );
-      /* Gentle highlight without harsh glare */
-      riverCol = mix(riverCol, vec3(0.55, 0.75, 0.95), clamp(core * 0.3, 0.0, 1.0));
 
-      totalColor += riverCol * riverGlow;
-      totalGlow  += riverGlow;
+      col += riverCol * (bloom * 0.14 + halo * 0.05);
     }
 
-    col += totalColor * 0.14;
-
-    /* ══ BACKGROUND NEBULA ═══════════════════════════
-       Low-frequency noise field adds depth/atmosphere.
-    ═══════════════════════════════════════════════ */
-    float nx = snoise(p * 0.7 + vec2(t * 0.08,  t * 0.05));
-    float ny = snoise(p * 0.7 + vec2(t * 0.06, -t * 0.09) + 5.3);
-    float nebula = snoise(p * 0.9 + vec2(nx, ny) * 0.5 + t * 0.04);
-    nebula = nebula * nebula;
-    col += vec3(0.005, 0.015, 0.04) * nebula * 0.20;
-
-    /* ══ TECH GRID ═══════════════════════════════════
-       Subtle dot-grid overlay gives the "circuit board"
-       techy feel without overwhelming the rivers.
-    ═══════════════════════════════════════════════ */
-    float gridScale = 14.0;
+    /* ── Tech dot-grid overlay ───────────────────── */
+    float gridScale = 20.0;
     vec2 gp = fract(p * gridScale + 0.5);
-    float gridDot = smoothstep(0.5, 0.42, length(gp - 0.5));
-    col += vec3(0.01, 0.03, 0.08) * gridDot * 0.12;
+    float gridDot = smoothstep(0.52, 0.44, length(gp - 0.5));
+    col += cSecondary * 0.08 * gridDot;
 
     /* Fine grid lines */
-    float gx = smoothstep(0.97, 1.0, gp.x) + smoothstep(0.97, 1.0, gp.y)
-             + smoothstep(0.03, 0.0, gp.x) + smoothstep(0.03, 0.0, gp.y);
-    col += vec3(0.005, 0.015, 0.04) * gx * 0.18;
+    float gx = smoothstep(0.96, 1.0, gp.x) + smoothstep(0.96, 1.0, gp.y)
+             + smoothstep(0.04, 0.0, gp.x) + smoothstep(0.04, 0.0, gp.y);
+    col += cPrimary * 0.05 * gx;
 
-    /* ══ SCANLINE ACCENT ════════════════════════════ */
-    float scan = sin(uv.y * uResolution.y * 0.75) * 0.5 + 0.5;
-    col += vec3(0.0, 0.01, 0.03) * scan * 0.15;
+    /* ── Subtle animated scanlines ───────────────── */
+    float scan = sin(uv.y * uResolution.y * 1.5 + t * 20.0) * 0.5 + 0.5;
+    col += cSecondary * 0.02 * scan;
 
-    /* ══ VIGNETTE ═══════════════════════════════════ */
+    /* ── Radial vignette — darkens edges strongly towards black ─────────── */
     vec2 vc = uv - 0.5;
-    float vignette = 1.0 - dot(vc, vc) * 1.8;
+    float vignette = 1.0 - dot(vc, vc) * 2.8;
     col *= clamp(vignette, 0.0, 1.0);
 
-    /* ══ LIGHT-MODE TINT ════════════════════════════
-       In light mode, brighten the whole scene so it
-       reads as navy-blue rather than black.
-    ═══════════════════════════════════════════════ */
-    vec3 lightOverlay = mix(vec3(0.55, 0.70, 0.90), vec3(0.0), uDark);
-    col = mix(col + lightOverlay * 0.25, col, uDark);
+    /* ── Center soft glow (atmospheric core) ─────── */
+    float centerGlow = exp(-dot(p, p) * 0.35);
+    col += cPrimary * 0.08 * centerGlow;
+
+    /* ── Light mode overlay ───────────────────────── */
+    vec3 lightOverlay = mix(cSecondary, vec3(0.0), uDark);
+    col = mix(col + lightOverlay * 0.30, col, uDark);
 
     col = clamp(col, 0.0, 1.0);
-
     gl_FragColor = vec4(col, 1.0);
   }
 `;
 
 /* ─── Inner shader mesh ─────────────────────────────── */
-function TechyFluid({ isDark }: { isDark: boolean }) {
+function AuroraFluid() {
   const matRef = useRef<THREE.ShaderMaterial>(null);
-  const needsUpdate = useRef(false);
 
-  /* Create uniforms once — stable reference for the material */
   const uniforms = useMemo<Record<string, THREE.IUniform>>(() => ({
     uTime:       { value: 0 },
     uResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
-    uDark:       { value: isDark ? 1.0 : 0.0 },
+    uDark:       { value: 1.0 },
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }), []);
 
-  /* Sync isDark changes */
-  useEffect(() => {
-    uniforms.uDark.value = isDark ? 1.0 : 0.0;
-    needsUpdate.current = true;
-  }, [isDark, uniforms]);
-
-  /* Sync resize */
   useEffect(() => {
     const onResize = () => {
       uniforms.uResolution.value.set(window.innerWidth, window.innerHeight);
@@ -183,12 +190,8 @@ function TechyFluid({ isDark }: { isDark: boolean }) {
     return () => window.removeEventListener("resize", onResize);
   }, [uniforms]);
 
-  /* Animate — uTime drives all motion */
   useFrame((state) => {
     uniforms.uTime.value = state.clock.elapsedTime;
-    if (matRef.current) {
-      matRef.current.needsUpdate = false; // uniforms update automatically
-    }
   });
 
   return (
@@ -206,32 +209,72 @@ function TechyFluid({ isDark }: { isDark: boolean }) {
   );
 }
 
+/* ─── CSS floating particles overlay ───────────────── */
+function CSSParticles() {
+  return (
+    <div
+      aria-hidden="true"
+      style={{
+        position: "absolute",
+        inset: 0,
+        overflow: "hidden",
+        pointerEvents: "none",
+      }}
+    >
+      {Array.from({ length: 28 }).map((_, i) => {
+        const size   = 1.5 + (i % 5) * 0.8;
+        const left   = ((i * 37 + 13) % 97);
+        const top    = ((i * 23 + 7) % 95);
+        const dur    = 6 + (i % 7) * 2.5;
+        const delay  = -(i * 1.1) % dur;
+        const opacity = 0.14 + (i % 4) * 0.06;
+        return (
+          <span
+            key={i}
+            style={{
+              position:    "absolute",
+              left:        `${left}%`,
+              top:         `${top}%`,
+              width:       size,
+              height:      size,
+              borderRadius:"50%",
+              background:  i % 3 === 0
+                ? "rgba(69,87,109,0.70)"
+                : i % 3 === 1
+                  ? "rgba(255,255,255,0.50)"
+                  : "rgba(35,54,79,0.65)",
+              boxShadow:   i % 3 === 0
+                ? "0 0 5px 1px rgba(69,87,109,0.3)"
+                : "0 0 3px 1px rgba(255,255,255,0.2)",
+              opacity: 0.08 + (i % 4) * 0.04,
+              animation:   `skywin-particle-float ${dur}s ${delay}s ease-in-out infinite`,
+            }}
+          />
+        );
+      })}
+      <style>{`
+        @keyframes skywin-particle-float {
+          0%,100% { transform: translateY(0px) scale(1); opacity: inherit; }
+          33%      { transform: translateY(-18px) scale(1.1); }
+          66%      { transform: translateY(8px) scale(0.95); }
+        }
+      `}</style>
+    </div>
+  );
+}
+
 /* ─── Exported component ─────────────────────────────── */
 export default function FluidBackground() {
-  const [isDark, setIsDark] = useState(true); // default dark for SSR
-
-  useEffect(() => {
-    const check = () =>
-      setIsDark(document.documentElement.classList.contains("dark"));
-    check();
-    const obs = new MutationObserver(check);
-    obs.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ["class"],
-    });
-    return () => obs.disconnect();
-  }, []);
-
   return (
     <div
       style={{
-        position: "fixed",
-        inset: 0,
-        width: "100vw",
-        height: "100vh",
-        zIndex: 0,
+        position:      "fixed",
+        inset:         0,
+        width:         "100vw",
+        height:        "100vh",
+        zIndex:        0,
         pointerEvents: "none",
-        background: "#03060f", /* fallback while canvas loads */
+        background:    "#030508",
       }}
       aria-hidden="true"
     >
@@ -239,15 +282,18 @@ export default function FluidBackground() {
         orthographic
         camera={{ zoom: 1, near: -1, far: 1, position: [0, 0, 0] }}
         gl={{
-          antialias: false,
-          alpha: false,
-          powerPreference: "high-performance",
+          antialias:         false,
+          alpha:             false,
+          powerPreference:   "high-performance",
         }}
         dpr={typeof window !== "undefined" ? Math.min(window.devicePixelRatio, 1.5) : 1}
         style={{ width: "100%", height: "100%" }}
       >
-        <TechyFluid isDark={isDark} />
+        <AuroraFluid />
       </Canvas>
+
+      {/* CSS floating particle dots layered on top */}
+      <CSSParticles />
     </div>
   );
 }

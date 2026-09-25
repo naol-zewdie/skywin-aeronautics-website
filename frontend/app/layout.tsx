@@ -2,20 +2,25 @@ import type { Metadata, Viewport } from "next";
 import { headers } from "next/headers";
 import Script from "next/script";
 import Link from "next/link";
-import { JetBrains_Mono, Syne } from "next/font/google";
+import { JetBrains_Mono, Syne, Geist_Mono } from "next/font/google";
 import Navbar from "./components/Navbar";
 import Container from "./components/Container";
 import {
   FluidBackground,
   LoadingScreen,
   ScrollProgress,
-  StatsTicker,
 } from "./components/ClientComponents";
 import "./globals.css";
 
 const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
   variable: "--font-mono",
+  display: "swap",
+});
+
+const geistMono = Geist_Mono({
+  subsets: ["latin"],
+  variable: "--font-header",
   display: "swap",
 });
 
@@ -56,7 +61,7 @@ export default async function RootLayout({
   return (
     <html
       lang="en"
-      className={`${jetbrainsMono.variable} ${syne.variable} h-full antialiased`}
+      className={`dark ${jetbrainsMono.variable} ${geistMono.variable} ${syne.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <body className="min-h-full text-[color:var(--foreground)]">
@@ -66,7 +71,7 @@ export default async function RootLayout({
           strategy="beforeInteractive"
           nonce={nonce}
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem('theme');if(t!=='light')document.documentElement.classList.add('dark')}catch(e){document.documentElement.classList.add('dark')}})()`,
+          __html: `document.documentElement.classList.add('dark')`,
           }}
         />
         {/* ── WebGL + Loading ── */}
@@ -83,18 +88,16 @@ export default async function RootLayout({
         <div className="relative z-10 flex min-h-screen flex-col">
           {children}
 
-          {/* ── Stats ticker ── */}
-          <StatsTicker />
 
           {/* ── Footer ── */}
           <footer
             className="relative overflow-hidden border-t"
-            style={{ borderColor: "rgba(56,189,248,0.10)", background: "#000000" }}
+            style={{ borderColor: "rgba(69,87,109,0.25)", background: "#000000" }}
           >
-            {/* Electric top border */}
+            {/* Theme accent top border */}
             <div
               className="absolute top-0 left-0 right-0 h-px"
-              style={{ background: "linear-gradient(90deg, transparent, #38bdf8, transparent)" }}
+              style={{ background: "linear-gradient(90deg, transparent, #45576D, transparent)" }}
             />
 
             <Container>
@@ -126,8 +129,8 @@ export default async function RootLayout({
                       <Link
                         key={l}
                         href={`/${l.toLowerCase()}`}
-                        className="uppercase transition-colors duration-200 hover:text-[#38bdf8]"
-                        style={{ color: "rgba(240,244,255,0.35)" }}
+                        className="uppercase transition-colors duration-200 hover:text-white"
+                        style={{ color: "rgba(232,237,248,0.45)" }}
                       >
                         {l}
                       </Link>

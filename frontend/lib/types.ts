@@ -27,19 +27,29 @@ export interface BackendCareer {
 }
 
 export interface FrontendService {
+  id?: string;
+  slug?: string;
   title: string;
   description: string;
   image: string;
+  category?: string;
 }
 
 export interface FrontendProduct {
+  id?: string;
+  slug?: string;
   title: string;
   shortDescription: string;
   description: string;
   images: string[];
+  category?: string;
+  price?: number;
+  stock?: number;
 }
 
 export interface FrontendCareer {
+  id?: string;
+  slug?: string;
   title: string;
   description: string;
   requirements?: string[];

@@ -1,145 +1,142 @@
 export const revalidate = 0;
 
-import { Suspense } from 'react';
-import Link from 'next/link';
-import Image from 'next/image';
-import Container from "../../components/Container";
-import Section from "../../components/Section";
+import { Suspense } from "react";
 import { getPostsByType } from "../../../lib/api";
 import { ContentType } from "../../../lib/types";
+import { InsightsScene } from "../../components/ClientComponents";
+import InsightsExplorer from "../../components/InsightsExplorer";
+
+export const metadata = {
+  title: "Skywin Aeronautics | Blog & Engineering Insights",
+  description:
+    "Engineering perspectives, autonomous avionics, UAV design challenges, and sovereign aerospace manufacturing insights from Skywin Aeronautics.",
+};
+
+async function BlogContent() {
+  const posts = await getPostsByType(ContentType.BLOG);
+  return (
+    <InsightsExplorer
+      posts={posts}
+      fixedType={ContentType.BLOG}
+      filterLabel="BROWSE BLOG TOPICS"
+    />
+  );
+}
 
 function BlogSkeleton() {
   return (
-    <div className="space-y-12">
-      {[...Array(3)].map((_, i) => (
-        <div key={i} className="animate-pulse flex flex-col md:flex-row gap-8 p-6 rounded-2xl border border-[color:var(--border)] bg-[color:var(--background)]">
-          <div className="md:w-1/3 aspect-[16/9] bg-[color:var(--muted)]/10 rounded-xl" />
-          <div className="md:w-2/3 space-y-3">
-            <div className="h-4 w-16 bg-[color:var(--muted)]/10 rounded-full" />
-            <div className="h-6 w-3/4 bg-[color:var(--muted)]/10 rounded" />
-            <div className="space-y-2">
-              <div className="h-3 w-full bg-[color:var(--muted)]/10 rounded" />
-              <div className="h-3 w-4/5 bg-[color:var(--muted)]/10 rounded" />
-            </div>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-async function BlogGrid() {
-  const posts = await getPostsByType(ContentType.BLOG);
-
-  const formatDate = (dateString: string | Date) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
-  };
-
-  if (posts.length === 0) {
-    return (
-      <div className="text-center py-12">
-        <p className="text-[color:var(--muted)]">No blog posts available at the moment.</p>
+    <div className="space-y-8 animate-pulse">
+      <div className="h-8 w-48 bg-white/[0.04] rounded-lg" />
+      <div className="flex gap-2">
+        {[...Array(4)].map((_, i) => (
+          <div key={i} className="h-8 w-24 rounded-full bg-white/[0.04]" />
+        ))}
       </div>
-    );
-  }
-
-  return (
-    <div className="space-y-12">
-      {posts.map((post) => (
-        <Link
-          key={post._id}
-          href={`/insights/${post._id}`}
-          className="group block"
-        >
-          <div className="flex flex-col md:flex-row gap-8 p-6 rounded-2xl border border-[color:var(--border)] bg-[color:var(--background)] shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
-            <div className="md:w-1/3 aspect-[16/9] overflow-hidden rounded-xl">
-              <Image
-                src={post.coverImage || '/drone.jpg'}
-                alt={post.title}
-                width={400}
-                height={225}
-                className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                sizes="(max-width: 768px) 100vw, 33vw"
-              />
-            </div>
-            
-            <div className="md:w-2/3 flex flex-col justify-center">
-              <div className="mb-3">
-                <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-green-100 text-green-800">
-                  BLOG
-                </span>
-              </div>
-
-              <h3 className="text-xl font-semibold text-[color:var(--primary)] mb-3 line-clamp-2 group-hover:text-[color:var(--accent)] transition-colors">
-                {post.title}
-              </h3>
-
-              <p className="text-[color:var(--muted)] mb-4 line-clamp-3">
-                {post.excerpt || post.content.substring(0, 200) + '...'}
-              </p>
-
-              <div className="flex items-center justify-between text-sm text-[color:var(--muted)]">
-                <div className="flex items-center space-x-2">
-                  <span>By {post.author}</span>
-                  <span>&middot;</span>
-                  <span>{formatDate(post.createdAt)}</span>
-                </div>
-                {post.views && (
-                  <span>{post.views} views</span>
-                )}
-              </div>
-
-              {post.tags && post.tags.length > 0 && (
-                <div className="mt-3 flex flex-wrap gap-1">
-                  {post.tags.slice(0, 4).map((tag: string, index: number) => (
-                    <span
-                      key={index}
-                      className="inline-block rounded bg-green-50 px-2 py-1 text-xs text-green-700"
-                    >
-                      #{tag}
-                    </span>
-                  ))}
-                  {post.tags.length > 4 && (
-                    <span className="inline-block rounded bg-green-50 px-2 py-1 text-xs text-green-700">
-                      +{post.tags.length - 4}
-                    </span>
-                  )}
-                </div>
-              )}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {[...Array(6)].map((_, i) => (
+          <div
+            key={i}
+            className="rounded-3xl border border-white/10 bg-[#0d1424]/60 overflow-hidden"
+          >
+            <div className="aspect-[16/10] bg-white/[0.04]" />
+            <div className="p-6 space-y-3">
+              <div className="h-5 w-3/4 bg-white/[0.06] rounded" />
+              <div className="h-3 w-full bg-white/[0.03] rounded" />
+              <div className="h-3 w-2/3 bg-white/[0.03] rounded" />
             </div>
           </div>
-        </Link>
-      ))}
+        ))}
+      </div>
     </div>
   );
 }
 
-export default function BlogPage() {
+export default async function BlogPage() {
   return (
-    <main className="bg-[color:var(--background)] text-[color:var(--foreground)]">
-      <Container>
-        <Section className="pt-12">
-          <div className="max-w-3xl space-y-6">
-            <p className="text-sm uppercase tracking-[0.3em] text-[color:var(--accent)]">Blog</p>
-            <h1 className="text-4xl font-semibold tracking-tight text-[color:var(--primary)] sm:text-5xl">
-              Insights and perspectives on aerospace innovation.
-            </h1>
-            <p className="max-w-2xl text-lg leading-8 text-[color:var(--muted)]">
-              Explore our expert articles on drone technology, aerospace engineering, and the future of aviation.
-            </p>
-          </div>
-        </Section>
+    <main className="relative min-h-screen bg-transparent text-white overflow-hidden pt-24 sm:pt-32 pb-24">
+      {/* ── Dot Matrix Overlay ── */}
+      <div
+        className="absolute inset-0 pointer-events-none opacity-40 z-0"
+        style={{
+          backgroundImage:
+            "radial-gradient(rgba(255, 255, 255, 0.12) 1px, transparent 1px)",
+          backgroundSize: "28px 28px",
+        }}
+        aria-hidden="true"
+      />
 
-        <Section>
-          <Suspense fallback={<BlogSkeleton />}>
-            <BlogGrid />
-          </Suspense>
-        </Section>
-      </Container>
+      {/* ── Ambient Radial Color Glows ── */}
+      <div
+        className="absolute -top-32 left-1/2 -translate-x-1/2 w-[750px] h-[450px] rounded-full pointer-events-none blur-3xl opacity-20 z-0"
+        style={{
+          background:
+            "radial-gradient(circle, rgba(69, 87, 109, 0.30) 0%, rgba(35, 54, 79, 0.15) 60%, transparent 100%)",
+        }}
+        aria-hidden="true"
+      />
+      <div
+        className="absolute top-1/2 -left-40 w-[600px] h-[500px] rounded-full pointer-events-none blur-3xl opacity-15 z-0"
+        style={{
+          background:
+            "radial-gradient(circle, rgba(69, 87, 109, 0.35) 0%, rgba(35, 54, 79, 0.2) 60%, transparent 100%)",
+        }}
+        aria-hidden="true"
+      />
+
+      {/* ── Three.js Hero Telemetry Scene ── */}
+      <div
+        className="absolute top-0 left-0 right-0 h-[620px] pointer-events-none opacity-35 z-0 overflow-hidden"
+        aria-hidden="true"
+      >
+        <InsightsScene />
+      </div>
+
+      <div className="relative z-10 max-w-6xl mx-auto px-5 sm:px-8 space-y-16 sm:space-y-20">
+        {/* ══════════════════════════════════════════════════════
+            1. HEADLINE PART (Matching Reference Image 1)
+        ══════════════════════════════════════════════════════ */}
+        <section className="text-center max-w-4xl mx-auto pt-6 sm:pt-10">
+          {/* Top Tag */}
+          <div className="mb-6">
+            <span
+              className="text-[11px] uppercase tracking-[0.22em] text-[#6a7e98] font-mono"
+            >
+              [ THE BLOG · ENGINEERING &amp; PERSPECTIVES ]
+            </span>
+          </div>
+
+          {/* Clean balanced display headline */}
+          <h1
+            className="text-[clamp(1.75rem,3.8vw,2.8rem)] font-semibold leading-[1.12] tracking-tight text-white"
+            style={{ fontFamily: "var(--font-display)" }}
+          >
+            Notes from the operat-
+            <br />
+            ing table.
+          </h1>
+
+          {/* Monospace Subtitle matching Image 1 */}
+          <p
+            className="mt-6 sm:mt-8 max-w-2xl mx-auto text-xs sm:text-sm md:text-base leading-relaxed text-white/60"
+            style={{
+              fontFamily: "var(--font-mono)",
+              letterSpacing: "0.02em",
+            }}
+          >
+            How we diagnose aerodynamic challenges, the engineering behind
+            autonomous flight control, and what sovereign aerospace manufacturing
+            actually changes — written for operators and engineers alike. No fluff,
+            no hype.
+          </p>
+        </section>
+
+        {/* ══════════════════════════════════════════════════════
+            2. EXPLORER GRID & ARCHIVE (Matching Image 2)
+        ══════════════════════════════════════════════════════ */}
+        <Suspense fallback={<BlogSkeleton />}>
+          <BlogContent />
+        </Suspense>
+      </div>
     </main>
   );
 }

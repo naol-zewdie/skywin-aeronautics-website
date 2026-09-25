@@ -1,211 +1,408 @@
 import Image from "next/image";
-import Container from "../components/Container";
-import Section from "../components/Section";
-import ScrollReveal from "../components/ScrollReveal";
-import CountUp from "../components/CountUp";
+import { AboutScene } from "../components/ClientComponents";
 
 export const metadata = {
   title: "Skywin Aeronautics | About",
-  description: "Learn more about Skywin Aeronautics, our mission, vision, and values.",
+  description:
+    "Learn about Skywin Aeronautics Industry — our founding, national mandate, indigenous UAV manufacturing, and Vision 2030.",
 };
+
+const FAQS = [
+  {
+    q: "Is Skywin Aeronautics a state-mandated initiative?",
+    a: "Yes. SkyWin Aeronautics Industry was inaugurated on March 8, 2025 by the Federal Democratic Republic of Ethiopia Prime Minister, H.E Abiy Ahmed (PhD), as a strategic national unmanned aerial systems manufacturing initiative. The company was established with a mandate to reduce external technology dependency while strengthening indigenous aerospace engineering capability.",
+  },
+  {
+    q: "What does SkyWin Aeronautics Industry produce?",
+    a: "SkyWin designs and manufactures sovereign unmanned aerial vehicles (UAVs), along with integrated subsystems including composite airframes, custom avionics integration, secure ground control interfaces, and mission-specific sensor payload configurations.",
+  },
+  {
+    q: "What types of UAV systems does SkyWin develop?",
+    a: "SkyWin develops multi-role tactical and commercial UAV platforms designed for operational flexibility — including reconnaissance, surveillance, critical infrastructure monitoring, agricultural aerial surveys, and specialized defense missions.",
+  },
+  {
+    q: "Where is SkyWin Aeronautics based?",
+    a: "Headquartered in Addis Ababa, Ethiopia, operating integrated aerospace manufacturing hangars, research and development laboratories, and formal testing and commissioning departments with dedicated flight-test airspace.",
+  },
+  {
+    q: "What is included in Drone Piloting & Technical Training?",
+    a: "Our training academy equips trainees with practical flight operations, flight control theory, safety procedures, system maintenance, and mission planning using certified UAV platforms and advanced simulation hardware.",
+  },
+  {
+    q: "Do you offer technical consultancy & customized missions?",
+    a: "Yes. SkyWin provides expert engineering consultancy in UAV platform selection, sensor payload integration, and operational strategy, as well as customized aerial mission execution for governmental and institutional partners.",
+  },
+];
 
 export default function AboutPage() {
   return (
-    <main className="bg-[color:var(--background)] text-[color:var(--foreground)]">
-      <Container>
-        <Section className="pt-12" backgroundImage="/assets/Drone-1.jpg">
-          <div className="max-w-3xl mx-auto text-center space-y-6">
-            <p className="text-sm uppercase tracking-[0.3em] text-[color:var(--foreground)]">About Skywin</p>
-            <h1 className="text-4xl font-semibold tracking-tight text-[color:var(--primary)] sm:text-5xl">
-              Leading African Aeronautics Innovation.
-            </h1>
-            <p className="max-w-2xl mx-auto text-lg leading-8 text-[color:var(--muted)]">
-              A strategic national unmanned aerial systems manufacturing initiative established with a mandate to advance indigenous aerospace engineering and manufacturing capabilities.
-            </p>
-          </div>
-        </Section>
+    <main className="relative min-h-screen bg-transparent text-white overflow-hidden pt-24 sm:pt-32 pb-24">
+      {/* ── Dot Matrix Overlay ── */}
+      <div
+        className="absolute inset-0 pointer-events-none opacity-40 z-0"
+        style={{
+          backgroundImage:
+            "radial-gradient(rgba(255, 255, 255, 0.12) 1px, transparent 1px)",
+          backgroundSize: "28px 28px",
+        }}
+        aria-hidden="true"
+      />
 
-        {/* Animated Stats Banner */}
-        <ScrollReveal>
-          <div className="relative overflow-hidden rounded-2xl my-8 p-8 sm:p-12" style={{ background: 'var(--gradient-primary)' }}>
-            <div className="absolute inset-0 tech-grid opacity-20" />
-            <div className="relative grid grid-cols-2 sm:grid-cols-4 gap-8 text-center text-white">
-              <div>
-                <p className="text-4xl font-bold">
-                  <CountUp target={2025} suffix="" />
-                </p>
-                <p className="text-sm uppercase tracking-widest text-white/70 mt-1">Founded</p>
-              </div>
-              <div>
-                <p className="text-4xl font-bold">
-                  <CountUp target={7} suffix="+" />
-                </p>
-                <p className="text-sm uppercase tracking-widest text-white/70 mt-1">Services</p>
-              </div>
-              <div>
-                <p className="text-4xl font-bold">
-                  <CountUp target={100} suffix="%" />
-                </p>
-                <p className="text-sm uppercase tracking-widest text-white/70 mt-1">Indigenous</p>
-              </div>
-              <div>
-                <p className="text-4xl font-bold">
-                  <CountUp target={2030} suffix="" />
-                </p>
-                <p className="text-sm uppercase tracking-widest text-white/70 mt-1">Vision Year</p>
-              </div>
-            </div>
-          </div>
-        </ScrollReveal>
+      {/* ── Ambient Radial Color Glows (Skywin Theme Colors) ── */}
+      <div
+        className="absolute -top-32 left-1/2 -translate-x-1/2 w-[750px] h-[450px] rounded-full pointer-events-none blur-3xl opacity-20 z-0"
+        style={{
+          background:
+            "radial-gradient(circle, rgba(69, 87, 109, 0.30) 0%, rgba(35, 54, 79, 0.20) 60%, transparent 100%)",
+        }}
+        aria-hidden="true"
+      />
+      <div
+        className="absolute top-1/2 -right-40 w-[600px] h-[500px] rounded-full pointer-events-none blur-3xl opacity-15 z-0"
+        style={{
+          background:
+            "radial-gradient(circle, rgba(69, 87, 109, 0.35) 0%, rgba(35, 54, 79, 0.2) 60%, transparent 100%)",
+        }}
+        aria-hidden="true"
+      />
 
-        <Section>
-          <div className="space-y-10">
-            {/* Image + National Inauguration two-column layout */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
-                {/* Row 1 */}
-                <ScrollReveal>
-                  <div className="relative min-h-[320px] overflow-hidden text-center">
+      {/* ── Three.js Constellation Network Scene ── */}
+      <div
+        className="absolute top-0 left-0 right-0 h-[650px] pointer-events-none opacity-35 z-0 overflow-hidden"
+        aria-hidden="true"
+      >
+        <AboutScene />
+      </div>
+
+      <div className="relative z-10 max-w-5xl mx-auto px-5 sm:px-8 space-y-24 sm:space-y-32">
+        {/* ══════════════════════════════════════════════════════
+            1. FIRST: THE HEADLINE PART (Image 1)
+        ══════════════════════════════════════════════════════ */}
+        <section className="text-center max-w-4xl mx-auto pt-6 sm:pt-10">
+          {/* Top pill badges */}
+          <div className="flex items-center justify-center gap-3 mb-8">
+            <span
+              className="inline-flex items-center px-3.5 py-1.5 rounded-full text-[11px] uppercase tracking-[0.2em] text-[#6a7e98] border border-[#6a7e98]/30 bg-[#6a7e98]/10"
+              style={{ fontFamily: "var(--font-mono)" }}
+            >
+              ABOUT
+            </span>
+            <span
+              className="inline-flex items-center px-3.5 py-1.5 rounded-full text-[11px] uppercase tracking-[0.2em] text-white/50 border border-white/10 bg-white/[0.03]"
+              style={{ fontFamily: "var(--font-mono)" }}
+            >
+              EST. 2025 · ADDIS ABABA
+            </span>
+          </div>
+
+          {/* Headline without shadow text and with decreased, balanced size */}
+          <h1
+            className="text-[clamp(1.75rem,3.8vw,2.8rem)] font-semibold leading-[1.12] tracking-tight text-white"
+            style={{ fontFamily: "var(--font-display)" }}
+          >
+            Always evolv-
+            <br />
+            ing. Never
+            <br />
+            obsolete.
+          </h1>
+
+          {/* Subtitle */}
+          <p
+            className="mt-6 sm:mt-7 max-w-2xl mx-auto text-sm sm:text-base leading-relaxed text-white/60"
+            style={{
+              fontFamily: "var(--font-mono)",
+              letterSpacing: "0.02em",
+            }}
+          >
+            Aerospace technology never sits still — so neither do we. SkyWin
+            Aeronautics was founded to advance sovereign unmanned aerial
+            systems, engineering indigenous UAV platforms that define the future
+            of flight.
+          </p>
+        </section>
+
+        {/* ══════════════════════════════════════════════════════
+            2. SECOND: THE 4 CIRCLE IMAGE & STORY PART (Image 2)
+        ══════════════════════════════════════════════════════ */}
+        <section className="space-y-16">
+          {/* Top: Two-column narrative */}
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.35fr] gap-10 lg:gap-14 items-start">
+            {/* Left Column: Title + "WHERE IT STARTED" Card */}
+            <div className="space-y-6">
+              <h2
+                className="text-3xl sm:text-4xl lg:text-[44px] font-bold text-white tracking-tight leading-[1.08]"
+                style={{ fontFamily: "var(--font-display)" }}
+              >
+                It started with a single vision.
+              </h2>
+
+              {/* Where it started card */}
+              <div
+                className="rounded-2xl p-6 sm:p-7 border border-white/10 transition-all duration-300 hover:border-white/20"
+                style={{
+                  background: "rgba(12, 18, 28, 0.75)",
+                  backdropFilter: "blur(16px)",
+                }}
+              >
+                <p
+                  className="text-[11px] uppercase tracking-[0.2em] text-white/40 mb-6"
+                  style={{ fontFamily: "var(--font-mono)" }}
+                >
+                  WHERE IT STARTED
+                </p>
+
+                <div className="py-4 flex flex-col items-center justify-center text-center space-y-3">
+                  <div className="relative w-48 h-16 flex items-center justify-center">
                     <Image
-                      src="/assets/droneinhangar.jpg"
-                      alt="Drone in hangar"
-                      width={600}
-                      height={400}
-                      className="object-cover w-full h-full"
-                      sizes="(max-width: 768px) 100vw, 50vw"
+                      src="/skywin_logo.png"
+                      alt="Skywin Aeronautics"
+                      width={200}
+                      height={50}
+                      className="object-contain brightness-125 drop-shadow-[0_0_15px_rgba(69,87,109,0.5)]"
                     />
                   </div>
-                </ScrollReveal>
-                <ScrollReveal delay={150}>
-                  <div className="flex flex-col justify-center text-left">
-                    <h3 className="text-2xl font-semibold text-[color:var(--foreground)] mb-4">
-                      National Inauguration
-                    </h3>
-                    <p className="text-lg leading-8 text-justify text-[color:var(--muted)]">
-                      SkyWin Aeronautics Industry was inaugurated on March 8, 2025 by the Federal Democratic Republic of Ethiopia Prime Minister, H.E Abiy Ahmed (PhD), as a strategic national unmanned aerial systems manufacturing initiative. The company was established with a national mandate to reduce external technology dependency while strengthening indigenous engineering intellectual property and local aerospace manufacturing capability.
-                    </p>
-                  </div>
-                </ScrollReveal>
-                {/* Row 2 */}
-                <ScrollReveal delay={80}>
-                  <div className="text-left">
-                    <h4 className="text-lg font-semibold text-[color:var(--foreground)] mb-2 flex items-center justify-start gap-2">
-                      <Image src="/assets/building_11645839.png" alt="" width={32} height={32} className="w-8 h-8 inline-block" />
-                      Infrastructure and Capability Development
-                    </h4>
-                    <p className="text-base leading-7 text-justify text-[color:var(--muted)]">
-                      With the establishment of dedicated manufacturing hangars, research and development laboratories, and formal testing and commissioning departments, the company achieved full production and deployment readiness.
-                    </p>
-                  </div>
-                </ScrollReveal>
-                <ScrollReveal delay={160}>
-                  <div className="text-left">
-                    <h4 className="text-lg font-semibold text-[color:var(--foreground)] mb-2 flex items-center justify-start gap-2">
-                      <Image src="/assets/certificate_11761894.png" alt="" width={32} height={32} className="w-8 h-8 inline-block" />
-                      Current Operations
-                    </h4>
-                    <p className="text-base leading-7 text-justify text-[color:var(--muted)]">
-                      Today, SkyWin Aeronautics Industry operates as a fully integrated UAV manufacturer delivering mission-ready aerial platforms for national development, security, and institutional operations, while continuously advancing indigenous aerospace engineering research to support future national programs.
-                    </p>
-                  </div>
-                </ScrollReveal>
-              </div>
-
-              {/* Drone icon divider */}
-              <ScrollReveal>
-                <div className="flex justify-center">
-                  <div className="bg-white rounded-full p-12 shadow-md">
-                    <Image src="/assets/drone_15762122.png" alt="" width={128} height={128} className="w-32 h-32" />
-                  </div>
+                  <p
+                    className="text-xs uppercase tracking-[0.22em] text-white/60 font-semibold"
+                    style={{ fontFamily: "var(--font-mono)" }}
+                  >
+                    Aeronautics Industry
+                  </p>
+                  <p
+                    className="text-[11px] text-white/40 tracking-wider"
+                    style={{ fontFamily: "var(--font-mono)" }}
+                  >
+                    Inaugurated March 8, 2025 · Addis Ababa
+                  </p>
                 </div>
-              </ScrollReveal>
-
-              {/* Vision & Mission text */}
-              <ScrollReveal>
-                <div className="mt-12">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-12 max-w-5xl mx-auto">
-                    <div className="text-center max-w-xs mx-auto">
-                      <h2 className="text-2xl font-semibold text-[color:var(--foreground)] mb-4 flex items-center justify-center gap-2">
-                        <Image src="/assets/light-bulb_15559817.png" alt="" width={32} height={32} className="w-8 h-8 inline-block" />
-                        OUR VISION
-                      </h2>
-                      <p className="text-lg leading-8 text-justify text-[color:var(--muted)]">
-                        To establish a globally competitive African aeronautics and drone technology powerhouse by 2030.
-                      </p>
-                    </div>
-                    <div className="text-center max-w-xs mx-auto">
-                      <h2 className="text-2xl font-semibold text-[color:var(--foreground)] mb-4 flex items-center justify-center gap-2">
-                        <Image src="/assets/target_5451975.png" alt="" width={32} height={32} className="w-8 h-8 inline-block" />
-                        OUR MISSION
-                      </h2>
-                      <p className="text-lg leading-8 text-justify text-[color:var(--muted)]">
-                        To design, manufacture, and deliver high-quality, multi-purpose UAVs that address national strategic priorities and global market demands, driven by cutting-edge technological innovation.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </ScrollReveal>
-
-              {/* Full-width drone technician image below */}
-              <div className="-mx-6 overflow-hidden">
-                <Image
-                  src="/assets/dronetechnician.jpg"
-                  alt="Drone technician"
-                  width={1200}
-                  height={300}
-                  className="w-full h-[300px] object-cover"
-                  sizes="100vw"
-                />
               </div>
+            </div>
 
-              {/* FAQ Section */}
-              <div className="space-y-4 text-left">
-                <ScrollReveal>
-                  <h2 className="text-3xl font-semibold text-[color:var(--foreground)] mb-8 text-center">
-                    FREQUENTLY ASKED QUESTIONS
-                  </h2>
-                </ScrollReveal>
+            {/* Right Column: Story text with bold highlights */}
+            <div
+              className="space-y-6 text-sm sm:text-base leading-relaxed text-white/65"
+              style={{ fontFamily: "var(--font-mono)" }}
+            >
+              <p>
+                SkyWin Aeronautics Industry was inaugurated on March 8, 2025 by
+                the Federal Democratic Republic of Ethiopia Prime Minister, H.E
+                Abiy Ahmed (PhD), as a strategic national unmanned aerial
+                systems manufacturing initiative. Every milestone taught our
+                engineers something new — so we said yes to harder aerodynamic
+                problems, then harder systems again.
+              </p>
 
-                {[
-                  {
-                    q: "What does SkyWin Aeronautics Industry produce?",
-                    a: "SkyWin designs and manufactures unmanned aerial vehicles (UAVs), along with integrated subsystems including airframes, avionics integration, ground control interfaces, and mission-specific payload configurations.",
-                  },
-                  {
-                    q: "What types of UAV systems does SkyWin develop?",
-                    a: "SkyWin develops multi-role UAV platforms designed for operational flexibility, including reconnaissance, surveillance, infrastructure monitoring, and institutional deployment use cases.",
-                  },
-                  {
-                    q: "What is included in Drone Piloting Training?",
-                    a: "Participants gain hands-on experience in flight operations, safety procedures, flight control systems, and mission planning using UAV platforms.",
-                  },
-                  {
-                    q: "Are the training sessions practical or theoretical?",
-                    a: "All training programs are structured with a strong practical component, ensuring hands-on experience with UAV systems and real operational scenarios.",
-                  },
-                  {
-                    q: "Do you offer consultancy services?",
-                    a: "Yes. SkyWin provides technical consultancy in UAV system selection, project planning, operational strategy, and implementation support for organizations.",
-                  },
-                ].map((item, i) => (
-                  <ScrollReveal key={i} delay={i * 80}>
-                    <details className="group rounded-2xl border border-[color:var(--border)] bg-[color:var(--background)] shadow-sm overflow-hidden">
-                      <summary className="flex items-center justify-between p-6 cursor-pointer text-lg font-medium text-left text-[color:var(--foreground)] hover:bg-[color:var(--accent-muted)] transition-colors">
-                        <span>{item.q}</span>
-                        <svg className="w-5 h-5 transition-transform duration-200 group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                        </svg>
-                      </summary>
-                      <div className="p-6 pt-0 text-[color:var(--muted)] leading-7">
-                        {item.a}
-                      </div>
-                    </details>
-                  </ScrollReveal>
-                ))}
-              </div>
+              <p>
+                Initial airframes became comprehensive tactical platforms.
+                Platforms became integrated systems that safeguard national
+                assets, monitor agricultural yields, and inspect strategic
+                infrastructure. The lesson stuck:{" "}
+                <strong className="text-white font-semibold">
+                  say yes, then engineer the how. There is no challenge in
+                  unmanned aeronautics we won&apos;t take on.
+                </strong>
+              </p>
+
+              <p>
+                With dedicated manufacturing hangars, composite prototyping
+                laboratories, and certified flight-testing airspace, we build
+                around one constant: never stand still. That&apos;s the real
+                mission: we don&apos;t assemble off-the-shelf parts like a
+                commodity. We engineer sovereign intellectual property from the
+                ground up — ensuring local technology independence as the global
+                aerospace horizon accelerates.
+              </p>
+            </div>
           </div>
-        </Section>
-      </Container>
-      
+
+          {/* Bottom: 4 Circular Milestone Badges */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 pt-6">
+            {/* Circle 01 */}
+            <div
+              className="aspect-square rounded-full border border-white/10 p-6 flex flex-col items-center justify-center text-center transition-all duration-300 hover:border-white/25 hover:scale-[1.03]"
+              style={{
+                background: "rgba(11, 17, 28, 0.70)",
+                backdropFilter: "blur(12px)",
+              }}
+            >
+              <span
+                className="text-[11px] text-white/40 tracking-wider"
+                style={{ fontFamily: "var(--font-mono)" }}
+              >
+                01
+              </span>
+              <span
+                className="text-[10px] font-mono tracking-[0.16em] uppercase text-white/50 mt-1 mb-2"
+              >
+                2025 · THE START
+              </span>
+              <h3
+                className="text-lg font-bold text-white tracking-tight"
+                style={{ fontFamily: "var(--font-display)" }}
+              >
+                National Mandate
+              </h3>
+              <p
+                className="text-[11px] text-white/50 font-mono mt-2 leading-relaxed px-2"
+              >
+                Inaugurated by H.E. Prime Minister Abiy Ahmed to establish
+                sovereign aerospace manufacturing.
+              </p>
+            </div>
+
+            {/* Circle 02 */}
+            <div
+              className="aspect-square rounded-full border border-white/10 p-6 flex flex-col items-center justify-center text-center transition-all duration-300 hover:border-white/25 hover:scale-[1.03]"
+              style={{
+                background: "rgba(11, 17, 28, 0.70)",
+                backdropFilter: "blur(12px)",
+              }}
+            >
+              <span
+                className="text-[11px] text-white/40 tracking-wider"
+                style={{ fontFamily: "var(--font-mono)" }}
+              >
+                02
+              </span>
+              <span
+                className="text-[10px] font-mono tracking-[0.16em] uppercase text-white/50 mt-1 mb-2"
+              >
+                GROWTH
+              </span>
+              <h3
+                className="text-lg font-bold text-white tracking-tight"
+                style={{ fontFamily: "var(--font-display)" }}
+              >
+                Hangars & Labs
+              </h3>
+              <p
+                className="text-[11px] text-white/50 font-mono mt-2 leading-relaxed px-2"
+              >
+                Dedicated manufacturing hangars, R&D labs, and testing
+                departments achieved production readiness.
+              </p>
+            </div>
+
+            {/* Circle 03 */}
+            <div
+              className="aspect-square rounded-full border border-white/10 p-6 flex flex-col items-center justify-center text-center transition-all duration-300 hover:border-white/25 hover:scale-[1.03]"
+              style={{
+                background: "rgba(11, 17, 28, 0.70)",
+                backdropFilter: "blur(12px)",
+              }}
+            >
+              <span
+                className="text-[11px] text-white/40 tracking-wider"
+                style={{ fontFamily: "var(--font-mono)" }}
+              >
+                03
+              </span>
+              <span
+                className="text-[10px] font-mono tracking-[0.16em] uppercase text-white/50 mt-1 mb-2"
+              >
+                SCALE
+              </span>
+              <h3
+                className="text-lg font-bold text-white tracking-tight"
+                style={{ fontFamily: "var(--font-display)" }}
+              >
+                Mission UAVs
+              </h3>
+              <p
+                className="text-[11px] text-white/50 font-mono mt-2 leading-relaxed px-2"
+              >
+                Full-scale deployments for agriculture, national infrastructure,
+                tactical surveillance, and training.
+              </p>
+            </div>
+
+            {/* Circle 04 (Active / Highlighted with theme color) */}
+            <div
+              className="aspect-square rounded-full border-2 border-[#6a7e98] p-6 flex flex-col items-center justify-center text-center transition-all duration-300 hover:scale-[1.03]"
+              style={{
+                background: "rgba(14, 22, 36, 0.85)",
+                boxShadow: "0 0 30px rgba(106, 126, 152, 0.35)",
+                backdropFilter: "blur(16px)",
+              }}
+            >
+              <span
+                className="text-[11px] text-white/40 tracking-wider"
+                style={{ fontFamily: "var(--font-mono)" }}
+              >
+                04
+              </span>
+              <span
+                className="text-[10px] font-mono tracking-[0.16em] uppercase text-[#6a7e98] font-bold mt-1 mb-2"
+              >
+                TODAY & BEYOND
+              </span>
+              <h3
+                className="text-lg font-bold text-white tracking-tight"
+                style={{ fontFamily: "var(--font-display)" }}
+              >
+                Vision 2030
+              </h3>
+              <p
+                className="text-[11px] text-white/60 font-mono mt-2 leading-relaxed px-2"
+              >
+                Next-generation autonomous avionics, AI payload integration, and
+                scaling an African aerospace powerhouse.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* ══════════════════════════════════════════════════════
+            3. AT THE END: FREQUENTLY ASKED QUESTIONS (Image 3)
+        ══════════════════════════════════════════════════════ */}
+        <section className="space-y-6 pt-4">
+          <p
+            className="text-xs uppercase tracking-[0.22em] text-white/40 mb-4"
+            style={{ fontFamily: "var(--font-mono)" }}
+          >
+            · FREQUENTLY ASKED
+          </p>
+
+          <div className="space-y-4">
+            {FAQS.map((faq, index) => (
+              <div
+                key={index}
+                className="rounded-2xl sm:rounded-3xl p-6 sm:p-8 border border-white/10 transition-all duration-300 hover:border-white/20"
+                style={{
+                  background: "rgba(11, 17, 28, 0.75)",
+                  backdropFilter: "blur(16px)",
+                }}
+              >
+                <h3
+                  className="text-lg sm:text-2xl font-bold text-white tracking-tight mb-3"
+                  style={{ fontFamily: "var(--font-display)" }}
+                >
+                  {faq.q}
+                </h3>
+                <p
+                  className="text-xs sm:text-sm text-white/60 leading-relaxed font-mono"
+                >
+                  {faq.a}
+                </p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* ── Bottom Operational Badge ── */}
+        <div className="pt-6 text-center space-y-2">
+          <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-white/[0.03] border border-white/[0.08] text-[11px] text-white/40 font-mono tracking-widest uppercase">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            <span>Skywin Aeronautics Industry · Sovereign Engineering</span>
+          </div>
+          <p
+            className="text-xs text-white/30 tracking-wider"
+            style={{ fontFamily: "var(--font-mono)" }}
+          >
+            Addis Ababa, Ethiopia · Leading African Aeronautics
+          </p>
+        </div>
+      </div>
     </main>
   );
 }

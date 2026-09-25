@@ -2,14 +2,15 @@ export const revalidate = 0;
 
 import Image from "next/image";
 import Link from "next/link";
-import Button from "./components/Button";
+import ServicesCTA from "./components/ServicesCTA";
 import Container from "./components/Container";
 import Section from "./components/Section";
 import ProductsSection from "./components/ProductsSection";
+import FeaturedProducts from "./components/FeaturedProducts";
 import ScrollReveal from "./components/ScrollReveal";
 import ThreeDCard from "./components/ThreeDCard";
 import SectionTag from "./components/SectionTag";
-import { DroneGlobe } from "./components/ClientComponents";
+import { DroneGlobe, StatsTicker, HeroInteractive } from "./components/ClientComponents";
 import { PrimaryPill, GhostPill } from "./components/HeroCTAs";
 
 const services = [
@@ -55,36 +56,111 @@ export default function Home() {
   return (
     <main className="bg-transparent text-[color:var(--foreground)]">
 
-      {/* ═══ HERO — Full screen, globe center, massive headline below ═══ */}
+      {/* ═══ HERO — Modern Split Layout: Text & CTAs Left, 3D Drone Right ═══ */}
       <section
-        className="relative flex flex-col items-center justify-center overflow-hidden"
-        style={{ minHeight: "100vh", paddingTop: "100px" }}
+        className="relative flex items-center min-h-[92vh] lg:min-h-screen pt-28 pb-16 lg:pt-24 lg:pb-12 overflow-hidden"
       >
-        {/* Globe — centerpiece */}
-        <div className="relative w-full max-w-2xl mx-auto" style={{ height: "480px" }}>
-          <DroneGlobe />
-        </div>
+        {/* Mouse-trail particles + click ripples overlay */}
+        <HeroInteractive />
 
-        {/* Hero text — below the globe */}
-        <div className="relative z-10 w-full max-w-6xl mx-auto px-6 pb-20 -mt-8">
-          <SectionTag>Skywin Aeronautics</SectionTag>
+        <div className="relative z-10 w-full max-w-7xl mx-auto px-6 sm:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-8 items-center">
+            {/* Left Column: Typography & CTAs */}
+            <div className="lg:col-span-7 flex flex-col items-start text-left space-y-6">
+              <SectionTag>Skywin Aeronautics</SectionTag>
 
-          <h1
-            className="mt-4 text-[clamp(3rem,9vw,7rem)] font-bold leading-[0.92] tracking-tight text-white"
-            style={{ fontFamily: "var(--font-display)" }}
-          >
-            Precision UAV<br />
-            <span
-              className="bg-clip-text text-transparent"
-              style={{ backgroundImage: "linear-gradient(135deg, #38bdf8 0%, #7dd3fc 50%, #ffffff 100%)" }}
-            >
-              Manufacturing.
-            </span>
-          </h1>
+              {/* Reduced and balanced display headline */}
+              <h1
+                className="text-[clamp(2.1rem,4.2vw,3.6rem)] font-bold leading-[1.08] tracking-tight text-white"
+                style={{ fontFamily: "var(--font-display)" }}
+              >
+                Precision UAV<br />
+                <span
+                  className="bg-clip-text text-transparent"
+                  style={{
+                    backgroundImage:
+                      "linear-gradient(135deg, #45576D 0%, #8fa3bf 50%, #ffffff 100%)",
+                  }}
+                >
+                  Manufacturing.
+                </span>
+              </h1>
 
-          <div className="mt-8 flex flex-col sm:flex-row items-start gap-4">
-            <PrimaryPill href="/products">View Products →</PrimaryPill>
-            <GhostPill href="/about">Our Story</GhostPill>
+              {/* Monospace Subtitle */}
+              <p
+                className="max-w-xl text-xs sm:text-sm md:text-base leading-relaxed text-white/60"
+                style={{
+                  fontFamily: "var(--font-mono)",
+                  letterSpacing: "0.02em",
+                }}
+              >
+                Sovereign unmanned aerial systems, tactical defense platforms,
+                and specialized industrial airframes engineered and manufactured
+                in-house for critical aerospace missions.
+              </p>
+
+              {/* Action Buttons */}
+              <div className="pt-2 flex flex-wrap items-center gap-4">
+                <PrimaryPill href="/products">View Products →</PrimaryPill>
+                <GhostPill href="/about">Our Story</GhostPill>
+              </div>
+
+              {/* Quick specs / trust points pill */}
+              <div
+                className="pt-6 border-t border-white/[0.08] grid grid-cols-3 gap-4 sm:gap-6 w-full max-w-lg text-left"
+                style={{ fontFamily: "var(--font-mono)" }}
+              >
+                <div>
+                  <p className="text-[10px] sm:text-xs uppercase tracking-wider text-[#6a7e98]">Standard</p>
+                  <p className="text-xs sm:text-sm font-semibold text-white mt-1">MIL-SPEC / IP67</p>
+                </div>
+                <div>
+                  <p className="text-[10px] sm:text-xs uppercase tracking-wider text-[#6a7e98]">Avionics</p>
+                  <p className="text-xs sm:text-sm font-semibold text-white mt-1">Autonomous AI</p>
+                </div>
+                <div>
+                  <p className="text-[10px] sm:text-xs uppercase tracking-wider text-[#6a7e98]">Build</p>
+                  <p className="text-xs sm:text-sm font-semibold text-white mt-1">100% In-House</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Column: 3D Drone Model */}
+            <div className="lg:col-span-5 relative w-full flex items-center justify-center">
+              {/* Soft radial backdrop aura behind drone */}
+              <div
+                className="absolute inset-0 pointer-events-none blur-3xl opacity-30"
+                style={{
+                  background:
+                    "radial-gradient(circle at 50% 50%, rgba(69, 87, 109, 0.40) 0%, rgba(35, 54, 79, 0.18) 50%, transparent 75%)",
+                }}
+                aria-hidden="true"
+              />
+
+              {/* Decorative HUD concentric coordinate rings behind drone */}
+              <div
+                className="absolute w-[300px] h-[300px] sm:w-[380px] sm:h-[380px] rounded-full border border-white/[0.05] pointer-events-none"
+                aria-hidden="true"
+              />
+              <div
+                className="absolute w-[220px] h-[220px] sm:w-[280px] sm:h-[280px] rounded-full border border-dashed border-[#45576D]/25 pointer-events-none animate-spin"
+                style={{ animationDuration: "60s" }}
+                aria-hidden="true"
+              />
+
+              {/* 3D Drone Canvas Container with smooth modern edge masking */}
+              <div
+                className="relative w-full h-[400px] sm:h-[460px] lg:h-[500px] flex items-center justify-center"
+                style={{
+                  maskImage:
+                    "radial-gradient(ellipse 92% 90% at 50% 50%, black 70%, transparent 100%)",
+                  WebkitMaskImage:
+                    "radial-gradient(ellipse 92% 90% at 50% 50%, black 70%, transparent 100%)",
+                }}
+              >
+                <DroneGlobe />
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -118,17 +194,17 @@ export default function Home() {
                       className="group relative block overflow-hidden rounded-2xl p-5 transition-all duration-500 hover:-translate-y-1 h-full"
                       style={{
                         background: "rgba(255,255,255,0.03)",
-                        border: "1px solid rgba(56,189,248,0.10)",
+                        border: "1px solid rgba(69, 87, 109,0.10)",
                         boxShadow: "0 4px 24px rgba(0,0,0,0.4)",
                       }}
                     >
                       <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                        style={{ boxShadow: "inset 0 0 0 1px rgba(56,189,248,0.35), 0 0 24px rgba(14,165,233,0.10)" }}
+                        style={{ boxShadow: "inset 0 0 0 1px rgba(69, 87, 109,0.35), 0 0 24px rgba(69, 87, 109,0.10)" }}
                       />
                       {/* Number */}
                       <span
                         className="block text-xs mb-4"
-                        style={{ fontFamily: "var(--font-mono)", color: "rgba(56,189,248,0.50)", letterSpacing: "0.12em" }}
+                        style={{ fontFamily: "var(--font-mono)", color: "rgba(69, 87, 109,0.50)", letterSpacing: "0.12em" }}
                       >
                         {String(i + 1).padStart(2, "0")}
                       </span>
@@ -141,7 +217,7 @@ export default function Home() {
                       </div>
                       {/* Content */}
                       <h3
-                        className="text-sm font-bold text-white group-hover:text-[#38bdf8] transition-colors duration-300 mb-1"
+                        className="text-sm font-bold text-white group-hover:text-[#45576D] transition-colors duration-300 mb-1"
                         style={{ fontFamily: "var(--font-display)", letterSpacing: "0.02em" }}
                       >
                         {service.title}
@@ -149,7 +225,7 @@ export default function Home() {
                       <p className="text-xs leading-5" style={{ fontFamily: "var(--font-mono)", color: "rgba(240,244,255,0.35)", letterSpacing: "0.03em" }}>
                         {service.description.slice(0, 80)}…
                       </p>
-                      <div className="mt-4 h-px w-0 group-hover:w-full bg-gradient-to-r from-[#0ea5e9] to-[#38bdf8] transition-all duration-500 rounded-full" />
+                      <div className="mt-4 h-px w-0 group-hover:w-full bg-gradient-to-r from-[#45576D] to-[#45576D] transition-all duration-500 rounded-full" />
                     </Link>
                   </ThreeDCard>
                 </ScrollReveal>
@@ -158,88 +234,24 @@ export default function Home() {
           </div>
         </Section>
 
-        {/* ═══ PRODUCTS — solid dark panel ═══ */}
-        <ScrollReveal>
-          <Section>
-            <div
-              className="relative overflow-hidden rounded-[2rem] px-6 py-16 sm:px-10 sm:py-20"
-              style={{
-                background: 'linear-gradient(135deg, #000000 0%, #050d1a 50%, #0a0f1a 100%)',
-                border: '1px solid rgba(56,189,248,0.12)',
-                boxShadow: '0 0 60px rgba(14,165,233,0.08)',
-              }}
-            >
-              {/* Grid overlay */}
-              <div className="absolute inset-0 tech-grid opacity-15 rounded-[2rem]" />
-              {/* Top electric line */}
-              <div className="absolute top-0 left-0 right-0 h-px"
-                style={{ background: 'linear-gradient(90deg, transparent, rgba(56,189,248,0.5), transparent)' }}
-              />
+        {/* ═══ TICKER — endless marquee between overview and products ═══ */}
+        <div className="py-2">
+          <StatsTicker />
+        </div>
 
-              <div className="relative space-y-10">
-                <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-                  <div>
-                    <SectionTag>Featured Products</SectionTag>
-                    <h2 className="mt-4 text-[clamp(2rem,4vw,3rem)] font-bold text-white" style={{ fontFamily: "var(--font-display)" }}>Selected Products.</h2>
-                  </div>
-                  <Button
-                    href="/products"
-                    variant="primary"
-                    className="!bg-[#0ea5e9] hover:!bg-[#38bdf8] !text-black !font-bold hover:!shadow-[0_0_20px_rgba(14,165,233,0.5)]"
-                  >
-                    View all products
-                  </Button>
-                </div>
-                <ProductsSection />
-              </div>
-            </div>
-          </Section>
-        </ScrollReveal>
+        {/* ═══ FEATURED PRODUCTS — alternating slide-up rows ═══ */}
+        <FeaturedProducts />
 
-        {/* ═══ CTA — electric gradient ═══ */}
-        <ScrollReveal delay={100}>
-          <Section>
-            <div className="relative overflow-hidden rounded-[2rem] p-12 sm:p-16"
-              style={{
-                background: 'linear-gradient(135deg, #000000 0%, #0a1628 40%, #0f1f3d 70%, #23364F 100%)',
-                border: '1px solid rgba(56,189,248,0.18)',
-              }}
-            >
-              {/* Electric top border */}
-              <div className="absolute top-0 left-0 right-0 h-px"
-                style={{ background: 'linear-gradient(90deg, transparent, #38bdf8, transparent)' }}
-              />
-              {/* Background glow spots */}
-              <div className="absolute -top-20 -right-20 w-72 h-72 rounded-full opacity-25 animate-mesh-flow"
-                style={{ background: 'radial-gradient(circle, rgba(14,165,233,0.4) 0%, transparent 70%)' }}
-              />
-              <div className="absolute -bottom-20 -left-20 w-72 h-72 rounded-full opacity-15 animate-mesh-flow"
-                style={{ background: 'radial-gradient(circle, rgba(35,54,79,0.5) 0%, transparent 70%)', animationDelay: '-4s' }}
-              />
-              <div className="absolute inset-0 tech-grid opacity-15" />
-
-              <div className="relative flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
-                <div className="max-w-2xl">
-                  <SectionTag>Get In Touch</SectionTag>
-                  <h2 className="mt-4 text-[clamp(2rem,5vw,3.5rem)] font-bold text-white" style={{ fontFamily: "var(--font-display)" }}>
-                    Ready to work<br />with Skywin?
-                  </h2>
-                  <p className="mt-4 text-lg leading-8 text-white/65">
-                    Contact our team for aerospace engineering, consulting, or collaboration inquiries.
-                  </p>
-                </div>
-                <Button
-                  href="/contact"
-                  className="!bg-[#0ea5e9] hover:!bg-[#38bdf8] !text-black !font-bold hover:!shadow-[0_0_40px_rgba(14,165,233,0.7)] transition-all duration-300 whitespace-nowrap"
-                >
-                  Start a conversation
-                </Button>
-              </div>
-            </div>
-          </Section>
-        </ScrollReveal>
+        {/* ═══ BOTTOM CTA (Matching Services page) ═══ */}
+        <ServicesCTA
+          headline="Ready for aerospace solutions that work as hard as you do?"
+          subtitle="Tell us about your mission requirements and operational needs. We'll come back with technical architecture, payload options, and a costed plan — sovereign engineering from day one."
+          buttonText="GET IN TOUCH"
+          href="/contact"
+        />
 
       </Container>
     </main>
   );
 }
+
