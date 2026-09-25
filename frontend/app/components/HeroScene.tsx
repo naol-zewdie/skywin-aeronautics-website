@@ -1,8 +1,9 @@
 "use client";
 
 import { useRef, useMemo, useEffect } from "react";
-import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
+import SafeCanvas from "./SafeCanvas";
 
 /* ─── Mouse-reactive camera rig ─── */
 function CameraRig() {
@@ -36,8 +37,8 @@ function DroneWireframe() {
   const ring2Ref = useRef<THREE.Mesh>(null);
   const coreRef = useRef<THREE.Mesh>(null);
 
-  useFrame((state) => {
-    const t = state.clock.elapsedTime;
+  useFrame(() => {
+    const t = performance.now() * 0.001;
     if (meshRef.current) {
       meshRef.current.rotation.x = t * 0.16;
       meshRef.current.rotation.y = t * 0.22;
@@ -126,9 +127,9 @@ function StarField() {
   }, []);
 
   const pointsRef = useRef<THREE.Points>(null);
-  useFrame((state) => {
+  useFrame(() => {
     if (pointsRef.current) {
-      pointsRef.current.rotation.y = state.clock.elapsedTime * 0.018;
+      pointsRef.current.rotation.y = performance.now() * 0.001 * 0.018;
     }
   });
 
@@ -165,12 +166,13 @@ function FloatingHex({
     [position]
   );
 
-  useFrame((state) => {
+  useFrame(() => {
     if (ref.current) {
+      const now = performance.now() * 0.001;
       ref.current.position.y =
         position[1] +
-        Math.sin(state.clock.elapsedTime * speed + offset) * 0.22;
-      ref.current.rotation.z = state.clock.elapsedTime * speed * 0.35;
+        Math.sin(now * speed + offset) * 0.22;
+      ref.current.rotation.z = now * speed * 0.35;
     }
   });
 
@@ -215,7 +217,7 @@ export default function HeroScene() {
           "radial-gradient(ellipse 90% 80% at 50% 50%, black 50%, transparent 100%)",
       }}
     >
-      <Canvas
+      <SafeCanvas
         className="three-canvas"
         camera={{ position: [0, 0, 5], fov: 55 }}
         gl={{ antialias: true, alpha: true }}
@@ -239,7 +241,7 @@ export default function HeroScene() {
             scale={h.scale}
           />
         ))}
-      </Canvas>
+      </SafeCanvas>
     </div>
   );
 }

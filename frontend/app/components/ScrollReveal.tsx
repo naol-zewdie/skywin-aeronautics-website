@@ -10,6 +10,7 @@ interface ScrollRevealProps {
   delay?: number;       // ms
   threshold?: number;
   direction?: Direction;
+  style?: React.CSSProperties;
 }
 
 const directionClass: Record<Direction, string> = {
@@ -23,8 +24,9 @@ export default function ScrollReveal({
   children,
   className = "",
   delay = 0,
-  threshold = 0.12,
+  threshold = 0.08,
   direction = "up",
+  style,
 }: ScrollRevealProps) {
   const ref = useRef<HTMLDivElement>(null);
 
@@ -32,25 +34,39 @@ export default function ScrollReveal({
     const el = ref.current;
     if (!el) return;
 
+    // Check if element is already within viewport on initial load
+    const rect = el.getBoundingClientRect();
+    if (rect.top < window.innerHeight - 20 && rect.bottom > 0) {
+      const timer = setTimeout(() => {
+        el.classList.add("visible");
+      }, delay);
+      return () => clearTimeout(timer);
+    }
+
+    let timer: NodeJS.Timeout | null = null;
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          setTimeout(() => {
+          timer = setTimeout(() => {
             el.classList.add("visible");
           }, delay);
           observer.unobserve(el);
         }
       },
-      { threshold }
+      { threshold, rootMargin: "0px 0px -40px 0px" }
     );
 
     observer.observe(el);
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+      if (timer) clearTimeout(timer);
+    };
   }, [delay, threshold]);
 
   return (
-    <div ref={ref} className={`${directionClass[direction]} ${className}`}>
+    <div ref={ref} className={`${directionClass[direction]} ${className}`} style={style}>
       {children}
     </div>
   );
 }
+

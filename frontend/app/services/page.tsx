@@ -125,9 +125,7 @@ export default async function ServicesPage() {
             className="text-[clamp(1.75rem,3.8vw,2.8rem)] font-semibold leading-[1.12] tracking-tight text-white"
             style={{ fontFamily: "var(--font-display)" }}
           >
-            {countWord} capabilities. One
-            <br />
-            operating model.
+            Comprehensive aerospace services built for growth.
           </h1>
 
           {/* Subtitle */}
@@ -138,10 +136,7 @@ export default async function ServicesPage() {
               letterSpacing: "0.02em",
             }}
           >
-            Every mission starts with the operational outcome we&apos;re
-            engineered to achieve. The capability we deliver is tailored to
-            strategic requirements — with sovereign aerospace precision built
-            into every platform.
+            Our service offerings are designed to support aerospace programs at every stage, from early concept through production and delivery.
           </p>
         </section>
 

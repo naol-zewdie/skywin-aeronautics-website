@@ -1,9 +1,10 @@
 "use client";
 
 import Image from "next/image";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { getServices, getProducts, FrontendService, FrontendProduct } from "../../lib/api";
+import NavbarMegaMenu from "./NavbarMegaMenu";
 
 const navLinks = [
   { href: "/", label: "Home" },
@@ -103,19 +104,19 @@ function NavLink({ href, children, onClick }: { href: string; children: React.Re
   );
 }
 
-/* ── Dropdown glass panel ── */
+/* ── Dropdown glass panel for compact menus (e.g. Insights) ── */
 function DropdownPanel({ children }: { children: React.ReactNode }) {
   return (
     <div className="absolute top-full left-0 pt-3 z-50" style={{ minWidth: "200px" }}>
       <div style={{
-        background:      "rgba(5, 8, 16, 0.88)",
-        backdropFilter:  "blur(28px)",
+        background: "rgba(5, 8, 16, 0.94)",
+        backdropFilter: "blur(28px)",
         WebkitBackdropFilter: "blur(28px)",
-        border:          "1px solid rgba(255,255,255,0.08)",
-        borderRadius:    "16px",
-        boxShadow:       "0 20px 60px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.04) inset",
-        overflow:        "hidden",
-        padding:         "8px 0",
+        border: "1px solid rgba(255,255,255,0.08)",
+        borderRadius: "16px",
+        boxShadow: "0 20px 60px rgba(0,0,0,0.65), 0 0 0 1px rgba(255,255,255,0.04) inset",
+        overflow: "hidden",
+        padding: "8px 0",
       }}>
         {children}
       </div>
@@ -127,11 +128,37 @@ export default function Navbar() {
   const [services, setServices] = useState<FrontendService[]>([]);
   const [products, setProducts] = useState<FrontendProduct[]>([]);
   const [isOpen, setIsOpen] = useState(false);
-  const [servicesDropdown, setServicesDropdown] = useState(false);
-  const [productsDropdown, setProductsDropdown] = useState(false);
-  const [insightsDropdown, setInsightsDropdown] = useState(false);
+  const [activeDropdown, setActiveDropdown] = useState<"services" | "products" | "insights" | null>(null);
 
+  const [mobileServicesOpen, setMobileServicesOpen] = useState(false);
+  const [mobileProductsOpen, setMobileProductsOpen] = useState(false);
+  const [mobileInsightsOpen, setMobileInsightsOpen] = useState(false);
+
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const fetchedRef = useRef({ services: false, products: false });
+
+  useEffect(() => {
+    let mounted = true;
+    getServices()
+      .then((data) => {
+        if (mounted && data) {
+          fetchedRef.current.services = true;
+          setServices(data);
+        }
+      })
+      .catch(() => { });
+    getProducts()
+      .then((data) => {
+        if (mounted && data) {
+          fetchedRef.current.products = true;
+          setProducts(data);
+        }
+      })
+      .catch(() => { });
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const fetchServices = async () => {
     if (fetchedRef.current.services || services.length > 0) return;
@@ -143,6 +170,24 @@ export default function Navbar() {
     if (fetchedRef.current.products || products.length > 0) return;
     fetchedRef.current.products = true;
     try { setProducts(await getProducts()); } catch { setProducts([]); }
+  };
+
+  const handleOpenDropdown = (type: "services" | "products" | "insights") => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    setActiveDropdown(type);
+    if (type === "services") fetchServices();
+    if (type === "products") fetchProducts();
+  };
+
+  const handleCloseWithDelay = () => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    timeoutRef.current = setTimeout(() => {
+      setActiveDropdown(null);
+    }, 200);
+  };
+
+  const handleCancelClose = () => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
   };
 
   const dropdownLink = (href: string, label: string, onClose: () => void) => (
@@ -160,22 +205,22 @@ export default function Navbar() {
   return (
     <header
       className="fixed z-50"
-      style={{ top: "20px", left: "50%", transform: "translateX(-50%)", width: "calc(100% - 48px)", maxWidth: "1100px" }}
+      style={{ top: "20px", left: "50%", transform: "translateX(-50%)", width: "calc(100% - 36px)", maxWidth: "1160px" }}
     >
       {/* ── Pill navbar ── */}
       <div
         className="flex items-center justify-between px-5 py-3"
         style={{
-          background:          "rgba(5, 8, 16, 0.82)",
-          backdropFilter:      "blur(32px)",
-          WebkitBackdropFilter:"blur(32px)",
-          borderRadius:        "100px",
-          border:              "1px solid rgba(255,255,255,0.09)",
-          boxShadow:           "0 4px 32px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.03) inset",
+          background: "rgba(5, 8, 16, 0.88)",
+          backdropFilter: "blur(32px)",
+          WebkitBackdropFilter: "blur(32px)",
+          borderRadius: "100px",
+          border: "1px solid rgba(255,255,255,0.09)",
+          boxShadow: "0 4px 32px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.03) inset",
         }}
       >
         {/* ── Brand / Logo ── */}
-        <Link href="/" className="flex items-center gap-3 flex-shrink-0" aria-label="Home">
+        <Link href="/" className="flex items-center gap-3 flex-shrink-0" aria-label="Home" onClick={() => setActiveDropdown(null)}>
           <Image
             src="/website_images/logo svg.png"
             alt="Skywin Aeronautics logo"
@@ -195,75 +240,107 @@ export default function Navbar() {
                 {link.hasDropdown && link.label === "Services" ? (
                   <div
                     className="relative"
-                    onMouseEnter={() => { fetchServices(); setServicesDropdown(true); }}
-                    onMouseLeave={() => setServicesDropdown(false)}
+                    onMouseEnter={() => handleOpenDropdown("services")}
+                    onMouseLeave={handleCloseWithDelay}
                   >
                     <button
-                      className="nav-btn-pill flex items-center gap-1 px-3 py-2 uppercase"
-                      style={{ fontFamily: "var(--font-mono)", letterSpacing: "0.10em", fontSize: "11px", background: "none", border: "none", cursor: "pointer" }}
-                      onClick={() => setServicesDropdown(!servicesDropdown)}
+                      className="nav-btn-pill flex items-center gap-1.5 px-3 py-2 uppercase"
+                      style={{
+                        fontFamily: "var(--font-mono)",
+                        letterSpacing: "0.10em",
+                        fontSize: "11px",
+                        background: "none",
+                        border: "none",
+                        cursor: "pointer",
+                        color: activeDropdown === "services" ? "#ffffff" : undefined,
+                      }}
+                      onClick={() => activeDropdown === "services" ? setActiveDropdown(null) : handleOpenDropdown("services")}
                     >
                       {link.label}
-                      <svg className={`w-3 h-3 transition-transform duration-200 ${servicesDropdown ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg
+                        className={`w-3 h-3 transition-transform duration-200 ${activeDropdown === "services" ? "rotate-180 text-sky-400" : ""
+                          }`}
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                       </svg>
                     </button>
-                    {servicesDropdown && (
-                      <DropdownPanel>
-                        {services.map((s) => dropdownLink("/services", s.title, () => setServicesDropdown(false)))}
-                      </DropdownPanel>
-                    )}
                   </div>
                 ) : link.hasDropdown && link.label === "Products" ? (
                   <div
                     className="relative"
-                    onMouseEnter={() => { fetchProducts(); setProductsDropdown(true); }}
-                    onMouseLeave={() => setProductsDropdown(false)}
+                    onMouseEnter={() => handleOpenDropdown("products")}
+                    onMouseLeave={handleCloseWithDelay}
                   >
                     <button
-                      className="nav-btn-pill flex items-center gap-1 px-3 py-2 uppercase"
-                      style={{ fontFamily: "var(--font-mono)", letterSpacing: "0.10em", fontSize: "11px", background: "none", border: "none", cursor: "pointer" }}
-                      onClick={() => setProductsDropdown(!productsDropdown)}
+                      className="nav-btn-pill flex items-center gap-1.5 px-3 py-2 uppercase"
+                      style={{
+                        fontFamily: "var(--font-mono)",
+                        letterSpacing: "0.10em",
+                        fontSize: "11px",
+                        background: "none",
+                        border: "none",
+                        cursor: "pointer",
+                        color: activeDropdown === "products" ? "#ffffff" : undefined,
+                      }}
+                      onClick={() => activeDropdown === "products" ? setActiveDropdown(null) : handleOpenDropdown("products")}
                     >
                       {link.label}
-                      <svg className={`w-3 h-3 transition-transform duration-200 ${productsDropdown ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg
+                        className={`w-3 h-3 transition-transform duration-200 ${activeDropdown === "products" ? "rotate-180 text-sky-400" : ""
+                          }`}
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                       </svg>
                     </button>
-                    {productsDropdown && (
-                      <DropdownPanel>
-                        {products.map((p) => dropdownLink(`/products?selected=${encodeURIComponent(p.title)}`, p.title, () => setProductsDropdown(false)))}
-                      </DropdownPanel>
-                    )}
                   </div>
                 ) : link.hasDropdown && link.label === "Insights" ? (
                   <div
                     className="relative"
-                    onMouseEnter={() => setInsightsDropdown(true)}
-                    onMouseLeave={() => setInsightsDropdown(false)}
+                    onMouseEnter={() => handleOpenDropdown("insights")}
+                    onMouseLeave={handleCloseWithDelay}
                   >
                     <button
-                      className="nav-btn-pill flex items-center gap-1 px-3 py-2 uppercase"
-                      style={{ fontFamily: "var(--font-mono)", letterSpacing: "0.10em", fontSize: "11px", background: "none", border: "none", cursor: "pointer" }}
-                      onClick={() => setInsightsDropdown(!insightsDropdown)}
+                      className="nav-btn-pill flex items-center gap-1.5 px-3 py-2 uppercase"
+                      style={{
+                        fontFamily: "var(--font-mono)",
+                        letterSpacing: "0.10em",
+                        fontSize: "11px",
+                        background: "none",
+                        border: "none",
+                        cursor: "pointer",
+                        color: activeDropdown === "insights" ? "#ffffff" : undefined,
+                      }}
+                      onClick={() => activeDropdown === "insights" ? setActiveDropdown(null) : handleOpenDropdown("insights")}
                     >
                       {link.label}
-                      <svg className={`w-3 h-3 transition-transform duration-200 ${insightsDropdown ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg
+                        className={`w-3 h-3 transition-transform duration-200 ${activeDropdown === "insights" ? "rotate-180 text-sky-400" : ""
+                          }`}
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                       </svg>
                     </button>
-                    {insightsDropdown && (
+                    {activeDropdown === "insights" && (
                       <DropdownPanel>
                         {[
-                          { href: "/insights/news",   label: "News" },
-                          { href: "/insights/blog",   label: "Blog" },
+                          { href: "/insights/news", label: "News" },
+                          { href: "/insights/blog", label: "Blog" },
                           { href: "/insights/events", label: "Events" },
-                        ].map((item) => dropdownLink(item.href, item.label, () => setInsightsDropdown(false)))}
+                        ].map((item) => dropdownLink(item.href, item.label, () => setActiveDropdown(null)))}
                       </DropdownPanel>
                     )}
                   </div>
                 ) : (
-                  <NavLink href={link.href} onClick={() => setIsOpen(false)}>
+                  <NavLink href={link.href} onClick={() => { setIsOpen(false); setActiveDropdown(null); }}>
                     {link.label}
                   </NavLink>
                 )}
@@ -272,16 +349,16 @@ export default function Navbar() {
           </ul>
         </nav>
 
-        {/* ── Right: Contact pill + dark mode ── */}
+        {/* ── Right: Contact pill + mobile menu ── */}
         <div className="flex items-center gap-3">
           <Link
             href="/contact"
             className="hidden md:inline-flex items-center gap-2 px-4 py-2 text-xs uppercase transition-all duration-200"
             style={{
-              fontFamily:   "var(--font-mono)",
-              letterSpacing:"0.12em",
-              color:        "rgba(240,244,255,0.70)",
-              border:       "1px solid rgba(255,255,255,0.14)",
+              fontFamily: "var(--font-mono)",
+              letterSpacing: "0.12em",
+              color: "rgba(240,244,255,0.70)",
+              border: "1px solid rgba(255,255,255,0.14)",
               borderRadius: "100px",
             }}
             onMouseEnter={(e) => {
@@ -321,18 +398,35 @@ export default function Navbar() {
         </div>
       </div>
 
+      {/* ── Mega Menu Desktop Container (Services & Products) ── */}
+      {(activeDropdown === "services" || activeDropdown === "products") && (
+        <div
+          className="hidden md:block absolute top-[calc(100%+8px)] left-0 right-0 z-50 animate-in fade-in slide-in-from-top-2 duration-200"
+          onMouseEnter={handleCancelClose}
+          onMouseLeave={handleCloseWithDelay}
+        >
+          {/* Transparent hit bridge to prevent premature mouseleave */}
+          <div className="absolute -top-3 left-0 right-0 h-3" />
+          <NavbarMegaMenu
+            type={activeDropdown}
+            onClose={() => setActiveDropdown(null)}
+            services={services}
+            products={products}
+          />
+        </div>
+      )}
+
       {/* ── Mobile dropdown ── */}
       <nav
         id="mobile-navigation"
         aria-label="Mobile navigation"
-        className={`absolute inset-x-0 top-full z-20 mt-3 overflow-hidden rounded-3xl md:hidden ${
-          isOpen ? "max-h-[700px] opacity-100 pointer-events-auto" : "max-h-0 opacity-0 pointer-events-none"
-        }`}
+        className={`absolute inset-x-0 top-full z-20 mt-3 overflow-hidden rounded-3xl md:hidden ${isOpen ? "max-h-[700px] opacity-100 pointer-events-auto" : "max-h-0 opacity-0 pointer-events-none"
+          }`}
         style={{
-          background:    "rgba(5,8,16,0.96)",
-          border:        isOpen ? "1px solid rgba(255,255,255,0.08)" : "none",
-          backdropFilter:"blur(28px)",
-          transition:    "max-height 0.35s ease, opacity 0.25s ease",
+          background: "rgba(5,8,16,0.96)",
+          border: isOpen ? "1px solid rgba(255,255,255,0.08)" : "none",
+          backdropFilter: "blur(28px)",
+          transition: "max-height 0.35s ease, opacity 0.25s ease",
         }}
       >
         <ul className="flex flex-col gap-4 p-6 text-base font-medium" style={{ color: "rgba(240,244,255,0.55)", fontFamily: "var(--font-mono)" }}>
@@ -341,17 +435,19 @@ export default function Navbar() {
               {link.hasDropdown && link.label === "Services" ? (
                 <div>
                   <button className="w-full text-left flex items-center justify-between py-1 uppercase text-xs tracking-widest hover:text-white transition-colors"
-                    onClick={() => { fetchServices(); setServicesDropdown(!servicesDropdown); }}>
+                    onClick={() => { fetchServices(); setMobileServicesOpen(!mobileServicesOpen); }}>
                     {link.label}
-                    <svg className={`w-4 h-4 transition-transform ${servicesDropdown ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className={`w-4 h-4 transition-transform ${mobileServicesOpen ? "rotate-180 text-sky-400" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                     </svg>
                   </button>
-                  {servicesDropdown && (
+                  {mobileServicesOpen && (
                     <div className="mt-2 ml-3 space-y-1">
+                      <Link href="/services" className="block px-3 py-1.5 text-xs uppercase tracking-wider text-sky-400 font-semibold hover:text-sky-300 transition-colors"
+                        onClick={() => { setMobileServicesOpen(false); setIsOpen(false); }}>All Services ⟶</Link>
                       {services.map((s) => (
-                        <Link key={s.title} href="/services" className="block px-3 py-2 text-xs uppercase tracking-wider hover:text-white transition-colors"
-                          onClick={() => { setServicesDropdown(false); setIsOpen(false); }}>{s.title}</Link>
+                        <Link key={s.title} href={`/services/${s.slug}`} className="block px-3 py-1.5 text-xs uppercase tracking-wider hover:text-white transition-colors"
+                          onClick={() => { setMobileServicesOpen(false); setIsOpen(false); }}>{s.title}</Link>
                       ))}
                     </div>
                   )}
@@ -359,18 +455,20 @@ export default function Navbar() {
               ) : link.hasDropdown && link.label === "Products" ? (
                 <div>
                   <button className="w-full text-left flex items-center justify-between py-1 uppercase text-xs tracking-widest hover:text-white transition-colors"
-                    onClick={() => { fetchProducts(); setProductsDropdown(!productsDropdown); }}>
+                    onClick={() => { fetchProducts(); setMobileProductsOpen(!mobileProductsOpen); }}>
                     {link.label}
-                    <svg className={`w-4 h-4 transition-transform ${productsDropdown ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className={`w-4 h-4 transition-transform ${mobileProductsOpen ? "rotate-180 text-sky-400" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                     </svg>
                   </button>
-                  {productsDropdown && (
+                  {mobileProductsOpen && (
                     <div className="mt-2 ml-3 space-y-1">
+                      <Link href="/products" className="block px-3 py-1.5 text-xs uppercase tracking-wider text-sky-400 font-semibold hover:text-sky-300 transition-colors"
+                        onClick={() => { setMobileProductsOpen(false); setIsOpen(false); }}>All Products ⟶</Link>
                       {products.map((p) => (
-                        <Link key={p.title} href={`/products?selected=${encodeURIComponent(p.title)}`}
-                          className="block px-3 py-2 text-xs uppercase tracking-wider hover:text-white transition-colors"
-                          onClick={() => { setProductsDropdown(false); setIsOpen(false); }}>{p.title}</Link>
+                        <Link key={p.title} href={`/products/${p.slug}`}
+                          className="block px-3 py-1.5 text-xs uppercase tracking-wider hover:text-white transition-colors"
+                          onClick={() => { setMobileProductsOpen(false); setIsOpen(false); }}>{p.title}</Link>
                       ))}
                     </div>
                   )}
@@ -378,17 +476,17 @@ export default function Navbar() {
               ) : link.hasDropdown && link.label === "Insights" ? (
                 <div>
                   <button className="w-full text-left flex items-center justify-between py-1 uppercase text-xs tracking-widest hover:text-white transition-colors"
-                    onClick={() => setInsightsDropdown(!insightsDropdown)}>
+                    onClick={() => setMobileInsightsOpen(!mobileInsightsOpen)}>
                     {link.label}
-                    <svg className={`w-4 h-4 transition-transform ${insightsDropdown ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className={`w-4 h-4 transition-transform ${mobileInsightsOpen ? "rotate-180 text-sky-400" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                     </svg>
                   </button>
-                  {insightsDropdown && (
+                  {mobileInsightsOpen && (
                     <div className="mt-2 ml-3 space-y-1">
-                      {[{href:"/insights/news",label:"News"},{href:"/insights/blog",label:"Blog"},{href:"/insights/events",label:"Events"}].map(i=>(
-                        <Link key={i.href} href={i.href} className="block px-3 py-2 text-xs uppercase tracking-wider hover:text-white transition-colors"
-                          onClick={()=>{setInsightsDropdown(false);setIsOpen(false);}}>{i.label}</Link>
+                      {[{ href: "/insights/news", label: "News" }, { href: "/insights/blog", label: "Blog" }, { href: "/insights/events", label: "Events" }].map(i => (
+                        <Link key={i.href} href={i.href} className="block px-3 py-1.5 text-xs uppercase tracking-wider hover:text-white transition-colors"
+                          onClick={() => { setMobileInsightsOpen(false); setIsOpen(false); }}>{i.label}</Link>
                       ))}
                     </div>
                   )}

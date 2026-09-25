@@ -5,6 +5,7 @@ interface ServicesCTAProps {
   subtitle?: string;
   buttonText?: string;
   href?: string;
+  className?: string;
 }
 
 export default function ServicesCTA({
@@ -12,9 +13,10 @@ export default function ServicesCTA({
   subtitle = "Tell us about your mission requirements and operational needs. We'll come back with technical architecture, payload options, and a costed plan — sovereign engineering from day one.",
   buttonText = "GET IN TOUCH",
   href = "/contact",
+  className = "my-16 sm:my-24",
 }: ServicesCTAProps) {
   return (
-    <section className="relative w-full max-w-5xl mx-auto px-4 sm:px-6 my-16 sm:my-24">
+    <section className={`relative w-full max-w-5xl mx-auto px-4 sm:px-6 ${className}`}>
       {/* ── Outer Card Container matching Image 4 ── */}
       <div
         className="relative rounded-2xl sm:rounded-3xl p-8 sm:p-14 md:p-16 text-center overflow-hidden transition-all duration-300"

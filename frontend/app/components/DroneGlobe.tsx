@@ -1,7 +1,8 @@
 "use client";
 
 import { useRef, useMemo } from "react";
-import { Canvas, useFrame } from "@react-three/fiber";
+import { useFrame } from "@react-three/fiber";
+import SafeCanvas from "./SafeCanvas";
 import { OrbitControls, Environment, Lightformer } from "@react-three/drei";
 import { EffectComposer, Bloom, ChromaticAberration, Vignette } from "@react-three/postprocessing";
 import { BlendFunction } from "postprocessing";
@@ -31,8 +32,8 @@ function RotorMotor({ position, isClockwise, ledColor, ledColorHex }: MotorProps
   const lightRef   = useRef<THREE.PointLight>(null);
   const ledRef     = useRef<THREE.Mesh>(null);
 
-  useFrame((state, delta) => {
-    const t = state.clock.elapsedTime;
+  useFrame((_, delta) => {
+    const t = performance.now() * 0.001;
 
     // Fast rotor spin
     if (propRef.current) {
@@ -225,8 +226,8 @@ function QuadcopterDrone() {
   const stripeRef     = useRef<THREE.Mesh>(null);
   const sensorRef     = useRef<THREE.Mesh>(null);
 
-  useFrame((state) => {
-    const t = state.clock.elapsedTime;
+  useFrame(() => {
+    const t = performance.now() * 0.001;
 
     // Hover bob + tilt
     if (droneGroupRef.current) {
@@ -398,7 +399,7 @@ function PulsingKeyLight() {
 export default function DroneGlobe() {
   return (
     <div className="relative w-full h-full cursor-grab active:cursor-grabbing" style={{ minHeight: "360px" }}>
-      <Canvas
+      <SafeCanvas
         camera={{ position: [3.4, 2.3, 4.4], fov: 42 }}
         gl={{
           antialias: true,
@@ -471,7 +472,7 @@ export default function DroneGlobe() {
           minPolarAngle={Math.PI / 6}
           maxPolarAngle={Math.PI - Math.PI / 6}
         />
-      </Canvas>
+      </SafeCanvas>
 
       {/* Interaction hint */}
       <div

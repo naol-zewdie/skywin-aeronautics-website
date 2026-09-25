@@ -1,8 +1,9 @@
 "use client";
 
 import { useRef, useEffect, useState, useMemo } from "react";
-import { Canvas, useFrame } from "@react-three/fiber";
+import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
+import SafeCanvas from "./SafeCanvas";
 
 /* ═══════════════════════════════════════════════════════════════
    SKYWIN — LIVING NAVY AURORA BACKGROUND
@@ -190,8 +191,8 @@ function AuroraFluid() {
     return () => window.removeEventListener("resize", onResize);
   }, [uniforms]);
 
-  useFrame((state) => {
-    uniforms.uTime.value = state.clock.elapsedTime;
+  useFrame(() => {
+    uniforms.uTime.value = performance.now() * 0.001;
   });
 
   return (
@@ -278,19 +279,28 @@ export default function FluidBackground() {
       }}
       aria-hidden="true"
     >
-      <Canvas
+      <SafeCanvas
         orthographic
         camera={{ zoom: 1, near: -1, far: 1, position: [0, 0, 0] }}
         gl={{
           antialias:         false,
           alpha:             false,
-          powerPreference:   "high-performance",
+          powerPreference:   "default",
         }}
         dpr={typeof window !== "undefined" ? Math.min(window.devicePixelRatio, 1.5) : 1}
         style={{ width: "100%", height: "100%" }}
+        fallback={
+          <div
+            className="absolute inset-0"
+            style={{
+              background:
+                "radial-gradient(ellipse at 50% 30%, rgba(35, 54, 79, 0.35) 0%, rgba(7, 11, 20, 0.95) 75%, #030508 100%)",
+            }}
+          />
+        }
       >
         <AuroraFluid />
-      </Canvas>
+      </SafeCanvas>
 
       {/* CSS floating particle dots layered on top */}
       <CSSParticles />

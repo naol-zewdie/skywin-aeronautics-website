@@ -1,8 +1,9 @@
 'use client';
 
 import { useRef, useMemo } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
+import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
+import SafeCanvas from './SafeCanvas';
 
 function pr(s: number): number {
   const x = Math.sin(s * 9301 + 49297) * 233280;
@@ -22,9 +23,10 @@ function TelemetryRing({
   color: string;
 }) {
   const ref = useRef<THREE.Mesh>(null);
-  useFrame((state) => {
+  useFrame(() => {
     if (ref.current) {
-      const t = (state.clock.elapsedTime * speed + delay) % 3;
+      const now = performance.now() * 0.001;
+      const t = (now * speed + delay) % 3;
       const scale = 0.5 + t * (radius / 1.5);
       ref.current.scale.set(scale, scale, 1);
       const mat = ref.current.material as THREE.MeshBasicMaterial;
@@ -62,8 +64,8 @@ function RadarCore() {
     });
   }, []);
 
-  useFrame((state) => {
-    const t = state.clock.elapsedTime;
+  useFrame(() => {
+    const t = performance.now() * 0.001;
     if (groupRef.current) {
       groupRef.current.rotation.y = t * 0.12;
       groupRef.current.rotation.x = Math.sin(t * 0.08) * 0.15;
@@ -126,9 +128,9 @@ function TelemetryDust() {
   }, []);
 
   const ref = useRef<THREE.Points>(null);
-  useFrame((state) => {
+  useFrame(() => {
     if (ref.current) {
-      ref.current.rotation.y = state.clock.elapsedTime * 0.02;
+      ref.current.rotation.y = performance.now() * 0.001 * 0.02;
     }
   });
 
@@ -159,7 +161,7 @@ export default function InsightsScene() {
       }}
       aria-hidden="true"
     >
-      <Canvas
+      <SafeCanvas
         camera={{ position: [0, 1.2, 5.2], fov: 48 }}
         gl={{ antialias: true, alpha: true }}
         dpr={[1, 1.5]}
@@ -174,7 +176,7 @@ export default function InsightsScene() {
         <TelemetryRing radius={2.2} speed={0.8} delay={0} color="#45576D" />
         <TelemetryRing radius={2.8} speed={0.8} delay={1} color="#6a7e98" />
         <TelemetryRing radius={3.4} speed={0.8} delay={2} color="#23364F" />
-      </Canvas>
+      </SafeCanvas>
     </div>
   );
 }

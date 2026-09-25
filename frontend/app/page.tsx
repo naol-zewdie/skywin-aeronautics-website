@@ -66,101 +66,105 @@ export default function Home() {
         <div className="relative z-10 w-full max-w-7xl mx-auto px-6 sm:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-8 items-center">
             {/* Left Column: Typography & CTAs */}
-            <div className="lg:col-span-7 flex flex-col items-start text-left space-y-6">
-              <SectionTag>Skywin Aeronautics</SectionTag>
+            <ScrollReveal direction="up" delay={60} className="lg:col-span-7 w-full">
+              <div className="flex flex-col items-start text-left space-y-6">
+                <SectionTag>Skywin Aeronautics</SectionTag>
 
-              {/* Reduced and balanced display headline */}
-              <h1
-                className="text-[clamp(2.1rem,4.2vw,3.6rem)] font-bold leading-[1.08] tracking-tight text-white"
-                style={{ fontFamily: "var(--font-display)" }}
-              >
-                Precision UAV<br />
-                <span
-                  className="bg-clip-text text-transparent"
+                {/* Reduced and balanced display headline */}
+                <h1
+                  className="text-[clamp(2.1rem,4.2vw,3.6rem)] font-bold leading-[1.08] tracking-tight text-white"
+                  style={{ fontFamily: "var(--font-display)" }}
+                >
+                  Precision UAV<br />
+                  <span
+                    className="bg-clip-text text-transparent"
+                    style={{
+                      backgroundImage:
+                        "linear-gradient(135deg, #45576D 0%, #8fa3bf 50%, #ffffff 100%)",
+                    }}
+                  >
+                    Manufacturing.
+                  </span>
+                </h1>
+
+                {/* Monospace Subtitle */}
+                <p
+                  className="max-w-xl text-xs sm:text-sm md:text-base leading-relaxed text-white/60"
                   style={{
-                    backgroundImage:
-                      "linear-gradient(135deg, #45576D 0%, #8fa3bf 50%, #ffffff 100%)",
+                    fontFamily: "var(--font-mono)",
+                    letterSpacing: "0.02em",
                   }}
                 >
-                  Manufacturing.
-                </span>
-              </h1>
+                  Sovereign unmanned aerial systems, tactical defense platforms,
+                  and specialized industrial airframes engineered and manufactured
+                  in-house for critical aerospace missions.
+                </p>
 
-              {/* Monospace Subtitle */}
-              <p
-                className="max-w-xl text-xs sm:text-sm md:text-base leading-relaxed text-white/60"
-                style={{
-                  fontFamily: "var(--font-mono)",
-                  letterSpacing: "0.02em",
-                }}
-              >
-                Sovereign unmanned aerial systems, tactical defense platforms,
-                and specialized industrial airframes engineered and manufactured
-                in-house for critical aerospace missions.
-              </p>
-
-              {/* Action Buttons */}
-              <div className="pt-2 flex flex-wrap items-center gap-4">
-                <PrimaryPill href="/products">View Products →</PrimaryPill>
-                <GhostPill href="/about">Our Story</GhostPill>
-              </div>
-
-              {/* Quick specs / trust points pill */}
-              <div
-                className="pt-6 border-t border-white/[0.08] grid grid-cols-3 gap-4 sm:gap-6 w-full max-w-lg text-left"
-                style={{ fontFamily: "var(--font-mono)" }}
-              >
-                <div>
-                  <p className="text-[10px] sm:text-xs uppercase tracking-wider text-[#6a7e98]">Standard</p>
-                  <p className="text-xs sm:text-sm font-semibold text-white mt-1">MIL-SPEC / IP67</p>
+                {/* Action Buttons */}
+                <div className="pt-2 flex flex-wrap items-center gap-4">
+                  <PrimaryPill href="/products">View Products →</PrimaryPill>
+                  <GhostPill href="/about">Our Story</GhostPill>
                 </div>
-                <div>
-                  <p className="text-[10px] sm:text-xs uppercase tracking-wider text-[#6a7e98]">Avionics</p>
-                  <p className="text-xs sm:text-sm font-semibold text-white mt-1">Autonomous AI</p>
-                </div>
-                <div>
-                  <p className="text-[10px] sm:text-xs uppercase tracking-wider text-[#6a7e98]">Build</p>
-                  <p className="text-xs sm:text-sm font-semibold text-white mt-1">100% In-House</p>
+
+                {/* Quick specs / trust points pill */}
+                <div
+                  className="pt-6 border-t border-white/[0.08] grid grid-cols-3 gap-4 sm:gap-6 w-full max-w-lg text-left"
+                  style={{ fontFamily: "var(--font-mono)" }}
+                >
+                  <div>
+                    <p className="text-[10px] sm:text-xs uppercase tracking-wider text-[#6a7e98]">Standard</p>
+                    <p className="text-xs sm:text-sm font-semibold text-white mt-1">MIL-SPEC / IP67</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] sm:text-xs uppercase tracking-wider text-[#6a7e98]">Avionics</p>
+                    <p className="text-xs sm:text-sm font-semibold text-white mt-1">Autonomous AI</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] sm:text-xs uppercase tracking-wider text-[#6a7e98]">Build</p>
+                    <p className="text-xs sm:text-sm font-semibold text-white mt-1">100% In-House</p>
+                  </div>
                 </div>
               </div>
-            </div>
+            </ScrollReveal>
 
             {/* Right Column: 3D Drone Model */}
-            <div className="lg:col-span-5 relative w-full flex items-center justify-center">
-              {/* Soft radial backdrop aura behind drone */}
-              <div
-                className="absolute inset-0 pointer-events-none blur-3xl opacity-30"
-                style={{
-                  background:
-                    "radial-gradient(circle at 50% 50%, rgba(69, 87, 109, 0.40) 0%, rgba(35, 54, 79, 0.18) 50%, transparent 75%)",
-                }}
-                aria-hidden="true"
-              />
+            <ScrollReveal direction="up" delay={180} className="lg:col-span-5 w-full">
+              <div className="relative w-full flex items-center justify-center">
+                {/* Soft radial backdrop aura behind drone */}
+                <div
+                  className="absolute inset-0 pointer-events-none blur-3xl opacity-30"
+                  style={{
+                    background:
+                      "radial-gradient(circle at 50% 50%, rgba(69, 87, 109, 0.40) 0%, rgba(35, 54, 79, 0.18) 50%, transparent 75%)",
+                  }}
+                  aria-hidden="true"
+                />
 
-              {/* Decorative HUD concentric coordinate rings behind drone */}
-              <div
-                className="absolute w-[300px] h-[300px] sm:w-[380px] sm:h-[380px] rounded-full border border-white/[0.05] pointer-events-none"
-                aria-hidden="true"
-              />
-              <div
-                className="absolute w-[220px] h-[220px] sm:w-[280px] sm:h-[280px] rounded-full border border-dashed border-[#45576D]/25 pointer-events-none animate-spin"
-                style={{ animationDuration: "60s" }}
-                aria-hidden="true"
-              />
+                {/* Decorative HUD concentric coordinate rings behind drone */}
+                <div
+                  className="absolute w-[300px] h-[300px] sm:w-[380px] sm:h-[380px] rounded-full border border-white/[0.05] pointer-events-none"
+                  aria-hidden="true"
+                />
+                <div
+                  className="absolute w-[220px] h-[220px] sm:w-[280px] sm:h-[280px] rounded-full border border-dashed border-[#45576D]/25 pointer-events-none animate-spin"
+                  style={{ animationDuration: "60s" }}
+                  aria-hidden="true"
+                />
 
-              {/* 3D Drone Canvas Container with smooth modern edge masking */}
-              <div
-                className="relative w-full h-[400px] sm:h-[460px] lg:h-[500px] flex items-center justify-center"
-                style={{
-                  maskImage:
-                    "radial-gradient(ellipse 92% 90% at 50% 50%, black 70%, transparent 100%)",
-                  WebkitMaskImage:
-                    "radial-gradient(ellipse 92% 90% at 50% 50%, black 70%, transparent 100%)",
-                }}
-              >
-                <DroneGlobe />
+                {/* 3D Drone Canvas Container with smooth modern edge masking */}
+                <div
+                  className="relative w-full h-[400px] sm:h-[460px] lg:h-[500px] flex items-center justify-center"
+                  style={{
+                    maskImage:
+                      "radial-gradient(ellipse 92% 90% at 50% 50%, black 70%, transparent 100%)",
+                    WebkitMaskImage:
+                      "radial-gradient(ellipse 92% 90% at 50% 50%, black 70%, transparent 100%)",
+                  }}
+                >
+                  <DroneGlobe />
+                </div>
               </div>
-            </div>
+            </ScrollReveal>
           </div>
         </div>
       </section>
@@ -235,20 +239,25 @@ export default function Home() {
         </Section>
 
         {/* ═══ TICKER — endless marquee between overview and products ═══ */}
-        <div className="py-2">
-          <StatsTicker />
-        </div>
+        <ScrollReveal direction="up" delay={60}>
+          <div className="py-2">
+            <StatsTicker />
+          </div>
+        </ScrollReveal>
 
         {/* ═══ FEATURED PRODUCTS — alternating slide-up rows ═══ */}
         <FeaturedProducts />
 
         {/* ═══ BOTTOM CTA (Matching Services page) ═══ */}
-        <ServicesCTA
-          headline="Ready for aerospace solutions that work as hard as you do?"
-          subtitle="Tell us about your mission requirements and operational needs. We'll come back with technical architecture, payload options, and a costed plan — sovereign engineering from day one."
-          buttonText="GET IN TOUCH"
-          href="/contact"
-        />
+        <ScrollReveal direction="up" delay={80}>
+          <ServicesCTA
+            className="mt-2 sm:mt-4 mb-16 sm:mb-20"
+            headline="Ready for aerospace solutions that work as hard as you do?"
+            subtitle="Tell us about your mission requirements and operational needs. We'll come back with technical architecture, payload options, and a costed plan — sovereign engineering from day one."
+            buttonText="GET IN TOUCH"
+            href="/contact"
+          />
+        </ScrollReveal>
 
       </Container>
     </main>

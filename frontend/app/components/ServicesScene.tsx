@@ -1,7 +1,8 @@
 'use client';
 import { useRef, useMemo, useEffect, useState, useCallback } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
+import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
+import SafeCanvas from './SafeCanvas';
 
 function pr(s: number): number { const x=Math.sin(s*9301+49297)*233280; return x-Math.floor(x); }
 
@@ -90,21 +91,21 @@ function ParticleField() {
   const COUNT=120;
   const pos=useMemo(()=>{const a=new Float32Array(COUNT*3);for(let i=0;i<COUNT;i++){a[i*3]=(pr(i*3)-0.5)*12;a[i*3+1]=pr(i*3+1)*4;a[i*3+2]=(pr(i*3+2)-0.5)*8-2;}return a;},[]);
   const ref=useRef<THREE.Points>(null);
-  useFrame((state)=>{ if(ref.current) ref.current.rotation.y=state.clock.elapsedTime*0.015; });
+  useFrame(()=>{ if(ref.current) ref.current.rotation.y = performance.now() * 0.001 * 0.015; });
   return (<points ref={ref}><bufferGeometry><bufferAttribute attach='attributes-position' args={[pos,3]} /></bufferGeometry><pointsMaterial size={0.022} color='#5a8aaa' transparent opacity={0.5} sizeAttenuation /></points>);
 }
 
 export default function ServicesScene() {
   return (
     <div style={{position:'absolute',inset:0,pointerEvents:'none',zIndex:0}} aria-hidden='true'>
-      <Canvas camera={{position:[0,5.5,4.5],fov:50}} gl={{antialias:true,alpha:true}} dpr={[1,1.5]}>
+      <SafeCanvas camera={{position:[0,5.5,4.5],fov:50}} gl={{antialias:true,alpha:true}} dpr={[1,1.5]}>
         <fog attach='fog' args={['#04060a',12,24]} />
         <ambientLight intensity={0.6} />
         <pointLight position={[0,4,0]} color='#18c984' intensity={1.2} distance={10} />
         <ParticleField />
         <RadarBase />
         <RadarSweep />
-      </Canvas>
+      </SafeCanvas>
     </div>
   );
 }

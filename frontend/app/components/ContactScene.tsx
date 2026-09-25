@@ -1,7 +1,8 @@
 'use client';
 import { useRef, useMemo, useEffect, useState } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
+import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
+import SafeCanvas from './SafeCanvas';
 
 function pr(s: number): number {
   const x = Math.sin(s * 9301 + 49297) * 233280;
@@ -38,8 +39,8 @@ function Globe() {
     });
   }, []);
 
-  useFrame((state) => {
-    const t = state.clock.elapsedTime;
+  useFrame(() => {
+    const t = performance.now() * 0.001;
     if (meshRef.current) meshRef.current.rotation.y = t * 0.09;
     if (glowRef.current) glowRef.current.rotation.y = t * 0.09;
   });
@@ -239,9 +240,9 @@ function StarField() {
 /* ── Whole scene gently bobs ── */
 function SceneContent() {
   const groupRef = useRef<THREE.Group>(null);
-  useFrame((state) => {
+  useFrame(() => {
     if (groupRef.current)
-      groupRef.current.position.y = Math.sin(state.clock.elapsedTime * 0.4) * 0.06;
+      groupRef.current.position.y = Math.sin(performance.now() * 0.001 * 0.4) * 0.06;
   });
   return (
     <group ref={groupRef}>
@@ -255,7 +256,7 @@ function SceneContent() {
 export default function ContactScene() {
   return (
     <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 0 }} aria-hidden="true">
-      <Canvas camera={{ position: [0, 1.2, 6.5], fov: 48 }} gl={{ antialias: true, alpha: true }} dpr={[1, 1.5]}>
+      <SafeCanvas camera={{ position: [0, 1.2, 6.5], fov: 48 }} gl={{ antialias: true, alpha: true }} dpr={[1, 1.5]}>
         <fog attach="fog" args={['#030810', 12, 26]} />
         <ambientLight intensity={0.5} />
         <pointLight position={[4, 6, 4]}  color="#45576D" intensity={2.0} distance={14} />
@@ -263,7 +264,7 @@ export default function ContactScene() {
         <pointLight position={[0, 0, 3]}   color="#ffffff" intensity={0.3} distance={8} />
         <StarField />
         <SceneContent />
-      </Canvas>
+      </SafeCanvas>
     </div>
   );
 }

@@ -127,9 +127,7 @@ export default async function ProductsPage() {
             className="text-[clamp(1.75rem,3.8vw,2.8rem)] font-semibold leading-[1.12] tracking-tight text-white"
             style={{ fontFamily: "var(--font-display)" }}
           >
-            {countWord} platforms. One
-            <br />
-            operating standard.
+            Aerospace products that deliver excellence.
           </h1>
 
           {/* Subtitle */}
@@ -140,9 +138,7 @@ export default async function ProductsPage() {
               letterSpacing: "0.02em",
             }}
           >
-            Every aerial vehicle is precision-engineered for sovereign defense,
-            tactical reconnaissance, and critical enterprise operations. Designed,
-            assembled, and flight-tested entirely in-house.
+            Our product lineup showcases cutting-edge aerospace solutions designed for reliability, performance, and innovation.
           </p>
         </section>
 

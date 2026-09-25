@@ -1,7 +1,8 @@
 'use client';
-import { useRef, useMemo, useEffect, useState } from 'react';
-import { Canvas, useFrame, useThree } from '@react-three/fiber';
+import { useRef, useMemo, useEffect } from 'react';
+import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
+import SafeCanvas from './SafeCanvas';
 
 function pr(s: number): number { const x = Math.sin(s*9301+49297)*233280; return x-Math.floor(x); }
 
@@ -47,10 +48,11 @@ function NodeNetwork() {
     return g;
   },[edges,nodes]);
 
-  useFrame((state) => {
+  useFrame(() => {
     if(groupRef.current){
-      groupRef.current.rotation.y=state.clock.elapsedTime*0.055;
-      groupRef.current.rotation.x=Math.sin(state.clock.elapsedTime*0.04)*0.08;
+      const t = performance.now() * 0.001;
+      groupRef.current.rotation.y = t * 0.055;
+      groupRef.current.rotation.x = Math.sin(t * 0.04) * 0.08;
     }
   });
 
@@ -78,13 +80,13 @@ function Stars() {
 export default function AboutScene() {
   return (
     <div style={{position:'absolute',inset:0,pointerEvents:'none',zIndex:0}} aria-hidden='true'>
-      <Canvas camera={{position:[0,0,7],fov:55}} gl={{antialias:true,alpha:true}} dpr={[1,1.5]}>
+      <SafeCanvas camera={{position:[0,0,7],fov:55}} gl={{antialias:true,alpha:true}} dpr={[1,1.5]}>
         <fog attach='fog' args={['#04060a',10,22]} />
         <ambientLight intensity={0.5} />
         <CameraRig />
         <Stars />
         <NodeNetwork />
-      </Canvas>
+      </SafeCanvas>
     </div>
   );
 }

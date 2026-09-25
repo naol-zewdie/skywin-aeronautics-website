@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useRef } from "react";
 import Image from "next/image";
@@ -7,54 +7,54 @@ import Image from "next/image";
 const FEATURED_PRODUCTS = [
   {
     id: "01",
-    tag: "Reconnaissance",
-    name: "SW-Alpha X4",
-    subtitle: "Precision Quadcopter UAV",
+    tag: "VTOL Platform",
+    name: "Vtol SW-01",
+    subtitle: "Heavy-Lift Autonomous Platform",
     description:
-      "The SW-Alpha X4 is Skywin's flagship surveillance quadcopter, engineered for long-endurance reconnaissance missions. Built with a carbon fiber monocoque frame and dual-redundant flight systems, it delivers unmatched stability in high-wind conditions up to 15 m/s.",
+      "SW-01 is our largest VTOL vehicle proudly designed and manufactured here at Skywin Aeronautics. Equipped with cutting-edge equipment and an AI-integrated system, its performance is remarkable in whether tackling the most demanding missions or enduring brutally harsh environments, the SW-01 stands unshaken. Thanks to its sustained energy efficiency, it achieves seamless vertical takeoff and landing while delivering exceptional endurance when every second in the sky counts.",
     specs: [
-      { label: "Flight Time", value: "55 min" },
-      { label: "Range",       value: "12 km" },
-      { label: "Payload",     value: "2.4 kg" },
-      { label: "Max Speed",   value: "72 km/h" },
+      { label: "Endurance",   value: "5 – 7 hr" },
+      { label: "Range",       value: "100 km" },
+      { label: "Payload",     value: "30 kg" },
+      { label: "Cruise Speed", value: "100-120 km/h" },
     ],
-    image: "/assets/product_alpha.jpg",
+    image: "/assets/vtolservice.JPG",
     accentColor: "#45576D",
     glowColor:   "rgba(59,130,246,0.22)",
   },
   {
     id: "02",
-    tag: "Long-Range",
-    name: "SW-Condor V2",
-    subtitle: "Fixed-Wing VTOL Platform",
+    tag: "Tactical FPV",
+    name: "Tew k-01",
+    subtitle: "High-Maneuverability Tactical Platform",
     description:
-      "The SW-Condor V2 bridges the gap between multirotor agility and fixed-wing endurance. Its tilting-rotor VTOL design enables vertical take-off from any terrain, transitioning seamlessly into aerodynamic cruise flight for area coverage missions exceeding 80 km.",
+      "Tew K are models of our best FPV drones in the field. They are capable of precise hovering and high maneuverability. The Tew K have been well tested, and their performance is assured for different purposes.",
     specs: [
-      { label: "Endurance",   value: "3.5 hr" },
-      { label: "Coverage",    value: "80+ km" },
-      { label: "Ceiling",     value: "4,500 m" },
-      { label: "Wing Span",   value: "2.2 m" },
+      { label: "Endurance",   value: "15 min" },
+      { label: "Range",       value: "15 km" },
+      { label: "Payload",     value: "2 kg" },
+      { label: "Ceiling",     value: "3,500 m" },
     ],
-    image: "/assets/product_vtol.jpg",
+    image: "/assets/tewk01.JPG",
     accentColor: "#6a7e98",
     glowColor:   "rgba(96,165,250,0.20)",
   },
   {
     id: "03",
-    tag: "Heavy-Lift",
-    name: "SW-Titan H6",
-    subtitle: "Industrial Hexacopter",
+    tag: "Multipurpose",
+    name: "15 inch multipurpose",
+    subtitle: "Modular Multi-Mission Platform",
     description:
-      "Designed for the most demanding payload missions, the SW-Titan H6 carries up to 12 kg while maintaining stable flight in turbulent conditions. Six independent motors with triple-redundant ESC architecture ensure operational continuity even during partial motor failure.",
+      "The 15 inch multipurpose drone is engineered as a highly adaptable platform built to excel across diverse operational environments. With its robust payload capacity and battery-powered efficiency, it seamlessly transitions between aerial surveillance, precision delivery, and tactical inspection. Its modular architecture and dependable flight stability make it an indispensable multipurpose asset for demanding missions.",
     specs: [
-      { label: "Payload",     value: "12 kg" },
-      { label: "Flight Time", value: "28 min" },
-      { label: "Lift Force",  value: "28 kgf" },
-      { label: "IP Rating",   value: "IP54" },
+      { label: "Endurance",   value: "30 min" },
+      { label: "Range",       value: "20 km" },
+      { label: "Payload",     value: "4 kg" },
+      { label: "Ceiling",     value: "3,500 m" },
     ],
-    image: "/assets/product_heavy.jpg",
+    image: "/assets/tewk02.jpg",
     accentColor: "#45576D",
-    glowColor:   "rgba(26,95,212,0.22)",
+    glowColor:   "rgba(59,130,246,0.22)",
   },
 ];
 
@@ -262,7 +262,7 @@ export default function FeaturedProducts() {
         /* ── Section ── */
         .fp-section {
           position: relative;
-          padding: 80px 0 120px;
+          padding: 80px 0 20px;
           overflow: hidden;
         }
 
@@ -544,7 +544,7 @@ export default function FeaturedProducts() {
         .fp-cta-row {
           display: flex;
           justify-content: center;
-          padding: 56px 0 24px;
+          padding: 48px 0 8px;
         }
         .fp-cta-btn {
           display: inline-flex;

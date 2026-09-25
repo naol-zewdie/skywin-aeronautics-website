@@ -1,7 +1,8 @@
 'use client';
 import { useRef, useMemo, useEffect, useState } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
+import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
+import SafeCanvas from './SafeCanvas';
 
 function pr(s: number): number {
   const x = Math.sin(s * 9301 + 49297) * 233280;
@@ -63,11 +64,12 @@ function DNAHelix() {
     return g;
   }, [strandB]);
 
-  useFrame((state) => {
+  useFrame(() => {
     if (groupRef.current) {
-      groupRef.current.rotation.y = state.clock.elapsedTime * 0.22;
+      const t = performance.now() * 0.001;
+      groupRef.current.rotation.y = t * 0.22;
       // Gentle float
-      groupRef.current.position.y = Math.sin(state.clock.elapsedTime * 0.5) * 0.12;
+      groupRef.current.position.y = Math.sin(t * 0.5) * 0.12;
     }
   });
 
@@ -242,7 +244,7 @@ function StarField() {
     return a;
   }, []);
   const ref = useRef<THREE.Points>(null);
-  useFrame((s) => { if (ref.current) ref.current.rotation.y = s.clock.elapsedTime * 0.013; });
+  useFrame(() => { if (ref.current) ref.current.rotation.y = performance.now() * 0.001 * 0.013; });
   return (
     <points ref={ref}>
       <bufferGeometry>
@@ -256,7 +258,7 @@ function StarField() {
 export default function CareersScene() {
   return (
     <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 0 }} aria-hidden="true">
-      <Canvas camera={{ position: [0, 0, 8], fov: 52 }} gl={{ antialias: true, alpha: true }} dpr={[1, 1.5]}>
+      <SafeCanvas camera={{ position: [0, 0, 8], fov: 52 }} gl={{ antialias: true, alpha: true }} dpr={[1, 1.5]}>
         <fog attach="fog" args={['#030810', 14, 28]} />
         <ambientLight intensity={0.5} />
         <pointLight position={[3, 5, 4]}   color="#45576D" intensity={1.8} distance={14} />
@@ -268,7 +270,7 @@ export default function CareersScene() {
         {HEX_TILES.map((h, i) => (
           <HexTile key={i} {...h} />
         ))}
-      </Canvas>
+      </SafeCanvas>
     </div>
   );
 }

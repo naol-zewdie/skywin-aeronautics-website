@@ -103,9 +103,7 @@ export default async function CareersPage() {
             className="text-[clamp(1.75rem,3.8vw,2.8rem)] font-semibold leading-[1.12] tracking-tight text-white"
             style={{ fontFamily: "var(--font-display)" }}
           >
-            Engineering the
-            <br />
-            unmanned future.
+            Join a team that builds aerospace solutions with purpose.
           </h1>
 
           {/* Monospace Subtitle matching Image 1 */}
@@ -116,9 +114,7 @@ export default async function CareersPage() {
               letterSpacing: "0.02em",
             }}
           >
-            We are looking for aerospace engineers, avionics developers, composite
-            technicians, and certified UAV pilots ready to solve hard aerodynamic
-            problems in our Addis Ababa hangars. No fluff, no hype.
+            At Skywin, we invest in people who value technical excellence, collaborative thinking, and long-term growth in aerospace engineering.
           </p>
         </section>
 
@@ -162,17 +158,14 @@ export default async function CareersPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">
             {[
               {
-                icon: "🚀",
                 title: "National Mandate",
                 desc: "Work on strategic, sovereign aerospace platforms that protect critical infrastructure and advance Ethiopian technology sovereignty.",
               },
               {
-                icon: "⚡",
                 title: "Full-Cycle Engineering",
                 desc: "From composite autoclaves and aerodynamic wind tunnels to PCB integration and live flight-testing airspace.",
               },
               {
-                icon: "🤝",
                 title: "Accelerated Growth",
                 desc: "Mentorship from senior aerospace pioneers, rapid prototyping cycles, and direct technical leadership opportunities.",
               },
@@ -181,7 +174,6 @@ export default async function CareersPage() {
                 key={i}
                 className="p-6 rounded-2xl border border-white/[0.08] bg-white/[0.02] space-y-3"
               >
-                <div className="text-2xl">{pillar.icon}</div>
                 <h3
                   className="text-lg font-bold text-white"
                   style={{ fontFamily: "var(--font-display)" }}

@@ -538,6 +538,17 @@
   ════════════════════════════════════════════════════════ */
 
   /* ── Staggered scroll-reveal variants ───────────────── */
+  .scroll-reveal {
+    opacity: 0;
+    transform: translateY(32px);
+    transition: opacity 0.85s cubic-bezier(0.16, 1, 0.3, 1),
+                transform 0.85s cubic-bezier(0.16, 1, 0.3, 1);
+    will-change: opacity, transform;
+  }
+  .scroll-reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
   .scroll-reveal-left {
     opacity: 0;
     transform: translateX(-40px);
