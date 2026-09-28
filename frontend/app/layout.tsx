@@ -1,6 +1,4 @@
 import type { Metadata, Viewport } from "next";
-import { headers } from "next/headers";
-import Script from "next/script";
 import Link from "next/link";
 import { JetBrains_Mono, Syne, Geist_Mono } from "next/font/google";
 import Navbar from "./components/Navbar";
@@ -51,13 +49,11 @@ export const viewport: Viewport = {
   themeColor: "#000000",
 };
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const nonce = (await headers()).get("x-nonce") ?? "";
-
   return (
     <html
       lang="en"
@@ -65,15 +61,6 @@ export default async function RootLayout({
       suppressHydrationWarning
     >
       <body className="min-h-full text-[color:var(--foreground)]">
-        {/* Dark mode detection — must run before hydration */}
-        <Script
-          id="dark-mode-init"
-          strategy="beforeInteractive"
-          nonce={nonce}
-          dangerouslySetInnerHTML={{
-          __html: `document.documentElement.classList.add('dark')`,
-          }}
-        />
         {/* ── WebGL + Loading ── */}
         <LoadingScreen />
         <FluidBackground />

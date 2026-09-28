@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useMemo } from "react";
+import { useRef, useMemo, useState, useEffect } from "react";
 import { useFrame } from "@react-three/fiber";
 import SafeCanvas from "./SafeCanvas";
 import { OrbitControls, Environment, Lightformer } from "@react-three/drei";
@@ -396,22 +396,37 @@ function PulsingKeyLight() {
   return <pointLight ref={lightRef} position={[0, 4, 2]} color="#45576D" intensity={2.0} distance={12} decay={2} />;
 }
 
+/* ─── Mobile detection (SSR-safe, responds to orientation changes) ─── */
+function useIsMobile(): boolean {
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 767px)");
+    setIsMobile(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
+  return isMobile;
+}
+
 export default function DroneGlobe() {
+  const isMobile = useIsMobile();
   return (
     <div className="relative w-full h-full cursor-grab active:cursor-grabbing" style={{ minHeight: "360px" }}>
       <SafeCanvas
         camera={{ position: [3.4, 2.3, 4.4], fov: 42 }}
         gl={{
-          antialias: true,
+          antialias: !isMobile,        /* skip AA on mobile — big win */
           alpha: true,
           toneMapping: THREE.ACESFilmicToneMapping,
           toneMappingExposure: 1.2,
         }}
-        dpr={[1, 1.5]}
+        dpr={isMobile ? 1 : [1, 1.5]} /* cap pixel ratio at 1× on mobile */
         style={{ background: "transparent" }}
       >
         {/* ── Procedural IBL — no file fetch, pure Lightformer env map ── */}
-        <Environment resolution={256} environmentIntensity={0.65}>
+        {/*   Mobile: resolution 64 (vs 256) saves ~8ms/frame of IBL bake  */}
+        <Environment resolution={isMobile ? 64 : 256} environmentIntensity={0.65}>
           {/* Top fill — #566A80 */}
           <Lightformer intensity={1.8} form="rect" color="#566A80" position={[0, 5, -4]} scale={[10, 4, 1]} rotation-x={Math.PI / 2} />
           {/* Key light — secondary #45576D */}
@@ -425,42 +440,57 @@ export default function DroneGlobe() {
         </Environment>
 
         {/* ── Cinematic Lights ── */}
-        <ambientLight intensity={0.3} />
-        <directionalLight position={[6, 12, 8]}   intensity={1.4} color="#ffffff" castShadow />
-        <directionalLight position={[-6, -4, -6]} intensity={0.7} color="#45576D" />
-        <PulsingKeyLight />
-        <pointLight position={[-3, 2, 4]}  color="#45576D" intensity={0.9} distance={9} decay={2} />
-        <pointLight position={[3, -2, -3]} color="#23364F" intensity={0.6} distance={7} decay={2} />
+        {/*   Mobile: skip castShadow + drop fill lights to cut draw calls  */}
+        <ambientLight intensity={isMobile ? 0.55 : 0.3} />
+        <directionalLight
+          position={[6, 12, 8]}
+          intensity={1.4}
+          color="#ffffff"
+          castShadow={!isMobile}
+        />
+        {!isMobile && (
+          <>
+            <directionalLight position={[-6, -4, -6]} intensity={0.7} color="#45576D" />
+            <PulsingKeyLight />
+            <pointLight position={[-3, 2, 4]}  color="#45576D" intensity={0.9} distance={9} decay={2} />
+            <pointLight position={[3, -2, -3]} color="#23364F" intensity={0.6} distance={7} decay={2} />
+          </>
+        )}
 
         {/* ── Scene ── */}
         <QuadcopterDrone />
         <ExhaustParticles />
 
-        {/* ── Post-Processing Effects ── */}
-        <EffectComposer>
-          {/* Bloom — makes all emissive surfaces glow beautifully */}
-          <Bloom
-            intensity={1.4}
-            luminanceThreshold={0.55}
-            luminanceSmoothing={0.85}
-            mipmapBlur
-            radius={0.7}
-          />
-          {/* Subtle chromatic aberration for lens realism */}
-          <ChromaticAberration
-            blendFunction={BlendFunction.NORMAL}
-            offset={new THREE.Vector2(0.0005, 0.0005)}
-            radialModulation={false}
-            modulationOffset={0}
-          />
-          {/* Vignette to push focus to center */}
-          <Vignette
-            offset={0.3}
-            darkness={0.6}
-            eskil={false}
-            blendFunction={BlendFunction.NORMAL}
-          />
-        </EffectComposer>
+        {/* ── Post-Processing Effects (desktop only) ─────────────────────
+             Bloom + Chromatic Aberration + Vignette together add ~8–14 ms/frame
+             on an average mobile GPU. We skip the entire EffectComposer on
+             screens ≤ 767 px wide (phones + small tablets in portrait).      */}
+        {!isMobile && (
+          <EffectComposer>
+            {/* Bloom — makes all emissive surfaces glow beautifully */}
+            <Bloom
+              intensity={1.4}
+              luminanceThreshold={0.55}
+              luminanceSmoothing={0.85}
+              mipmapBlur
+              radius={0.7}
+            />
+            {/* Subtle chromatic aberration for lens realism */}
+            <ChromaticAberration
+              blendFunction={BlendFunction.NORMAL}
+              offset={new THREE.Vector2(0.0005, 0.0005)}
+              radialModulation={false}
+              modulationOffset={0}
+            />
+            {/* Vignette to push focus to center */}
+            <Vignette
+              offset={0.3}
+              darkness={0.6}
+              eskil={false}
+              blendFunction={BlendFunction.NORMAL}
+            />
+          </EffectComposer>
+        )}
 
         {/* ── 360° Interactive Orbit Controls ── */}
         <OrbitControls

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState } from "react";
 
@@ -6,11 +6,18 @@ export default function ScrollProgress() {
   const [pct, setPct] = useState(0);
 
   useEffect(() => {
+    let ticking = false;
     const onScroll = () => {
-      const el = document.documentElement;
-      const scrolled = el.scrollTop;
-      const total = el.scrollHeight - el.clientHeight;
-      setPct(total > 0 ? Math.round((scrolled / total) * 100) : 0);
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          const el = document.documentElement;
+          const scrolled = el.scrollTop;
+          const total = el.scrollHeight - el.clientHeight;
+          setPct(total > 0 ? Math.round((scrolled / total) * 100) : 0);
+          ticking = false;
+        });
+        ticking = true;
+      }
     };
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);

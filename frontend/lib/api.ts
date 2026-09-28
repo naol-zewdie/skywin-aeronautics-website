@@ -71,7 +71,7 @@ class ApiClient {
         mode: 'cors',
         headers: headersInit,
         signal: controller.signal,
-        cache: 'no-store',
+        next: { revalidate: 60 },
         ...options,
       });
       return res;

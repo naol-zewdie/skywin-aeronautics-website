@@ -29,6 +29,7 @@ const fragmentShader = /* glsl */ `
   uniform float uTime;
   uniform vec2  uResolution;
   uniform float uDark;
+  uniform int   uOctaves;   /* 5 on desktop, 4 on mobile */
 
   varying vec2 vUv;
 
@@ -48,12 +49,15 @@ const fragmentShader = /* glsl */ `
   }
 
   /* ── Fractal Brownian Motion (fbm) ───────────────── */
+  /* Outer bound is a compile-time constant (GLSL ES 1.00 requirement).   */
+  /* uOctaves controls actual iterations: 5=desktop, 4=mobile.            */
   float fbm(vec2 p) {
     float v = 0.0;
     float a = 0.5;
     vec2  shift = vec2(100.0);
     mat2  rot = mat2(cos(0.5), sin(0.5), -sin(0.5), cos(0.5));
     for (int i = 0; i < 5; i++) {
+      if (i >= uOctaves) break;  /* mobile early-exit */
       v += a * noise(p);
       p  = rot * p * 2.1 + shift;
       a *= 0.5;
@@ -172,16 +176,37 @@ const fragmentShader = /* glsl */ `
   }
 `;
 
+/* ─── Mobile detection (SSR-safe, responds to orientation changes) ─── */
+function useIsMobile(): boolean {
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 767px)");
+    setIsMobile(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
+  return isMobile;
+}
+
 /* ─── Inner shader mesh ─────────────────────────────── */
 function AuroraFluid() {
   const matRef = useRef<THREE.ShaderMaterial>(null);
+  const isMobile = useIsMobile();
 
   const uniforms = useMemo<Record<string, THREE.IUniform>>(() => ({
     uTime:       { value: 0 },
     uResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
     uDark:       { value: 1.0 },
+    uOctaves:    { value: 5 },   /* updated to 4 on mobile via useEffect below */
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }), []);
+
+  /* Sync octave count whenever mobile state resolves (runs once after mount,
+     and again if the user rotates device crossing the 767px breakpoint).   */
+  useEffect(() => {
+    uniforms.uOctaves.value = isMobile ? 4 : 5;
+  }, [isMobile, uniforms]);
 
   useEffect(() => {
     const onResize = () => {
@@ -191,8 +216,10 @@ function AuroraFluid() {
     return () => window.removeEventListener("resize", onResize);
   }, [uniforms]);
 
-  useFrame(() => {
-    uniforms.uTime.value = performance.now() * 0.001;
+  /* Use state.clock.elapsedTime instead of performance.now() to avoid the
+     deprecated THREE.Clock warning from @react-three/fiber's internal timer. */
+  useFrame((state) => {
+    uniforms.uTime.value = state.clock.elapsedTime;
   });
 
   return (
@@ -228,7 +255,6 @@ function CSSParticles() {
         const top    = ((i * 23 + 7) % 95);
         const dur    = 6 + (i % 7) * 2.5;
         const delay  = -(i * 1.1) % dur;
-        const opacity = 0.14 + (i % 4) * 0.06;
         return (
           <span
             key={i}

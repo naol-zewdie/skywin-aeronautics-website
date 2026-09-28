@@ -124,9 +124,12 @@ function DropdownPanel({ children }: { children: React.ReactNode }) {
   );
 }
 
+let cachedServices: FrontendService[] | null = null;
+let cachedProducts: FrontendProduct[] | null = null;
+
 export default function Navbar() {
-  const [services, setServices] = useState<FrontendService[]>([]);
-  const [products, setProducts] = useState<FrontendProduct[]>([]);
+  const [services, setServices] = useState<FrontendService[]>(() => cachedServices || []);
+  const [products, setProducts] = useState<FrontendProduct[]>(() => cachedProducts || []);
   const [isOpen, setIsOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<"services" | "products" | "insights" | null>(null);
 
@@ -135,26 +138,32 @@ export default function Navbar() {
   const [mobileInsightsOpen, setMobileInsightsOpen] = useState(false);
 
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const fetchedRef = useRef({ services: false, products: false });
+  const fetchedRef = useRef({ services: !!cachedServices, products: !!cachedProducts });
 
   useEffect(() => {
     let mounted = true;
-    getServices()
-      .then((data) => {
-        if (mounted && data) {
-          fetchedRef.current.services = true;
-          setServices(data);
-        }
-      })
-      .catch(() => { });
-    getProducts()
-      .then((data) => {
-        if (mounted && data) {
-          fetchedRef.current.products = true;
-          setProducts(data);
-        }
-      })
-      .catch(() => { });
+    if (!cachedServices) {
+      getServices()
+        .then((data) => {
+          if (mounted && data) {
+            cachedServices = data;
+            fetchedRef.current.services = true;
+            setServices(data);
+          }
+        })
+        .catch(() => { });
+    }
+    if (!cachedProducts) {
+      getProducts()
+        .then((data) => {
+          if (mounted && data) {
+            cachedProducts = data;
+            fetchedRef.current.products = true;
+            setProducts(data);
+          }
+        })
+        .catch(() => { });
+    }
     return () => {
       mounted = false;
     };

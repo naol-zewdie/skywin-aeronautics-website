@@ -11,11 +11,28 @@ const apiProtocol = process.env.BACKEND_URL
   : 'http';
 
 const nextConfig: NextConfig = {
+  /*
+   * Standalone output — emits a self-contained .next/standalone directory
+   * during `npm run build`. The Dockerfile's runner stage copies only that
+   * directory, dramatically reducing the final image size (no npm, no
+   * full node_modules tree). The server is started with `node server.js`
+   * instead of `npm start`.
+   */
+  output: "standalone",
+  compress: true,
   transpilePackages: ['three', '@react-three/fiber', '@react-three/drei'],
   reactStrictMode: true,
   poweredByHeader: false,
+  compiler: {
+    removeConsole: process.env.NODE_ENV === 'production' ? { exclude: ['error', 'warn'] } : false,
+  },
+  experimental: {
+    optimizePackageImports: ['@react-three/drei', 'three'],
+  },
   allowedDevOrigins: ['127.0.0.1'],
   images: {
+    formats: ['image/avif', 'image/webp'],
+    minimumCacheTTL: 60 * 60 * 24 * 30,
     dangerouslyAllowLocalIP: process.env.NODE_ENV !== 'production',
     remotePatterns: [
       {
@@ -57,19 +74,35 @@ const nextConfig: NextConfig = {
     ];
   },
   async headers() {
+    /*
+     * Security headers — split between here and proxy.ts:
+     *
+     * proxy.ts owns (per-request, nonce-aware):
+     *   Content-Security-Policy  ← nonce injected fresh per request
+     *   X-Frame-Options
+     *   X-Content-Type-Options
+     *   Referrer-Policy
+     *   Permissions-Policy
+     *
+     * next.config.ts owns (static, applied to all routes including static files):
+     *   Strict-Transport-Security ← HSTS must survive even if proxy is bypassed
+     *
+     * DO NOT add Content-Security-Policy here — it would create a duplicate
+     * header alongside proxy.ts's live nonce-stamped version and break CSP.
+     */
     return [
       {
         source: '/(.*)',
         headers: [
-          { key: 'X-Frame-Options', value: 'DENY' },
-          { key: 'X-Content-Type-Options', value: 'nosniff' },
-          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
-          { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
-          { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
+          {
+            key:   'Strict-Transport-Security',
+            value: 'max-age=63072000; includeSubDomains; preload',
+          },
         ],
       },
     ];
   },
+
 };
 
 export default nextConfig;
