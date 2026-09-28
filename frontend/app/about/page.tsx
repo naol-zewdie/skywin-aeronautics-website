@@ -416,22 +416,6 @@ export default function AboutPage() {
             ))}
           </div>
         </section>
-
-        {/* ── Bottom Operational Badge ── */}
-        <ScrollReveal direction="up" delay={60}>
-          <div className="pt-6 text-center space-y-2">
-            <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-white/[0.03] border border-white/[0.08] text-[11px] text-white/40 font-mono tracking-widest uppercase">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              <span>Skywin Aeronautics Industry · Sovereign Engineering</span>
-            </div>
-            <p
-              className="text-xs text-white/30 tracking-wider"
-              style={{ fontFamily: "var(--font-mono)" }}
-            >
-              Addis Ababa, Ethiopia · Leading African Aeronautics
-            </p>
-          </div>
-        </ScrollReveal>
       </div>
     </main>
   );

@@ -76,7 +76,7 @@ export default async function CareersPage() {
         aria-hidden="true"
       />
 
-      {/* ── Three.js DNA Helix / Trajectory Scene ── */}
+      {/* ── Three.js Trajectory Scene ── */}
       <div
         className="absolute top-0 left-0 right-0 h-[620px] pointer-events-none opacity-35 z-0 overflow-hidden"
         aria-hidden="true"

@@ -145,7 +145,7 @@ export default function RootLayout({
                     className="inline-flex items-center gap-1.5 transition-colors duration-200 hover:text-white/60 w-fit"
                     style={{ color: "rgba(240,244,255,0.20)" }}
                   >
-                    <span>made with love by Naol</span>
+                    <span>contact the developer</span>
                     <svg
                       width="11"
                       height="11"

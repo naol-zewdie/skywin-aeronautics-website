@@ -1,5 +1,5 @@
 'use client';
-import { useRef, useMemo, useEffect, useState } from 'react';
+import { useRef, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import SafeCanvas from './SafeCanvas';
@@ -9,128 +9,6 @@ function pr(s: number): number {
   return x - Math.floor(x);
 }
 
-/* ── Double-helix / DNA strand (career growth metaphor) ── */
-function DNAHelix() {
-  const groupRef = useRef<THREE.Group>(null);
-  const COUNT    = 36;
-
-  const strandA = useMemo<[number, number, number][]>(() => {
-    return Array.from({ length: COUNT }, (_, i) => {
-      const t = (i / COUNT) * Math.PI * 4; // 2 full turns
-      const y = (i / COUNT) * 6 - 3;
-      return [Math.cos(t) * 0.85, y, Math.sin(t) * 0.85];
-    });
-  }, []);
-
-  const strandB = useMemo<[number, number, number][]>(() => {
-    return Array.from({ length: COUNT }, (_, i) => {
-      const t = (i / COUNT) * Math.PI * 4 + Math.PI; // offset by π
-      const y = (i / COUNT) * 6 - 3;
-      return [Math.cos(t) * 0.85, y, Math.sin(t) * 0.85];
-    });
-  }, []);
-
-  // Rungs connecting both strands every 3rd node
-  const rungs = useMemo(() => {
-    return strandA
-      .filter((_, i) => i % 3 === 0)
-      .map((a, i) => {
-        const bi = i * 3;
-        if (bi >= strandB.length) return null;
-        const b = strandB[bi];
-        const g = new THREE.BufferGeometry();
-        g.setAttribute('position', new THREE.BufferAttribute(
-          new Float32Array([a[0], a[1], a[2], b[0], b[1], b[2]]), 3
-        ));
-        return g;
-      })
-      .filter(Boolean);
-  }, [strandA, strandB]);
-
-  // Backbone line for strand A
-  const lineGeoA = useMemo(() => {
-    const pts: number[] = [];
-    strandA.forEach(([x, y, z]) => pts.push(x, y, z));
-    const g = new THREE.BufferGeometry();
-    g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(pts), 3));
-    return g;
-  }, [strandA]);
-
-  const lineGeoB = useMemo(() => {
-    const pts: number[] = [];
-    strandB.forEach(([x, y, z]) => pts.push(x, y, z));
-    const g = new THREE.BufferGeometry();
-    g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(pts), 3));
-    return g;
-  }, [strandB]);
-
-  // Dispose GPU-side geometries on unmount
-  useEffect(() => () => {
-    lineGeoA.dispose();
-    lineGeoB.dispose();
-    rungs.forEach(g => g?.dispose());
-  }, [lineGeoA, lineGeoB, rungs]);
-
-  useFrame(() => {
-    if (groupRef.current) {
-      const t = performance.now() * 0.001;
-      groupRef.current.rotation.y = t * 0.22;
-      // Gentle float
-      groupRef.current.position.y = Math.sin(t * 0.5) * 0.12;
-    }
-  });
-
-  return (
-    <group ref={groupRef}>
-      {/* Strand A backbone */}
-      <lineSegments geometry={lineGeoA}>
-        <lineBasicMaterial color="#45576D" transparent opacity={0.6} />
-      </lineSegments>
-
-      {/* Strand B backbone */}
-      <lineSegments geometry={lineGeoB}>
-        <lineBasicMaterial color="#30e8a0" transparent opacity={0.6} />
-      </lineSegments>
-
-      {/* Node spheres - Strand A */}
-      {strandA.map((pos, i) => (
-        <mesh key={`a-${i}`} position={pos}>
-          <sphereGeometry args={[0.055, 8, 8]} />
-          <meshStandardMaterial
-            color="#45576D"
-            emissive="#45576D"
-            emissiveIntensity={0.7}
-            metalness={0.6}
-            roughness={0.3}
-          />
-        </mesh>
-      ))}
-
-      {/* Node spheres - Strand B */}
-      {strandB.map((pos, i) => (
-        <mesh key={`b-${i}`} position={pos}>
-          <sphereGeometry args={[0.055, 8, 8]} />
-          <meshStandardMaterial
-            color="#30e8a0"
-            emissive="#30e8a0"
-            emissiveIntensity={0.7}
-            metalness={0.6}
-            roughness={0.3}
-          />
-        </mesh>
-      ))}
-
-      {/* Connecting rungs */}
-      {rungs.map((geo, i) => (
-        geo && (
-          <lineSegments key={`rung-${i}`} geometry={geo}>
-            <lineBasicMaterial color="#45576D" transparent opacity={0.45} />
-          </lineSegments>
-        )
-      ))}
-    </group>
-  );
-}
 
 /* ── Rising rocket trajectory path ── */
 function LaunchTrajectory() {
@@ -270,9 +148,8 @@ export default function CareersScene() {
         <ambientLight intensity={0.5} />
         <pointLight position={[3, 5, 4]}   color="#45576D" intensity={1.8} distance={14} />
         <pointLight position={[-4, -2, 2]}  color="#23364F" intensity={1.0} distance={12} />
-        <pointLight position={[0, 0, 2]}    color="#30e8a0" intensity={0.5} distance={8} />
+        <pointLight position={[0, 0, 2]}    color="#45576D" intensity={0.5} distance={8} />
         <StarField />
-        <DNAHelix />
         <LaunchTrajectory />
         {HEX_TILES.map((h, i) => (
           <HexTile key={i} {...h} />

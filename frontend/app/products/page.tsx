@@ -100,7 +100,7 @@ export default async function ProductsPage() {
         aria-hidden="true"
       />
 
-      {/* ── Three.js Orbital Atom Scene in Hero Background ── */}
+      {/* ── Three.js Hero Background Scene ── */}
       <div
         className="absolute top-0 left-0 right-0 h-[600px] pointer-events-none opacity-35 z-0 overflow-hidden"
         aria-hidden="true"

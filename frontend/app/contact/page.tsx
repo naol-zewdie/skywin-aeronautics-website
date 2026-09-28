@@ -78,20 +78,6 @@ export default function ContactPage() {
           directEmail="naol1000zedu@gmail.com"
           directPhone="+1 956 272 1689"
         />
-
-        {/* ── Bottom Operational Dispatch Tag ── */}
-        <div className="mt-16 text-center space-y-2">
-          <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-white/[0.03] border border-white/[0.08] text-[11px] text-white/40 font-mono tracking-widest uppercase">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            <span>Skywin Engineering Dispatch · Active</span>
-          </div>
-          <p
-            className="text-xs text-white/30 tracking-wider"
-            style={{ fontFamily: "var(--font-mono)" }}
-          >
-            Addis Ababa, Ethiopia · Global Consultations
-          </p>
-        </div>
       </div>
     </main>
   );

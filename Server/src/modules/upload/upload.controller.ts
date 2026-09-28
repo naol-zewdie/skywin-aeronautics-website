@@ -81,14 +81,60 @@ function validateImageMagicBytes(buffer: Buffer, claimedMime: string): boolean {
 }
 
 /**
+ * Detects whether the buffer contains an authentic Windows PE/MZ binary executable,
+ * either starting at byte 0 or embedded as a polyglot.
+ * Avoids false-positive collisions with random 2-byte sequences in compressed image streams.
+ */
+function hasRealPE(buffer: Buffer): boolean {
+  // 1. Direct PE header at offset 0
+  if (buffer.length >= 2 && buffer[0] === 0x4d && buffer[1] === 0x5a) {
+    return true;
+  }
+  // 2. Standard Windows DOS stub message
+  if (
+    buffer.indexOf(Buffer.from("This program cannot be run in DOS mode")) !== -1 ||
+    buffer.indexOf(Buffer.from("This program must be run under Win32")) !== -1
+  ) {
+    return true;
+  }
+  // 3. Valid PE structure: MZ followed by e_lfanew pointer to PE\0\0
+  let idx = 0;
+  while ((idx = buffer.indexOf(Buffer.from([0x4d, 0x5a]), idx)) !== -1) {
+    if (idx + 0x40 <= buffer.length) {
+      const e_lfanew = buffer.readUInt32LE(idx + 0x3c);
+      if (
+        e_lfanew >= 0x40 &&
+        e_lfanew <= 0x1000 &&
+        idx + e_lfanew + 4 <= buffer.length
+      ) {
+        if (
+          buffer
+            .subarray(idx + e_lfanew, idx + e_lfanew + 4)
+            .equals(Buffer.from([0x50, 0x45, 0x00, 0x00]))
+        ) {
+          return true;
+        }
+      }
+    }
+    idx++;
+  }
+  return false;
+}
+
+/**
  * Deeply scans the uploaded image buffer for executable headers, shell scripts,
- * embedded web shells, PHP/ASP/JSP tags, macros, and polyglot payload signatures.
+ * embedded web shells, PHP/JSP tags, macros, and polyglot payload signatures.
  * Truncates trailing payload data appended past valid image EOF markers.
  */
 function sanitizeAndTruncateImageBuffer(buffer: Buffer, mimetype: string): Buffer {
-  // 1. Binary executable headers and archive embedding check (MZ, ELF, Mach-O, ZIP/RAR/7z polyglots)
+  // 1. Binary executable headers and archive embedding check (ELF, Mach-O, ZIP/RAR/7z polyglots, and validated PE)
+  if (hasRealPE(buffer)) {
+    throw new BadRequestException(
+      "File rejected: contains forbidden binary header or embedded archive (Windows PE/MZ)",
+    );
+  }
+
   const DANGEROUS_BINARY_HEADERS: Array<{ name: string; bytes: Buffer }> = [
-    { name: "Windows PE/MZ", bytes: Buffer.from([0x4d, 0x5a]) }, // 'MZ'
     { name: "Linux ELF", bytes: Buffer.from([0x7f, 0x45, 0x4c, 0x46]) }, // '\x7fELF'
     { name: "Mach-O 32-bit", bytes: Buffer.from([0xfe, 0xed, 0xfa, 0xce]) },
     { name: "Mach-O 64-bit", bytes: Buffer.from([0xfe, 0xed, 0xfa, 0xcf]) },
@@ -111,14 +157,13 @@ function sanitizeAndTruncateImageBuffer(buffer: Buffer, mimetype: string): Buffe
   const FORBIDDEN_PATTERNS = [
     /<\s*script[\s>]/i,
     /<\s*\?php/i,
-    /<\s*\?=/i,
+    /<\s*\?=\s*[\$a-zA-Z0-9_\x22\x27(]/i,
     /<\s*html[\s>]/i,
     /<\s*svg[\s>]/i,
     /<\s*iframe[\s>]/i,
     /<\s*object[\s>]/i,
     /<\s*embed[\s>]/i,
     /<\s*applet[\s>]/i,
-    /<%/i, // ASP / JSP
     /<jsp:/i,
     /<!DOCTYPE/i,
     /<!ENTITY/i,
@@ -140,7 +185,6 @@ function sanitizeAndTruncateImageBuffer(buffer: Buffer, mimetype: string): Buffe
       );
     }
   }
-
 
   // 3. Truncate trailing polyglot payload data past official EOF markers
   if (mimetype === "image/jpeg") {
