@@ -48,6 +48,9 @@ function NodeNetwork() {
     return g;
   },[edges,nodes]);
 
+  // Dispose GPU-side geometry when the component unmounts or geometry changes
+  useEffect(() => () => { lineGeo.dispose(); }, [lineGeo]);
+
   useFrame(() => {
     if(groupRef.current){
       const t = performance.now() * 0.001;

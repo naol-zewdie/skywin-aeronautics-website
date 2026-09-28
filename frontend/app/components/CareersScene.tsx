@@ -64,6 +64,13 @@ function DNAHelix() {
     return g;
   }, [strandB]);
 
+  // Dispose GPU-side geometries on unmount
+  useEffect(() => () => {
+    lineGeoA.dispose();
+    lineGeoB.dispose();
+    rungs.forEach(g => g?.dispose());
+  }, [lineGeoA, lineGeoB, rungs]);
+
   useFrame(() => {
     if (groupRef.current) {
       const t = performance.now() * 0.001;

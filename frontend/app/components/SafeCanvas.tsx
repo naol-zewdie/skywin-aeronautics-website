@@ -20,12 +20,9 @@ export function isWebGLSupported(): boolean {
     const gl =
       (canvas.getContext("webgl2", { failIfMajorPerformanceCaveat: false }) as WebGL2RenderingContext | null) ||
       (canvas.getContext("webgl", { failIfMajorPerformanceCaveat: false }) as WebGLRenderingContext | null);
-    if (!gl) return false;
-    const ext = gl.getExtension("WEBGL_lose_context");
-    if (ext) {
-      ext.loseContext();
-    }
-    return true;
+    // NOTE: Do NOT call ext.loseContext() here — it corrupts the driver's
+    // context pool on certain GPUs and causes subsequent real canvases to fail.
+    return !!gl;
   } catch {
     return false;
   }
@@ -110,10 +107,12 @@ export default function SafeCanvas({
       <Canvas
         {...props}
         gl={{
+          // Defaults — caller-supplied gl props take precedence (spread last)
           antialias: true,
           alpha: true,
           powerPreference: "default",
           failIfMajorPerformanceCaveat: false,
+          // Caller props override the defaults above
           ...gl,
         }}
         onCreated={(state) => {

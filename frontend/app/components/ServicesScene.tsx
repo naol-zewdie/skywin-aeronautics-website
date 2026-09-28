@@ -1,5 +1,5 @@
 'use client';
-import { useRef, useMemo, useEffect, useState, useCallback } from 'react';
+import { useRef, useMemo, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import SafeCanvas from './SafeCanvas';
@@ -16,6 +16,10 @@ function RadarBase() {
       return g;
     });
   },[]);
+
+  // Dispose GPU-side geometries on unmount
+  useEffect(() => () => { lineGeos.forEach(g => g.dispose()); }, [lineGeos]);
+
   return (
     <group rotation={[-Math.PI/2,0,0]}>
       <mesh>
@@ -55,6 +59,12 @@ function RadarSweep() {
     ]),3));
     return {geo:g, opacity:(1-i/18)*0.06};
   }),[]);
+
+  // Dispose GPU-side geometries on unmount
+  useEffect(() => () => {
+    sweepGeo.dispose();
+    wedgeGeos.forEach(w => w.geo.dispose());
+  }, [sweepGeo, wedgeGeos]);
 
   const blipMeshRefs=useRef<(THREE.Mesh | null)[]>([]);
 

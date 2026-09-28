@@ -1,5 +1,5 @@
 'use client';
-import { useRef, useMemo, useEffect, useState } from 'react';
+import { useRef, useMemo, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import SafeCanvas from './SafeCanvas';
@@ -120,12 +120,17 @@ function DataArc({
     return new THREE.QuadraticBezierCurve3(v0, mid, v1);
   }, [from, to]);
 
-  const linePositions = useMemo(() => {
+  const lineGeo = useMemo(() => {
     const pts = curve.getPoints(60);
     const arr = new Float32Array(pts.length * 3);
     pts.forEach((p, i) => { arr[i * 3] = p.x; arr[i * 3 + 1] = p.y; arr[i * 3 + 2] = p.z; });
-    return arr;
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(arr, 3));
+    return geo;
   }, [curve]);
+
+  // Dispose GPU geometry on unmount
+  useEffect(() => () => { lineGeo.dispose(); }, [lineGeo]);
 
   useFrame((_, delta) => {
     progressRef.current = (progressRef.current + delta * speed) % 1;
@@ -136,9 +141,7 @@ function DataArc({
   return (
     <group>
       <points>
-        <bufferGeometry>
-          <bufferAttribute attach="attributes-position" args={[linePositions, 3]} />
-        </bufferGeometry>
+        <bufferGeometry ref={(g) => { if (g && lineGeo) g.copy(lineGeo); }} />
         <pointsMaterial size={0.012} color={color} transparent opacity={0.35} sizeAttenuation />
       </points>
       <mesh ref={dotRef}>
