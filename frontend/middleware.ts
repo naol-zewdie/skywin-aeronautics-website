@@ -2,13 +2,23 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 const isDev = process.env.NODE_ENV !== 'production';
-const connectSrc = process.env.CSP_CONNECT_SRC;
 
 function buildCsp(nonce: string): string {
-  const connectDirective = connectSrc
-    ? `connect-src 'self' ${connectSrc}`
-    : "connect-src 'self'";
+  const backendUrl = process.env.BACKEND_URL || 'http://localhost:3005';
+  let connectSrc = "'self'";
+  try {
+    const u = new URL(backendUrl);
+    connectSrc += ` ${u.origin}`;
+  } catch {
+    connectSrc += ' http://localhost:3005';
+  }
+  if (process.env.CSP_CONNECT_SRC) {
+    connectSrc += ` ${process.env.CSP_CONNECT_SRC}`;
+  }
 
+  // Strict CSP Level 3: Nonce-based execution with strict-dynamic.
+  // In development, 'unsafe-eval' is permitted for Turbopack/HMR debugging.
+  // In production, zero unsafe-inline and zero unsafe-eval are permitted.
   const scriptSrc = isDev
     ? `script-src 'self' 'nonce-${nonce}' 'unsafe-eval' 'strict-dynamic'`
     : `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'`;
@@ -18,8 +28,9 @@ function buildCsp(nonce: string): string {
     scriptSrc,
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' http: https: data: blob:",
-    "font-src 'self'",
-    connectDirective,
+    "font-src 'self' data: https:",
+    `connect-src ${connectSrc}`,
+    "media-src 'self' data: blob:",
     "frame-ancestors 'none'",
     "object-src 'none'",
     "base-uri 'self'",
@@ -28,7 +39,8 @@ function buildCsp(nonce: string): string {
 }
 
 export default function middleware(request: NextRequest) {
-  const nonce = crypto.randomUUID();
+  // Generate a cryptographically secure random base64 nonce
+  const nonce = Buffer.from(crypto.randomUUID()).toString('base64');
   const csp = buildCsp(nonce);
 
   const requestHeaders = new Headers(request.headers);
