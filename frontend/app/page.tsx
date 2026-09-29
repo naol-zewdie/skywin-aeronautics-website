@@ -123,25 +123,6 @@ export default function Home() {
                 <PrimaryPill href="/products">View Products →</PrimaryPill>
                 <GhostPill href="/about">Our Story</GhostPill>
               </div>
-
-              {/* Trust specs bar */}
-              <div
-                className="pt-6 mt-2 border-t border-white/[0.08] grid grid-cols-3 gap-8 sm:gap-14 w-full max-w-lg"
-                style={{ fontFamily: "var(--font-mono)" }}
-              >
-                <div>
-                  <p className="text-[10px] sm:text-xs uppercase tracking-wider text-[#6a7e98]">Standard</p>
-                  <p className="text-xs sm:text-sm font-semibold text-white mt-1">MIL-SPEC / IP67</p>
-                </div>
-                <div>
-                  <p className="text-[10px] sm:text-xs uppercase tracking-wider text-[#6a7e98]">Avionics</p>
-                  <p className="text-xs sm:text-sm font-semibold text-white mt-1">Autonomous AI</p>
-                </div>
-                <div>
-                  <p className="text-[10px] sm:text-xs uppercase tracking-wider text-[#6a7e98]">Build</p>
-                  <p className="text-xs sm:text-sm font-semibold text-white mt-1">100% In-House</p>
-                </div>
-              </div>
             </div>
           </ScrollReveal>
         </div>
