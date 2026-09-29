@@ -10,7 +10,7 @@ import FeaturedProducts from "./components/FeaturedProducts";
 import ScrollReveal from "./components/ScrollReveal";
 import ThreeDCard from "./components/ThreeDCard";
 import SectionTag from "./components/SectionTag";
-import { DroneGlobe, StatsTicker, HeroInteractive } from "./components/ClientComponents";
+import { StatsTicker, HeroInteractive, HeroVideoBackground } from "./components/ClientComponents";
 import { PrimaryPill, GhostPill } from "./components/HeroCTAs";
 
 const services = [
@@ -56,116 +56,94 @@ export default function Home() {
   return (
     <main className="bg-transparent text-[color:var(--foreground)]">
 
-      {/* ═══ HERO — Modern Split Layout: Text & CTAs Left, 3D Drone Right ═══ */}
+      {/* ═══ HERO — Full-width cinematic layout with live VTOL video background ═══ */}
       <section
-        className="relative flex items-center min-h-[92vh] lg:min-h-screen pt-28 pb-16 lg:pt-24 lg:pb-12 overflow-hidden"
+        className="relative flex items-center min-h-[92vh] lg:min-h-screen pt-28 pb-20 lg:pt-32 lg:pb-24 overflow-hidden"
       >
-        {/* Mouse-trail particles + click ripples overlay */}
+        {/* ── Live VTOL video background (lazy-loaded, theme-blended) ── */}
+        <HeroVideoBackground />
+
+        {/* ── Mouse-trail particles + click ripples overlay ── */}
         <HeroInteractive />
 
-        <div className="relative z-10 w-full max-w-7xl mx-auto px-6 sm:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-8 items-center">
-            {/* Left Column: Typography & CTAs */}
-            <ScrollReveal direction="up" delay={60} className="lg:col-span-7 w-full">
-              <div className="flex flex-col items-start text-left space-y-6">
-                <SectionTag>Skywin Aeronautics</SectionTag>
+        {/* ── Subtle dot-matrix texture over video ── */}
+        <div
+          className="absolute inset-0 pointer-events-none opacity-25 z-[1]"
+          style={{
+            backgroundImage: "radial-gradient(rgba(255,255,255,0.10) 1px, transparent 1px)",
+            backgroundSize: "28px 28px",
+          }}
+          aria-hidden="true"
+        />
 
-                {/* Reduced and balanced display headline */}
-                <h1
-                  className="text-[clamp(2.1rem,4.2vw,3.6rem)] font-bold leading-[1.08] tracking-tight text-white"
-                  style={{ fontFamily: "var(--font-display)" }}
-                >
-                  Precision UAV<br />
-                  <span
-                    className="bg-clip-text text-transparent"
-                    style={{
-                      backgroundImage:
-                        "linear-gradient(135deg, #45576D 0%, #8fa3bf 50%, #ffffff 100%)",
-                    }}
-                  >
-                    Manufacturing.
-                  </span>
-                </h1>
+        {/* ── Decorative HUD corner brackets ── */}
+        <div className="absolute top-28 left-6 sm:left-10 w-10 h-10 border-t-2 border-l-2 border-[#45576D]/40 pointer-events-none z-[2]" aria-hidden="true" />
+        <div className="absolute top-28 right-6 sm:right-10 w-10 h-10 border-t-2 border-r-2 border-[#45576D]/40 pointer-events-none z-[2]" aria-hidden="true" />
+        <div className="absolute bottom-16 left-6 sm:left-10 w-10 h-10 border-b-2 border-l-2 border-[#45576D]/40 pointer-events-none z-[2]" aria-hidden="true" />
+        <div className="absolute bottom-16 right-6 sm:right-10 w-10 h-10 border-b-2 border-r-2 border-[#45576D]/40 pointer-events-none z-[2]" aria-hidden="true" />
 
-                {/* Monospace Subtitle */}
-                <p
-                  className="max-w-xl text-xs sm:text-sm md:text-base leading-relaxed text-white/60"
+        {/* ── Content: centered single column ── */}
+        <div className="relative z-10 w-full max-w-5xl mx-auto px-6 sm:px-8 flex flex-col items-center text-center">
+          <ScrollReveal direction="up" delay={60}>
+            <div className="flex flex-col items-center space-y-7">
+              <SectionTag>Skywin Aeronautics</SectionTag>
+
+              {/* Main headline */}
+              <h1
+                className="text-[clamp(2.4rem,5.5vw,4.4rem)] font-bold leading-[1.06] tracking-tight text-white"
+                style={{ fontFamily: "var(--font-display)" }}
+              >
+                Precision UAV{" "}
+                <span
+                  className="bg-clip-text text-transparent"
                   style={{
-                    fontFamily: "var(--font-mono)",
-                    letterSpacing: "0.02em",
+                    backgroundImage:
+                      "linear-gradient(135deg, #45576D 0%, #8fa3bf 50%, #ffffff 100%)",
                   }}
                 >
-                  Sovereign unmanned aerial systems, tactical defense platforms,
-                  and specialized industrial airframes engineered and manufactured
-                  in-house for critical aerospace missions.
-                </p>
+                  Manufacturing.
+                </span>
+              </h1>
 
-                {/* Action Buttons */}
-                <div className="pt-2 flex flex-wrap items-center gap-4">
-                  <PrimaryPill href="/products">View Products →</PrimaryPill>
-                  <GhostPill href="/about">Our Story</GhostPill>
+              {/* Monospace subtitle */}
+              <p
+                className="max-w-2xl text-xs sm:text-sm md:text-[15px] leading-relaxed text-white/55"
+                style={{
+                  fontFamily: "var(--font-mono)",
+                  letterSpacing: "0.025em",
+                }}
+              >
+                Sovereign unmanned aerial systems, tactical defense platforms,
+                and specialized industrial airframes engineered and manufactured
+                in-house for critical aerospace missions.
+              </p>
+
+              {/* Action Buttons */}
+              <div className="pt-2 flex flex-wrap items-center justify-center gap-4">
+                <PrimaryPill href="/products">View Products →</PrimaryPill>
+                <GhostPill href="/about">Our Story</GhostPill>
+              </div>
+
+              {/* Trust specs bar */}
+              <div
+                className="pt-6 mt-2 border-t border-white/[0.08] grid grid-cols-3 gap-8 sm:gap-14 w-full max-w-lg"
+                style={{ fontFamily: "var(--font-mono)" }}
+              >
+                <div>
+                  <p className="text-[10px] sm:text-xs uppercase tracking-wider text-[#6a7e98]">Standard</p>
+                  <p className="text-xs sm:text-sm font-semibold text-white mt-1">MIL-SPEC / IP67</p>
                 </div>
-
-                {/* Quick specs / trust points pill */}
-                <div
-                  className="pt-6 border-t border-white/[0.08] grid grid-cols-3 gap-4 sm:gap-6 w-full max-w-lg text-left"
-                  style={{ fontFamily: "var(--font-mono)" }}
-                >
-                  <div>
-                    <p className="text-[10px] sm:text-xs uppercase tracking-wider text-[#6a7e98]">Standard</p>
-                    <p className="text-xs sm:text-sm font-semibold text-white mt-1">MIL-SPEC / IP67</p>
-                  </div>
-                  <div>
-                    <p className="text-[10px] sm:text-xs uppercase tracking-wider text-[#6a7e98]">Avionics</p>
-                    <p className="text-xs sm:text-sm font-semibold text-white mt-1">Autonomous AI</p>
-                  </div>
-                  <div>
-                    <p className="text-[10px] sm:text-xs uppercase tracking-wider text-[#6a7e98]">Build</p>
-                    <p className="text-xs sm:text-sm font-semibold text-white mt-1">100% In-House</p>
-                  </div>
+                <div>
+                  <p className="text-[10px] sm:text-xs uppercase tracking-wider text-[#6a7e98]">Avionics</p>
+                  <p className="text-xs sm:text-sm font-semibold text-white mt-1">Autonomous AI</p>
+                </div>
+                <div>
+                  <p className="text-[10px] sm:text-xs uppercase tracking-wider text-[#6a7e98]">Build</p>
+                  <p className="text-xs sm:text-sm font-semibold text-white mt-1">100% In-House</p>
                 </div>
               </div>
-            </ScrollReveal>
-
-            {/* Right Column: 3D Drone Model */}
-            <ScrollReveal direction="up" delay={180} className="lg:col-span-5 w-full">
-              <div className="relative w-full flex items-center justify-center">
-                {/* Soft radial backdrop aura behind drone */}
-                <div
-                  className="absolute inset-0 pointer-events-none blur-3xl opacity-30"
-                  style={{
-                    background:
-                      "radial-gradient(circle at 50% 50%, rgba(69, 87, 109, 0.40) 0%, rgba(35, 54, 79, 0.18) 50%, transparent 75%)",
-                  }}
-                  aria-hidden="true"
-                />
-
-                {/* Decorative HUD concentric coordinate rings behind drone */}
-                <div
-                  className="absolute w-[300px] h-[300px] sm:w-[380px] sm:h-[380px] rounded-full border border-white/[0.05] pointer-events-none"
-                  aria-hidden="true"
-                />
-                <div
-                  className="absolute w-[220px] h-[220px] sm:w-[280px] sm:h-[280px] rounded-full border border-dashed border-[#45576D]/25 pointer-events-none animate-spin"
-                  style={{ animationDuration: "60s" }}
-                  aria-hidden="true"
-                />
-
-                {/* 3D Drone Canvas Container with smooth modern edge masking */}
-                <div
-                  className="relative w-full h-[400px] sm:h-[460px] lg:h-[500px] flex items-center justify-center"
-                  style={{
-                    maskImage:
-                      "radial-gradient(ellipse 92% 90% at 50% 50%, black 70%, transparent 100%)",
-                    WebkitMaskImage:
-                      "radial-gradient(ellipse 92% 90% at 50% 50%, black 70%, transparent 100%)",
-                  }}
-                >
-                  <DroneGlobe />
-                </div>
-              </div>
-            </ScrollReveal>
-          </div>
+            </div>
+          </ScrollReveal>
         </div>
       </section>
 

@@ -63,3 +63,8 @@ export const InsightsScene = dynamic(
   () => import("./InsightsScene"),
   { ssr: false }
 );
+
+export const HeroVideoBackground = dynamic(
+  () => import("./HeroVideoBackground"),
+  { ssr: false }
+);

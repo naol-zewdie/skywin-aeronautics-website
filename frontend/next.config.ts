@@ -75,9 +75,9 @@ const nextConfig: NextConfig = {
   },
   async headers() {
     /*
-     * Security headers — split between here and proxy.ts:
+     * Security headers — split between here and middleware.ts:
      *
-     * proxy.ts owns (per-request, nonce-aware):
+     * middleware.ts owns (per-request, nonce-aware):
      *   Content-Security-Policy  ← nonce injected fresh per request
      *   X-Frame-Options
      *   X-Content-Type-Options
@@ -85,10 +85,10 @@ const nextConfig: NextConfig = {
      *   Permissions-Policy
      *
      * next.config.ts owns (static, applied to all routes including static files):
-     *   Strict-Transport-Security ← HSTS must survive even if proxy is bypassed
+     *   Strict-Transport-Security ← HSTS must survive even if middleware is bypassed
      *
      * DO NOT add Content-Security-Policy here — it would create a duplicate
-     * header alongside proxy.ts's live nonce-stamped version and break CSP.
+     * header alongside middleware.ts's live nonce-stamped version and break CSP.
      */
     return [
       {
