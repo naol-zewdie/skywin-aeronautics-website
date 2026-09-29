@@ -16,7 +16,7 @@ const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   images: {
-    dangerouslyAllowLocalIP: process.env.NODE_ENV !== 'production',
+    dangerouslyAllowLocalIP: true,
     remotePatterns: [
       {
         protocol: 'https',
