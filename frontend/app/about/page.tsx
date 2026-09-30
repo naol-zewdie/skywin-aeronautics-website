@@ -3,9 +3,9 @@ import { AboutScene } from "../components/ClientComponents";
 import ScrollReveal from "../components/ScrollReveal";
 
 export const metadata = {
-  title: "Skywin Aeronautics | About",
+  title: "Skywin Aeronautics | About Us",
   description:
-    "Learn about Skywin Aeronautics Industry — our founding, national mandate, indigenous UAV manufacturing, and Vision 2030.",
+    "Learn about SkyWin Aeronautics Industry — our founding, national mandate, indigenous UAV manufacturing, mission, and Vision 2030.",
 };
 
 const FAQS = [
@@ -77,14 +77,14 @@ export default function AboutPage() {
 
       <div className="relative z-10 max-w-5xl mx-auto px-5 sm:px-8 space-y-24 sm:space-y-32">
         {/* ══════════════════════════════════════════════════════
-            1. FIRST: THE HEADLINE PART (Image 1)
+            1. ABOUT US HEADER
         ══════════════════════════════════════════════════════ */}
         <ScrollReveal direction="up" delay={50}>
           <section className="text-center max-w-4xl mx-auto pt-6 sm:pt-10">
             {/* Top pill badges */}
-            <div className="flex items-center justify-center gap-3 mb-8">
+            <div className="flex items-center justify-center gap-3 mb-6">
               <span
-                className="inline-flex items-center px-3.5 py-1.5 rounded-full text-[11px] uppercase tracking-[0.2em] text-[#6a7e98] border border-[#6a7e98]/30 bg-[#6a7e98]/10"
+                className="inline-flex items-center px-3.5 py-1.5 rounded-full text-[11px] uppercase tracking-[0.2em] text-sky-400 border border-sky-400/30 bg-sky-400/10"
                 style={{ fontFamily: "var(--font-mono)" }}
               >
                 ABOUT
@@ -97,17 +97,20 @@ export default function AboutPage() {
               </span>
             </div>
 
-            {/* Headline without shadow text and with decreased, balanced size */}
+            {/* Headline: Clean white sans-serif in the reference style */}
             <h1
-              className="text-[clamp(1.75rem,3.8vw,2.8rem)] font-semibold leading-[1.12] tracking-tight text-white"
-              style={{ fontFamily: "var(--font-display)" }}
+              className="text-[clamp(2.5rem,5.8vw,4.5rem)] font-bold text-white tracking-[-0.025em] leading-[1.08] mt-2 mb-6 font-sans"
+              style={{
+                fontFamily:
+                  'var(--font-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+              }}
             >
-              Leading African Aeronautics Innovation.
+              About Us
             </h1>
 
             {/* Subtitle */}
             <p
-              className="mt-6 sm:mt-7 max-w-2xl mx-auto text-sm sm:text-base leading-relaxed text-white/60"
+              className="max-w-2xl mx-auto text-sm sm:text-base leading-relaxed text-white/70"
               style={{
                 fontFamily: "var(--font-mono)",
                 letterSpacing: "0.02em",
@@ -119,16 +122,16 @@ export default function AboutPage() {
         </ScrollReveal>
 
         {/* ══════════════════════════════════════════════════════
-            2. SECOND: THE 4 CIRCLE IMAGE & STORY PART (Image 2)
+            2. STORY & TWO CIRCLES (OUR VISION & OUR MISSION)
         ══════════════════════════════════════════════════════ */}
         <section className="space-y-16">
           {/* Top: Two-column narrative */}
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.35fr] gap-10 lg:gap-14 items-start">
             {/* Left Column: Title + "WHERE IT STARTED" Card */}
-            <ScrollReveal direction="up" delay={80} className="w-full">
+            <ScrollReveal direction="up" delay={80} className="w-full lg:sticky lg:top-28">
               <div className="space-y-6">
                 <h2
-                  className="text-3xl sm:text-4xl lg:text-[44px] font-bold text-white tracking-tight leading-[1.08]"
+                  className="text-3xl sm:text-4xl lg:text-[40px] font-bold text-white tracking-tight leading-[1.12]"
                   style={{ fontFamily: "var(--font-display)" }}
                 >
                   It started with a single vision.
@@ -136,7 +139,7 @@ export default function AboutPage() {
 
                 {/* Where it started card */}
                 <div
-                  className="relative overflow-hidden rounded-2xl p-6 sm:p-8 border border-white/15 transition-all duration-500 hover:border-sky-400/40 group min-h-[280px] sm:min-h-[320px] flex flex-col justify-between shadow-2xl"
+                  className="relative overflow-hidden rounded-2xl p-6 sm:p-8 border border-white/15 transition-all duration-500 hover:border-sky-400/40 group min-h-[300px] sm:min-h-[360px] flex flex-col justify-between shadow-2xl"
                 >
                   {/* Background image filling the whole box */}
                   <Image
@@ -193,187 +196,135 @@ export default function AboutPage() {
               </div>
             </ScrollReveal>
 
-            {/* Right Column: Story text with bold highlights */}
+            {/* Right Column: Story text with 5 paragraphs */}
             <ScrollReveal direction="up" delay={160} className="w-full">
               <div
-                className="space-y-6 text-sm sm:text-base leading-relaxed text-white/65"
+                className="space-y-6 text-sm sm:text-base leading-relaxed text-white/75"
                 style={{ fontFamily: "var(--font-mono)" }}
               >
                 <p>
-                  SkyWin Aeronautics Industry was inaugurated on March 8, 2025 by
+                  SkyWin aeronautics industry was inaugurated on March 8, 2025 by
                   the Federal Democratic Republic of Ethiopia Prime Minister, H.E
                   Abiy Ahmed (PhD), as a strategic national unmanned aerial
-                  systems manufacturing initiative. Every milestone taught our
-                  engineers something new — so we said yes to harder aerodynamic
-                  problems, then harder systems again.
+                  systems manufacturing initiative.
                 </p>
 
                 <p>
-                  Initial airframes became comprehensive tactical platforms.
-                  Platforms became integrated systems that safeguard national
-                  assets, monitor agricultural yields, and inspect strategic
-                  infrastructure. The lesson stuck:{" "}
-                  <strong className="text-white font-semibold">
-                    say yes, then engineer the how. There is no challenge in
-                    unmanned aeronautics we won&apos;t take on.
-                  </strong>
+                  The company was established with a national mandate to reduce
+                  external technology dependency while strengthening indigenous
+                  engineering intellectual property and local aerospace
+                  manufacturing capability.
                 </p>
 
                 <p>
-                  With dedicated manufacturing hangars, composite prototyping
-                  laboratories, and certified flight-testing airspace, we build
-                  around one constant: never stand still. That&apos;s the real
-                  mission: we don&apos;t assemble off-the-shelf parts like a
-                  commodity. We engineer sovereign intellectual property from the
-                  ground up — ensuring local technology independence as the global
-                  aerospace horizon accelerates.
+                  SkyWin aeronautics industry was formed through a strategic
+                  integration of local engineering talent, institutional
+                  capacities and system resources drawn from multiple specialized
+                  national organizations into a unified UAV manufacturing
+                  framework.
+                </p>
+
+                <p>
+                  With the establishment of dedicated manufacturing hangars,
+                  research and development laboratories, and formal testing and
+                  commissioning departments, the company achieved full production
+                  and deployment readiness.
+                </p>
+
+                <p>
+                  Today, SkyWin aeronautics industry operates as a fully integrated
+                  UAV manufacturer delivering mission-ready aerial platforms for
+                  national development, security, and institutional operations,
+                  while continuously advancing indigenous aerospace engineering
+                  research to support future national programs.
                 </p>
               </div>
             </ScrollReveal>
           </div>
 
-          {/* Bottom: 4 Circular Milestone Badges */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6 pt-4 sm:pt-6">
-            {/* Circle 01 */}
-            <ScrollReveal direction="up" delay={0} className="w-full flex justify-center">
-              <div
-                className="w-[210px] h-[210px] max-w-[210px] sm:w-full sm:h-auto sm:max-w-none aspect-square mx-auto rounded-full border border-white/10 p-4 sm:p-6 flex flex-col items-center justify-center text-center transition-all duration-300 hover:border-white/25 hover:scale-[1.03]"
-                style={{
-                  background: "rgba(11, 17, 28, 0.70)",
-                  backdropFilter: "blur(12px)",
-                }}
-              >
-                <span
-                  className="text-[10px] sm:text-[11px] text-white/40 tracking-wider"
-                  style={{ fontFamily: "var(--font-mono)" }}
+          {/* Bottom: 2 Circular Milestone Badges for OUR VISION & OUR MISSION */}
+          <div className="pt-6 sm:pt-10">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 sm:gap-12 max-w-4xl mx-auto">
+              {/* Circle 01: OUR VISION */}
+              <ScrollReveal direction="up" delay={80} className="w-full flex justify-center">
+                <div
+                  className="w-[280px] h-[280px] sm:w-[330px] sm:h-[330px] lg:w-[350px] lg:h-[350px] aspect-square rounded-full border-2 border-sky-400/80 p-6 sm:p-9 flex flex-col items-center justify-center text-center transition-all duration-500 hover:border-sky-300 hover:scale-[1.03] shadow-2xl relative overflow-hidden group"
+                  style={{
+                    background: "rgba(14, 22, 36, 0.85)",
+                    boxShadow: "0 0 35px rgba(56, 189, 248, 0.22)",
+                    backdropFilter: "blur(16px)",
+                  }}
                 >
-                  01
-                </span>
-                <span
-                  className="text-[9px] sm:text-[10px] font-mono tracking-[0.16em] uppercase text-white/50 mt-0.5 sm:mt-1 mb-1 sm:mb-2"
-                >
-                  2025 · THE START
-                </span>
-                <h3
-                  className="text-base sm:text-lg font-bold text-white tracking-tight"
-                  style={{ fontFamily: "var(--font-display)" }}
-                >
-                  National Mandate
-                </h3>
-                <p
-                  className="text-[10px] sm:text-[11px] text-white/50 font-mono mt-1 sm:mt-2 leading-relaxed px-2"
-                >
-                  Inaugurated by H.E. Prime Minister Abiy Ahmed to establish
-                  sovereign aerospace manufacturing.
-                </p>
-              </div>
-            </ScrollReveal>
+                  {/* Subtle inner ambient glow */}
+                  <div
+                    className="absolute inset-0 rounded-full pointer-events-none opacity-20 group-hover:opacity-35 transition-opacity duration-500"
+                    style={{
+                      background:
+                        "radial-gradient(circle, rgba(56, 189, 248, 0.4) 0%, transparent 70%)",
+                    }}
+                    aria-hidden="true"
+                  />
+                  <div className="relative z-10 flex flex-col items-center justify-center">
+                    <span
+                      className="text-[10px] sm:text-[11px] font-mono tracking-[0.2em] uppercase text-sky-400 font-bold mb-1.5"
+                    >
+                      HORIZON 2030
+                    </span>
+                    <h3
+                      className="text-xl sm:text-2xl lg:text-[26px] font-bold text-sky-400 tracking-wider uppercase mb-3 drop-shadow-sm"
+                      style={{ fontFamily: "var(--font-display)" }}
+                    >
+                      OUR VISION
+                    </h3>
+                    <p
+                      className="text-xs sm:text-sm text-white/80 font-mono leading-relaxed max-w-[240px] sm:max-w-[270px]"
+                    >
+                      To establish a globally competitive African aeronautics and drone technology powerhouse by 2030.
+                    </p>
+                  </div>
+                </div>
+              </ScrollReveal>
 
-            {/* Circle 02 */}
-            <ScrollReveal direction="up" delay={90} className="w-full flex justify-center">
-              <div
-                className="w-[210px] h-[210px] max-w-[210px] sm:w-full sm:h-auto sm:max-w-none aspect-square mx-auto rounded-full border border-white/10 p-4 sm:p-6 flex flex-col items-center justify-center text-center transition-all duration-300 hover:border-white/25 hover:scale-[1.03]"
-                style={{
-                  background: "rgba(11, 17, 28, 0.70)",
-                  backdropFilter: "blur(12px)",
-                }}
-              >
-                <span
-                  className="text-[10px] sm:text-[11px] text-white/40 tracking-wider"
-                  style={{ fontFamily: "var(--font-mono)" }}
+              {/* Circle 02: OUR MISSION */}
+              <ScrollReveal direction="up" delay={160} className="w-full flex justify-center">
+                <div
+                  className="w-[280px] h-[280px] sm:w-[330px] sm:h-[330px] lg:w-[350px] lg:h-[350px] aspect-square rounded-full border-2 border-sky-400/80 p-6 sm:p-9 flex flex-col items-center justify-center text-center transition-all duration-500 hover:border-sky-300 hover:scale-[1.03] shadow-2xl relative overflow-hidden group"
+                  style={{
+                    background: "rgba(14, 22, 36, 0.85)",
+                    boxShadow: "0 0 35px rgba(56, 189, 248, 0.22)",
+                    backdropFilter: "blur(16px)",
+                  }}
                 >
-                  02
-                </span>
-                <span
-                  className="text-[9px] sm:text-[10px] font-mono tracking-[0.16em] uppercase text-white/50 mt-0.5 sm:mt-1 mb-1 sm:mb-2"
-                >
-                  GROWTH
-                </span>
-                <h3
-                  className="text-base sm:text-lg font-bold text-white tracking-tight"
-                  style={{ fontFamily: "var(--font-display)" }}
-                >
-                  Hangars & Labs
-                </h3>
-                <p
-                  className="text-[10px] sm:text-[11px] text-white/50 font-mono mt-1 sm:mt-2 leading-relaxed px-2"
-                >
-                  Dedicated manufacturing hangars, R&D labs, and testing
-                  departments achieved production readiness.
-                </p>
-              </div>
-            </ScrollReveal>
-
-            {/* Circle 03 */}
-            <ScrollReveal direction="up" delay={180} className="w-full flex justify-center">
-              <div
-                className="w-[210px] h-[210px] max-w-[210px] sm:w-full sm:h-auto sm:max-w-none aspect-square mx-auto rounded-full border border-white/10 p-4 sm:p-6 flex flex-col items-center justify-center text-center transition-all duration-300 hover:border-white/25 hover:scale-[1.03]"
-                style={{
-                  background: "rgba(11, 17, 28, 0.70)",
-                  backdropFilter: "blur(12px)",
-                }}
-              >
-                <span
-                  className="text-[10px] sm:text-[11px] text-white/40 tracking-wider"
-                  style={{ fontFamily: "var(--font-mono)" }}
-                >
-                  03
-                </span>
-                <span
-                  className="text-[9px] sm:text-[10px] font-mono tracking-[0.16em] uppercase text-white/50 mt-0.5 sm:mt-1 mb-1 sm:mb-2"
-                >
-                  SCALE
-                </span>
-                <h3
-                  className="text-base sm:text-lg font-bold text-white tracking-tight"
-                  style={{ fontFamily: "var(--font-display)" }}
-                >
-                  Mission UAVs
-                </h3>
-                <p
-                  className="text-[10px] sm:text-[11px] text-white/50 font-mono mt-1 sm:mt-2 leading-relaxed px-2"
-                >
-                  Full-scale deployments for agriculture, national infrastructure,
-                  tactical surveillance, and training.
-                </p>
-              </div>
-            </ScrollReveal>
-
-            {/* Circle 04 (Active / Highlighted with theme color) */}
-            <ScrollReveal direction="up" delay={270} className="w-full flex justify-center">
-              <div
-                className="w-[210px] h-[210px] max-w-[210px] sm:w-full sm:h-auto sm:max-w-none aspect-square mx-auto rounded-full border-2 border-sky-400/80 p-4 sm:p-6 flex flex-col items-center justify-center text-center transition-all duration-300 hover:scale-[1.03]"
-                style={{
-                  background: "rgba(14, 22, 36, 0.85)",
-                  boxShadow: "0 0 30px rgba(56, 189, 248, 0.25)",
-                  backdropFilter: "blur(16px)",
-                }}
-              >
-                <span
-                  className="text-[10px] sm:text-[11px] text-white/40 tracking-wider"
-                  style={{ fontFamily: "var(--font-mono)" }}
-                >
-                  04
-                </span>
-                <span
-                  className="text-[9px] sm:text-[10px] font-mono tracking-[0.16em] uppercase text-sky-400 font-bold mt-0.5 sm:mt-1 mb-1 sm:mb-2"
-                >
-                  TODAY & BEYOND
-                </span>
-                <h3
-                  className="text-base sm:text-lg font-bold text-white tracking-tight"
-                  style={{ fontFamily: "var(--font-display)" }}
-                >
-                  Vision 2030
-                </h3>
-                <p
-                  className="text-[10px] sm:text-[11px] text-white/60 font-mono mt-1 sm:mt-2 leading-relaxed px-2"
-                >
-                  Next-generation autonomous avionics, AI payload integration, and
-                  scaling an African aerospace powerhouse.
-                </p>
-              </div>
-            </ScrollReveal>
+                  {/* Subtle inner ambient glow */}
+                  <div
+                    className="absolute inset-0 rounded-full pointer-events-none opacity-20 group-hover:opacity-35 transition-opacity duration-500"
+                    style={{
+                      background:
+                        "radial-gradient(circle, rgba(56, 189, 248, 0.4) 0%, transparent 70%)",
+                    }}
+                    aria-hidden="true"
+                  />
+                  <div className="relative z-10 flex flex-col items-center justify-center">
+                    <span
+                      className="text-[10px] sm:text-[11px] font-mono tracking-[0.2em] uppercase text-sky-400 font-bold mb-1.5"
+                    >
+                      STRATEGIC MANDATE
+                    </span>
+                    <h3
+                      className="text-xl sm:text-2xl lg:text-[26px] font-bold text-sky-400 tracking-wider uppercase mb-3 drop-shadow-sm"
+                      style={{ fontFamily: "var(--font-display)" }}
+                    >
+                      OUR MISSION
+                    </h3>
+                    <p
+                      className="text-xs sm:text-[13px] text-white/80 font-mono leading-relaxed max-w-[240px] sm:max-w-[270px]"
+                    >
+                      To design, manufacture, and deliver high-quality, multi-purpose UAVs that address national strategic priorities and global market demands, driven by cutting-edge technological innovation.
+                    </p>
+                  </div>
+                </div>
+              </ScrollReveal>
+            </div>
           </div>
         </section>
 

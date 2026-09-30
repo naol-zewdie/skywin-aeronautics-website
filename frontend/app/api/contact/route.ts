@@ -77,7 +77,7 @@ export async function POST(request: NextRequest) {
     const apiKey = process.env.RESEND_API_KEY;
     if (apiKey) {
       const resend = new Resend(apiKey);
-      const contactEmail = process.env.CONTACT_EMAIL || 'info@skywin.aero';
+      const contactEmail = process.env.CONTACT_EMAIL || 'hr1.skywin@gmail.com';
       const { error: sendError } = await resend.emails.send({
         from: 'Skywin Aeronautics <onboarding@resend.dev>',
         to: [contactEmail],

@@ -75,7 +75,7 @@ export default function ContactPage() {
 
         {/* ── Interactive Multi-Step Form + Direct Reach Out Cards ── */}
         <ContactWizard
-          directEmail="naol1000zedu@gmail.com"
+          directEmail="hr1.skywin@gmail.com"
           directPhone="+1 956 272 1689"
         />
       </div>

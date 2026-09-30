@@ -8,16 +8,16 @@ interface ContactWizardProps {
 }
 
 const INTEREST_OPTIONS = [
-  { id: "aerospace", label: "Aerospace Engineering & Design", icon: "✈️" },
-  { id: "drones", label: "Drone Systems & UAV Solutions", icon: "🛸" },
-  { id: "training", label: "Flight Training & Simulation", icon: "🎓" },
-  { id: "defense", label: "Defense & Avionics Research", icon: "🔬" },
-  { id: "partnership", label: "Strategic Partnership", icon: "🤝" },
-  { id: "consulting", label: "General Consultation & Other", icon: "💬" },
+  { id: "aerospace", label: "Aerospace Engineering & Design" },
+  { id: "drones", label: "Drone Systems & UAV Solutions" },
+  { id: "training", label: "Flight Training & Simulation" },
+  { id: "defense", label: "Defense & Avionics Research" },
+  { id: "partnership", label: "Strategic Partnership" },
+  { id: "consulting", label: "General Consultation & Other" },
 ];
 
 export default function ContactWizard({
-  directEmail = "naol1000zedu@gmail.com",
+  directEmail = "hr1.skywin@gmail.com",
   directPhone = "+1 956 272 1689",
 }: ContactWizardProps) {
   const [currentStep, setCurrentStep] = useState(0);
@@ -482,7 +482,29 @@ export default function ContactWizard({
                               : "none",
                           }}
                         >
-                          <span className="text-xl">{item.icon}</span>
+                          <span
+                            className={`w-4 h-4 rounded-md border flex items-center justify-center shrink-0 transition-colors ${
+                              isSelected
+                                ? "border-sky-400 bg-sky-400/20 text-sky-400"
+                                : "border-white/20 bg-white/[0.02]"
+                            }`}
+                          >
+                            {isSelected && (
+                              <svg
+                                className="w-2.5 h-2.5 text-sky-400"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                                strokeWidth={3}
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  d="M5 13l4 4L19 7"
+                                />
+                              </svg>
+                            )}
+                          </span>
                           <span
                             className={`text-xs sm:text-sm font-medium transition-colors ${
                               isSelected ? "text-white" : "text-white/70"
@@ -547,7 +569,19 @@ export default function ContactWizard({
                   className="mt-3 text-xs text-red-400 flex items-center gap-2 animate-fadeIn"
                   style={{ fontFamily: "var(--font-mono)" }}
                 >
-                  <span>⚠️</span>
+                  <svg
+                    className="w-3.5 h-3.5 shrink-0 text-red-400"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                    />
+                  </svg>
                   <span>{errorMsg}</span>
                 </div>
               )}
